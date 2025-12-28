@@ -1,0 +1,28 @@
+{
+  "name": "Zenith Comercial",
+  "short_name": "Zenith",
+  "description": "Sistema de Gestão Comercial Zenith",
+  "start_url": "/zenith-admin-completo.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#D4AF37",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/zenith-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/zenith-screenshot.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "lang": "pt-BR",
+  "dir": "ltr"
+}
