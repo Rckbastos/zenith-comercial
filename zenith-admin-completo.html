@@ -594,7 +594,7 @@
                         <span class="kpi-title">Custo Total</span>
                         <div class="kpi-icon cost">💰</div>
                     </div>
-                    <div class="kpi-value">R$ 12.450,00</div>
+                    <div class="kpi-value" id="kpiCost">R$ 0,00</div>
                     <div class="kpi-trend">
                         <span>↓</span>
                         <span>Despesas operacionais</span>
@@ -606,7 +606,7 @@
                         <span class="kpi-title">Lucro Total</span>
                         <div class="kpi-icon profit">📈</div>
                     </div>
-                    <div class="kpi-value profit-color">R$ 8.750,00</div>
+                    <div class="kpi-value profit-color" id="kpiProfit">R$ 0,00</div>
                     <div class="kpi-trend">
                         <span>↑</span>
                         <span>Margem de lucro</span>
@@ -618,7 +618,7 @@
                         <span class="kpi-title">Ordens Abertas</span>
                         <div class="kpi-icon orders">📦</div>
                     </div>
-                    <div class="kpi-value">12</div>
+                    <div class="kpi-value" id="kpiOpen">0</div>
                     <div class="kpi-trend">
                         <span>⏳</span>
                         <span>Aguardando conclusão</span>
@@ -630,7 +630,7 @@
                         <span class="kpi-title">Ordens Concluídas</span>
                         <div class="kpi-icon orders">✅</div>
                     </div>
-                    <div class="kpi-value">45</div>
+                    <div class="kpi-value" id="kpiClosed">0</div>
                     <div class="kpi-trend">
                         <span>↑</span>
                         <span>Total processado</span>
@@ -706,19 +706,7 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="usersTableBody">
-                        <tr>
-                            <td>João Silva</td>
-                            <td>joao@zenith.com</td>
-                            <td>Gerente de Contas</td>
-                            <td><span class="badge badge-gold">15%</span></td>
-                            <td><span class="badge badge-success">Ativo</span></td>
-                            <td>
-                                <button class="btn-icon btn-edit" title="Editar">✏️</button>
-                                <button class="btn-icon btn-delete" title="Excluir">🗑️</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="usersTableBody"></tbody>
                 </table>
             </div>
         </div>
@@ -795,41 +783,7 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="servicesTableBody">
-                        <tr>
-                            <td>Consignado INSS</td>
-                            <td>R$ 20,00 + 0.80%</td>
-                            <td>R$ 1.200,00</td>
-                            <td class="profit-color">R$ 1.170,40</td>
-                            <td><span class="badge badge-success">Ativo</span></td>
-                            <td>
-                                <button class="btn-icon btn-edit" title="Editar">✏️</button>
-                                <button class="btn-icon btn-delete" title="Excluir">🗑️</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Refinanciamento</td>
-                            <td>R$ 50,00</td>
-                            <td>R$ 2.000,00</td>
-                            <td class="profit-color">R$ 1.950,00</td>
-                            <td><span class="badge badge-success">Ativo</span></td>
-                            <td>
-                                <button class="btn-icon btn-edit" title="Editar">✏️</button>
-                                <button class="btn-icon btn-delete" title="Excluir">🗑️</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Consignado FGTS</td>
-                            <td>1.5%</td>
-                            <td>R$ 1.500,00</td>
-                            <td class="profit-color">R$ 1.477,50</td>
-                            <td><span class="badge badge-success">Ativo</span></td>
-                            <td>
-                                <button class="btn-icon btn-edit" title="Editar">✏️</button>
-                                <button class="btn-icon btn-delete" title="Excluir">🗑️</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="servicesTableBody"></tbody>
                 </table>
             </div>
         </div>
@@ -844,17 +798,12 @@
                             <label>Selecionar Usuário <span>*</span></label>
                             <select id="assignUser" required>
                                 <option value="">Selecione...</option>
-                                <option value="1">João Silva - Gerente de Contas</option>
-                                <option value="2">Maria Santos - Consultora</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Selecionar Serviço <span>*</span></label>
                             <select id="assignService" required>
                                 <option value="">Selecione...</option>
-                                <option value="1">Consignado INSS</option>
-                                <option value="2">Consignado FGTS</option>
-                                <option value="3">Refinanciamento</option>
                             </select>
                         </div>
                     </div>
@@ -881,19 +830,7 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>João Silva</td>
-                            <td>Gerente de Contas</td>
-                            <td>
-                                <span class="badge badge-gold">Consignado INSS</span>
-                                <span class="badge badge-gold">Refinanciamento</span>
-                            </td>
-                            <td>
-                                <button class="btn-icon btn-edit" title="Editar">✏️</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="assignmentsTableBody"></tbody>
                 </table>
             </div>
         </div>
