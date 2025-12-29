@@ -570,10 +570,10 @@
             </div>
         </div>
         <div class="user-info">
-            <div class="user-avatar">JS</div>
+            <div class="user-avatar" id="userAvatar">JS</div>
             <div class="user-details">
-                <span class="user-name">João Silva</span>
-                <span class="user-role">Gerente de Contas • 15% comissão</span>
+                <span class="user-name" id="userName">Usuário</span>
+                <span class="user-role" id="userRole">Cargo • Comissão</span>
             </div>
         </div>
     </div>
@@ -595,15 +595,15 @@
             <div class="commission-banner">
                 <div class="commission-info">
                     <div class="commission-label">💰 COMISSÃO A RECEBER</div>
-                    <div class="commission-value">R$ 1.312,50</div>
+                    <div class="commission-value" id="bannerCommission">R$ 0,00</div>
                     <div class="commission-details">
                         <div class="commission-detail">
                             <span class="commission-detail-label">Lucro Gerado</span>
-                            <span class="commission-detail-value">R$ 8.750,00</span>
+                            <span class="commission-detail-value" id="bannerProfit">R$ 0,00</span>
                         </div>
                         <div class="commission-detail">
                             <span class="commission-detail-label">Vendas</span>
-                            <span class="commission-detail-value">18 vendas</span>
+                            <span class="commission-detail-value" id="bannerSales">0 vendas</span>
                         </div>
                     </div>
                 </div>
@@ -617,8 +617,8 @@
                         <span class="stat-title">Vendas do Mês</span>
                         <span class="stat-icon">📊</span>
                     </div>
-                    <div class="stat-value">18</div>
-                    <div class="stat-subtitle">+3 vs. mês anterior</div>
+                    <div class="stat-value" id="vendasMes">0</div>
+                    <div class="stat-subtitle" id="vendasMesSubtitle">--</div>
                 </div>
 
                 <div class="stat-card">
@@ -626,7 +626,7 @@
                         <span class="stat-title">Ticket Médio</span>
                         <span class="stat-icon">💵</span>
                     </div>
-                    <div class="stat-value">R$ 1.456</div>
+                    <div class="stat-value" id="ticketMedio">R$ 0,00</div>
                     <div class="stat-subtitle">Valor médio por venda</div>
                 </div>
 
@@ -635,7 +635,7 @@
                         <span class="stat-title">Em Análise</span>
                         <span class="stat-icon">⏳</span>
                     </div>
-                    <div class="stat-value">3</div>
+                    <div class="stat-value" id="emAnalise">0</div>
                     <div class="stat-subtitle">Aguardando aprovação</div>
                 </div>
 
@@ -644,8 +644,8 @@
                         <span class="stat-title">Taxa de Aprovação</span>
                         <span class="stat-icon">✅</span>
                     </div>
-                    <div class="stat-value">95%</div>
-                    <div class="stat-subtitle">Ordens aprovadas</div>
+                    <div class="stat-value" id="taxaAprovacao">0%</div>
+                    <div class="stat-subtitle" id="taxaAprovacaoSub">Ordens aprovadas</div>
                 </div>
 
                 <div class="stat-card" style="background: linear-gradient(135deg, #1a3a52 0%, #0a2a42 100%); border: 2px solid #D4AF37;">
@@ -818,7 +818,7 @@
 
     <script>
         const apiBase = '';
-        const currentSellerId = 1; // Mock do usuário logado (João Silva)
+        let currentSellerId = null; // será definido pelo login/usuário encontrado
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -961,13 +961,21 @@
         }
 
         function renderOrdersForSeller(orders, users) {
-            const sellerOrders = orders.filter(o => Number(o.sellerId) === currentSellerId);
+            if (!currentSellerId && users.length) {
+                currentSellerId = users[0].id;
+            }
+            const sellerOrders = currentSellerId
+                ? orders.filter(o => Number(o.sellerId) === Number(currentSellerId))
+                : [];
             const analysisTbody = document.getElementById('analysisTbody');
             const concludedTbody = document.getElementById('concludedTbody');
             const allSalesTbody = document.getElementById('allSalesTbody');
             if (analysisTbody) analysisTbody.innerHTML = '';
             if (concludedTbody) concludedTbody.innerHTML = '';
             if (allSalesTbody) allSalesTbody.innerHTML = '';
+
+            // KPIs
+            updateKpis(sellerOrders, users.find(u => u.id === currentSellerId));
 
             sellerOrders.forEach(order => {
                 const statusLabel = order.status === 'concluded' ? '<span class=\"badge badge-success\">Aprovada</span>' : '<span class=\"badge badge-pending\">Em Análise</span>';
@@ -1023,9 +1031,56 @@
                     fetchJson('/api/users'),
                     fetchJson('/api/orders')
                 ]);
+                resolveSellerId(users);
                 renderOrdersForSeller(orders, users);
             } catch (err) {
                 showError(err);
+            }
+        }
+
+        function updateKpis(orders, user) {
+            const commissionPending = orders
+                .filter(o => o.status === 'concluded' && !o.commissionPaid)
+                .reduce((sum, o) => sum + (Number(o.commissionValue) || 0), 0);
+            const totalProfit = orders.reduce((sum, o) => sum + (Number(o.profit) || 0), 0);
+            const totalSales = orders.length;
+            const openCount = orders.filter(o => o.status === 'open').length;
+            const concludedCount = orders.filter(o => o.status === 'concluded').length;
+            const approvalRate = totalSales ? Math.round((concludedCount / totalSales) * 100) : 0;
+            const ticket = totalSales ? orders.reduce((sum, o) => sum + (Number(o.price) || 0), 0) / totalSales : 0;
+
+            const name = user?.name || 'Usuário';
+            const role = user?.role || 'Gerente';
+            const commissionRate = user?.commission != null ? `${user.commission}% comissão` : '';
+            const initials = name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userRole').textContent = `${role}${commissionRate ? ' • ' + commissionRate : ''}`;
+            document.getElementById('userAvatar').textContent = initials;
+
+            document.getElementById('bannerCommission').textContent = formatBRL(commissionPending);
+            document.getElementById('bannerProfit').textContent = formatBRL(totalProfit);
+            document.getElementById('bannerSales').textContent = `${totalSales} ${totalSales === 1 ? 'venda' : 'vendas'}`;
+
+            document.getElementById('vendasMes').textContent = totalSales;
+            document.getElementById('vendasMesSubtitle').textContent = totalSales ? `${totalSales} no período atual` : '--';
+            document.getElementById('ticketMedio').textContent = formatBRL(ticket);
+            document.getElementById('emAnalise').textContent = openCount;
+            document.getElementById('taxaAprovacao').textContent = `${approvalRate}%`;
+            document.getElementById('taxaAprovacaoSub').textContent = `${concludedCount} aprovadas`;
+        }
+
+        function resolveSellerId(users) {
+            const storedLogin = (localStorage.getItem('loggedLogin') || '').toLowerCase();
+            if (storedLogin) {
+                const found = users.find(u => (u.email || '').toLowerCase() === storedLogin || (u.name || '').toLowerCase() === storedLogin);
+                if (found) {
+                    currentSellerId = found.id;
+                    return;
+                }
+            }
+            if (!currentSellerId && users.length) {
+                currentSellerId = users[0].id;
             }
         }
     </script>
