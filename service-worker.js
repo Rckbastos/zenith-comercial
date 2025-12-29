@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zenith-comercial-v3';
+const CACHE_NAME = 'zenith-comercial-v4';
 const urlsToCache = [
   './',
   'index.html',
@@ -46,32 +46,34 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Navegação: deixa seguir direto para evitar problemas de redirect/SPA
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(() => caches.match('index.html')));
+    return;
+  }
+
+  // Somente GET e mesma origem
+  if (request.method !== 'GET' || url.origin !== self.location.origin) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(request)
-      .then(response => {
-        if (response) return response;
+    caches.match(request).then(cached => {
+      if (cached) return cached;
 
-        return fetch(request).then(networkResponse => {
-          // Se a resposta é inválida ou redirecionada, não cacheia
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' || networkResponse.redirected) {
-            return networkResponse;
-          }
-
-          const responseToCache = networkResponse.clone();
-
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(request, responseToCache).catch(err => {
-                console.warn('Cache put falhou:', err);
-              });
-            });
-
+      return fetch(request).then(networkResponse => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' || networkResponse.redirected) {
           return networkResponse;
-        }).catch(() => {
-          // fallback simples: retorna cache se existir (já tratado acima) ou nada
-          return caches.match(request);
-        });
-      })
+        }
+
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME)
+          .then(cache => cache.put(request, responseToCache))
+          .catch(err => console.warn('Cache put falhou:', err));
+
+        return networkResponse;
+      }).catch(() => caches.match(request));
+    })
   );
 });
 
