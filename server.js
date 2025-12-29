@@ -147,7 +147,7 @@ function calcCost(price, service, opts = {}) {
 }
 
 async function computeFinancials(order, seller, service) {
-  const price = Number(order.price) || 0;
+  const price = Number(order.price) || 0; // total informado
   const quantity = Number(order.quantity) || 0;
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
   const unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
@@ -155,20 +155,29 @@ async function computeFinancials(order, seller, service) {
     : quantity > 0
       ? price / quantity
       : price;
-  let quote = null;
+  const salesTotal = unitPrice * (quantity || 1);
+
   const serviceCostType = service?.costType ?? service?.costtype;
+  const fallbackQuote = quantity > 0 ? price / quantity : 0;
+  let quote = null;
   if (service && serviceCostType === 'cotacao_percentual') {
     quote = await fetchUsdtQuote();
   }
+
   let cost = 0;
   if (service) {
-    const fallbackQuote = quantity > 0 ? price / quantity : 0;
-    const totalValue = unitPrice * (quantity || 1);
-    cost = calcCost(totalValue, service, { quote: quote || fallbackQuote, quantity });
+    if (serviceCostType === 'cotacao_percentual') {
+      const baseQuote = (Number.isFinite(quote) && quote > 0) ? quote : fallbackQuote;
+      const pct = Number(service.costPercentual ?? service.costpercentual ?? 0);
+      const qty = quantity || 1;
+      cost = baseQuote * (1 + (pct / 100)) * qty;
+    } else {
+      cost = calcCost(salesTotal, service, { quote: quote || fallbackQuote, quantity });
+    }
   } else if (order.cost != null) {
     cost = Number(order.cost);
   }
-  const salesTotal = unitPrice * (quantity || 1);
+
   const profit = salesTotal - cost;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit * (commissionRate / 100);
