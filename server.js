@@ -285,11 +285,8 @@ app.get('/api/users', async (_req, res) => {
 app.post('/api/users', async (req, res) => {
   const body = req.body || {};
   const authLogin = body.login || body.email || body.name;
-  const authRoleRaw = (body.loginRole || '').toLowerCase();
   const roleLower = (body.role || '').toLowerCase();
-  const authRole = authRoleRaw === 'admin' || authRoleRaw === 'gerente'
-    ? authRoleRaw
-    : (roleLower.includes('admin') ? 'admin' : 'gerente');
+  const authRole = roleLower.includes('admin') ? 'admin' : 'gerente';
   const authTarget = authRole === 'gerente' ? '/zenith-gerente-completo.html' : '/zenith-admin-completo.html';
 
   const rows = await query(
@@ -370,12 +367,12 @@ app.put('/api/services/:id', async (req, res) => {
 app.delete('/api/services/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
+    // Remove vínculos e libera ordens antes de excluir o serviço
+    await query('DELETE FROM assignments WHERE serviceId=$1', [id]);
+    await query('UPDATE orders SET serviceId = NULL WHERE serviceId=$1', [id]);
     await query('DELETE FROM services WHERE id=$1', [id]);
     res.status(204).end();
   } catch (err) {
-    if (err.code === '23503') {
-      return res.status(409).json({ error: 'Não é possível excluir: serviço vinculado a ordens existentes.' });
-    }
     res.status(500).json({ error: err.message });
   }
 });

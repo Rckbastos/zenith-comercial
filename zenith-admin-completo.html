@@ -661,6 +661,7 @@
                             <label>Cargo <span>*</span></label>
                             <select id="userRole" required>
                                 <option value="">Selecione...</option>
+                                <option value="Administrador">Administrador</option>
                                 <option value="Gerente de Contas">Gerente de Contas</option>
                                 <option value="Consultor Comercial">Consultor Comercial</option>
                                 <option value="Executivo de Vendas">Executivo de Vendas</option>
@@ -670,14 +671,6 @@
                         <div class="form-group">
                             <label>Senha de acesso</label>
                             <input type="password" id="userPassword" placeholder="Defina a senha para login" autocomplete="new-password">
-                        </div>
-                        <div class="form-group">
-                            <label>Nível de acesso (login)</label>
-                            <select id="userAccessLevel">
-                                <option value="">Auto (pelo cargo)</option>
-                                <option value="admin">Admin</option>
-                                <option value="gerente">Gerente</option>
-                            </select>
                         </div>
                         <div class="form-group">
                             <label>Comissão sobre Lucro (%) <span>*</span></label>
@@ -1043,8 +1036,7 @@
                 role: document.getElementById('userRole').value,
                 commission: document.getElementById('userCommission').value,
                 status: document.getElementById('userStatus').value,
-                password: document.getElementById('userPassword').value || undefined,
-                loginRole: document.getElementById('userAccessLevel').value || undefined
+                password: document.getElementById('userPassword').value || undefined
             };
 
             fetchJson('/api/users', {
