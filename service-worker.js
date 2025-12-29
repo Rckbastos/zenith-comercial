@@ -38,29 +38,38 @@ self.addEventListener('activate', event => {
 
 // Interceptar requisições
 self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Ignora esquemas não http(s) (ex.: chrome-extension) para evitar erros
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then(response => {
-        // Retorna do cache se disponível, senão busca da rede
-        if (response) {
-          return response;
-        }
-        
-        return fetch(event.request).then(response => {
-          // Não cachear se não for uma resposta válida
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+        if (response) return response;
+
+        return fetch(request).then(networkResponse => {
+          // Se a resposta é inválida ou redirecionada, não cacheia
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' || networkResponse.redirected) {
+            return networkResponse;
           }
-          
-          // Clonar a resposta
-          const responseToCache = response.clone();
-          
+
+          const responseToCache = networkResponse.clone();
+
           caches.open(CACHE_NAME)
             .then(cache => {
-              cache.put(event.request, responseToCache);
+              cache.put(request, responseToCache).catch(err => {
+                console.warn('Cache put falhou:', err);
+              });
             });
-          
-          return response;
+
+          return networkResponse;
+        }).catch(() => {
+          // fallback simples: retorna cache se existir (já tratado acima) ou nada
+          return caches.match(request);
         });
       })
   );
