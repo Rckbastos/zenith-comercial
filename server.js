@@ -241,43 +241,6 @@ async function initDb() {
     );
   `);
 
-  // Seed inicial se estiver vazio
-  const usersCount = (await query('SELECT COUNT(*)::int AS count FROM users'))[0].count;
-  if (usersCount === 0) {
-    await query(
-      `INSERT INTO users (name, email, phone, role, commission, status) VALUES
-      ('João Silva','joao@zenith.com','(11) 99999-9999','Gerente de Contas',15,'Ativo'),
-      ('Maria Santos','maria@zenith.com','(21) 98888-7777','Consultora Comercial',12,'Ativo')`
-    );
-  }
-
-  const servicesCount = (await query('SELECT COUNT(*)::int AS count FROM services'))[0].count;
-  if (servicesCount === 0) {
-    await query(
-      `INSERT INTO services (name, costType, costFixo, costPercentual, price, status, description) VALUES
-      ('Consignado INSS','fixo_percentual',20,0.8,1200,'Ativo','Crédito consignado para INSS'),
-      ('Refinanciamento','fixo',50,0,2000,'Ativo','Refinanciamento de dívidas'),
-      ('Consignado FGTS','percentual',0,1.5,1500,'Ativo','Empréstimo com garantia FGTS')`
-    );
-  }
-
-  // IDs disponíveis para uso nos seeds
-  const [firstUser] = await query('SELECT id FROM users ORDER BY id LIMIT 1');
-  const serviceRows = await query('SELECT id FROM services ORDER BY id LIMIT 3');
-  const service1 = serviceRows[0]?.id || null;
-  const service2 = serviceRows[1]?.id || service1;
-
-  const ordersCount = (await query('SELECT COUNT(*)::int AS count FROM orders'))[0].count;
-  if (ordersCount === 0 && firstUser?.id && service1) {
-    await query(
-      `INSERT INTO orders (customer, sellerId, serviceId, price, cost, profit, commissionValue, date, status, commissionPaid, productType)
-       VALUES
-       ('Ana Costa', $1, $2, 1100, 450, 650, 97.5, '2025-12-23', 'open', false, 'Consignado FGTS'),
-       ('Pedro Santos', $1, $3, 2000, 800, 1200, 180, '2025-12-24', 'concluded', true, 'Refinanciamento')`,
-      [firstUser.id, service1, service2]
-    );
-  }
-
   const authCount = (await query('SELECT COUNT(*)::int AS count FROM auth_accounts'))[0].count;
   if (authCount === 0) {
     await query(
