@@ -1192,6 +1192,7 @@
         async function fetchJson(path, options = {}) {
             const res = await fetch(apiBase + path, {
                 headers: { 'Content-Type': 'application/json' },
+                cache: 'no-store',
                 ...options
             });
             if (!res.ok) {
