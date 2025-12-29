@@ -905,6 +905,15 @@
             }
         }
 
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
+        }
+
         document.getElementById('orderForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             if (isSubmittingOrder) return;
@@ -917,6 +926,7 @@
             const usdtPrice = Number(document.getElementById('usdtPrice').value || 0);
             const remessaValue = Number(document.getElementById('remessaValue').value || 0);
             const remessaDolar = Number(document.getElementById('remessaDolar').value || 0);
+            const wallet = document.getElementById('usdtWallet').value || null;
 
             if (!fileInput.files.length) {
                 alert('⚠️ Por favor, anexe o comprovante de pagamento!');
@@ -938,7 +948,8 @@
                 price: priceBRL,
                 cost: 0,
                 status: 'open',
-                productType: selectedService?.name || 'Serviço'
+                productType: selectedService?.name || 'Serviço',
+                wallet
             };
 
             const submitBtn = document.getElementById('orderSubmitBtn');
@@ -949,6 +960,9 @@
             isSubmittingOrder = true;
 
             try {
+                const payoutProof = await readFileAsDataUrl(fileInput.files[0]);
+                payload.payoutProof = payoutProof;
+
                 await fetchJson('/api/orders', {
                     method: 'POST',
                     body: JSON.stringify(payload)
@@ -1016,6 +1030,11 @@
             return (value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
         }
 
+        function formatBRL5(value) {
+            const num = Number(value) || 0;
+            return 'R$ ' + num.toFixed(5).replace('.', ',');
+        }
+
         function renderOrdersForSeller(orders, users) {
             if (!currentSellerId && users.length) {
                 currentSellerId = users[0].id;
@@ -1039,7 +1058,7 @@
                     <td>#${order.id}</td>
                     <td>${order.customer || '-'}</td>
                     <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
-                    <td>${formatBRL(order.price)}</td>
+                    <td>${formatBRL5(order.price)}</td>
                     <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                     <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
@@ -1057,7 +1076,7 @@
                         <td>#${order.id}</td>
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
-                        <td>${formatBRL(order.price)}</td>
+                        <td>${formatBRL5(order.price)}</td>
                         <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                         <td><span class=\"badge badge-pending\">Em Análise</span></td>
                         <td><a href=\"#\" style=\"color: #D4AF37;\">📎 Ver</a></td>
@@ -1072,7 +1091,7 @@
                         <td>#${order.id}</td>
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
-                        <td>${formatBRL(order.price)}</td>
+                        <td>${formatBRL5(order.price)}</td>
                         <td class=\"profit-value\">${formatBRL(order.profit)}</td>
                         <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>
                         <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>

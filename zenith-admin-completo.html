@@ -29,7 +29,7 @@
             background: #0a0a0a;
             color: #ffffff;
             min-height: 100vh;
-            padding-left: 240px;
+            padding-left: 0;
         }
 
         /* Header */
@@ -106,45 +106,41 @@
 
         /* Navigation Tabs */
         .nav-tabs {
-            position: fixed;
-            top: 120px;
-            left: 20px;
             display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            padding: 1rem;
-            background: #0f0f0f;
-            border: 1px solid #333;
-            border-radius: 12px;
-            width: 220px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            z-index: 90;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem 1.25rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            background: #0a0a0a;
+            border-bottom: 1px solid #2a2a2a;
+            position: static;
+            width: 100%;
+            box-shadow: none;
         }
 
         .nav-tab {
-            padding: 0.75rem 1rem;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #888;
-            font-size: 0.875rem;
+            padding: 0.35rem 0.65rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: #c8c8c8;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: normal;
-            width: 100%;
-            text-align: left;
+            transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            white-space: nowrap;
         }
 
         .nav-tab:hover {
-            border-color: #D4AF37;
             color: #D4AF37;
+            background: rgba(212, 175, 55, 0.08);
         }
 
         .nav-tab.active {
-            background: #D4AF37;
-            color: #0a0a0a;
-            border-color: #D4AF37;
+            color: #D4AF37;
+            background: rgba(212, 175, 55, 0.12);
+            border-bottom: 2px solid #D4AF37;
         }
 
         /* Content Sections */
@@ -925,6 +921,7 @@
                             <th>Vendedor</th>
                             <th>Serviço</th>
                             <th>Qtd</th>
+                            <th>Wallet</th>
                             <th>Custo</th>
                             <th>Preço</th>
                             <th>Lucro</th>
@@ -951,11 +948,13 @@
                             <th>Vendedor</th>
                             <th>Serviço</th>
                             <th>Qtd</th>
+                            <th>Wallet</th>
                             <th>Custo</th>
                             <th>Preço</th>
                             <th>Lucro</th>
                             <th>Comissão</th>
                             <th>Data</th>
+                            <th>Comprovante</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -1016,9 +1015,13 @@
     <div id="comprovanteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center;">
         <div style="position: relative; max-width: 90%; max-height: 90%; background: #1a1a1a; border-radius: 12px; padding: 2rem; border: 2px solid #D4AF37;">
             <button onclick="fecharModal()" style="position: absolute; top: 1rem; right: 1rem; background: #D4AF37; color: #0a0a0a; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; font-weight: bold;">&times;</button>
-            <h3 style="color: #D4AF37; margin-bottom: 1.5rem; text-align: center;">📎 Comprovante de Pagamento</h3>
+            <h3 style="color: #D4AF37; margin-bottom: 1rem; text-align: center;">📎 Detalhes da Ordem</h3>
+            <div style="color: #ddd; margin-bottom: 1rem;">
+                <p style="margin: 0.25rem 0;"><strong>Wallet:</strong> <span id="walletInfo">-</span></p>
+            </div>
             <div style="text-align: center;">
-                <img id="comprovanteImg" src="" alt="Comprovante" style="max-width: 100%; max-height: 70vh; border-radius: 8px; border: 1px solid #333;">
+                <img id="comprovanteImg" src="" alt="Comprovante" style="max-width: 100%; max-height: 65vh; border-radius: 8px; border: 1px solid #333; display: none;">
+                <p id="comprovantePlaceholder" style="color: #888; font-size: 0.95rem; margin-top: 1rem;">Nenhum comprovante enviado.</p>
                 <p style="color: #888; margin-top: 1rem; font-size: 0.875rem;">Clique no X para fechar</p>
             </div>
         </div>
@@ -1139,9 +1142,23 @@
 
         function verComprovante(id) {
             const modal = document.getElementById('comprovanteModal');
-            modal.style.display = 'flex';
+            const order = (cachedOrders || []).find(o => Number(o.id) === Number(id));
+            const walletEl = document.getElementById('walletInfo');
+            const imgEl = document.getElementById('comprovanteImg');
+            const placeholderEl = document.getElementById('comprovantePlaceholder');
 
-            alert('📎 Visualizando comprovante da ordem #' + id + '\n\nEm produção, a imagem/PDF do comprovante seria exibida aqui.');
+            walletEl.textContent = order?.wallet || '-';
+
+            if (order?.payoutProof) {
+                imgEl.style.display = 'block';
+                imgEl.src = order.payoutProof;
+                placeholderEl.style.display = 'none';
+            } else {
+                imgEl.style.display = 'none';
+                placeholderEl.style.display = 'block';
+            }
+
+            modal.style.display = 'flex';
         }
 
         function fecharModal() {
@@ -1387,12 +1404,13 @@
                     <td>${sellerName}</td>
                     <td><span class=\"badge badge-gold\">${serviceName}</span></td>
                     <td>${order.quantity != null ? order.quantity : '-'}</td>
+                    <td>${order.wallet ? `<span title=\"${order.wallet}\">${order.wallet}</span>` : '-'}</td>
                     <td>${formatBRL(order.cost)}</td>
                     <td>${formatBRL(order.price)}</td>
                     <td class=\"profit-color\">${formatBRL(order.profit)}</td>
                     <td class=\"profit-color\">${formatBRL(commissionValue)}</td>
                     <td>${formatDate(order.date)}</td>
-                    <td>-</td>
+                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovante(${order.id})\">📎 Ver</button>` : '-'}</td>
                     <td>${status === 'open' ? `<button class=\"btn btn-primary\" style=\"padding: 0.5rem 1rem; font-size: 0.875rem;\" onclick=\"concluirOrdem(${order.id})\">✅ Concluir</button>` : '<span class=\"badge badge-success\">Concluída</span>'}</td>
                 `;
 

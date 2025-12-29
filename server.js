@@ -29,7 +29,8 @@ async function runMigrations() {
   await query(`
     ALTER TABLE orders
       ADD COLUMN IF NOT EXISTS quantity NUMERIC(14,4) DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS payoutProof TEXT;
+      ADD COLUMN IF NOT EXISTS payoutProof TEXT,
+      ADD COLUMN IF NOT EXISTS wallet TEXT;
   `);
 }
 
@@ -145,12 +146,19 @@ function calcCost(price, service, opts = {}) {
 async function computeFinancials(order, seller, service) {
   const price = Number(order.price) || 0;
   const quantity = Number(order.quantity) || 0;
+  const unitPrice = Number(order.unitPrice ?? order.pricePerUnit ?? 0);
   let quote = null;
   if (service && service.costType === 'cotacao_percentual') {
     quote = await fetchUsdtQuote();
   }
-  const cost = order.cost != null ? Number(order.cost) : calcCost(price, service, { quote, quantity });
-  const profit = price - cost;
+  let cost = 0;
+  if (service) {
+    cost = calcCost(price, service, { quote, quantity });
+  } else if (order.cost != null) {
+    cost = Number(order.cost);
+  }
+  const salesTotal = quantity > 0 && unitPrice > 0 ? unitPrice * quantity : price;
+  const profit = salesTotal - cost;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit * (commissionRate / 100);
 
@@ -198,7 +206,8 @@ function normalizeOrder(row = {}) {
     status: row.status,
     commissionPaid: row.commissionPaid ?? row.commissionpaid,
     productType: row.productType ?? row.producttype,
-    payoutProof: row.payoutProof ?? row.payoutproof
+    payoutProof: row.payoutProof ?? row.payoutproof,
+    wallet: row.wallet
   };
 }
 
@@ -462,8 +471,8 @@ app.post('/api/orders', async (req, res) => {
   const { price, cost, profit, commissionValue } = await computeFinancials(body, seller, service);
 
   const rows = await query(
-    `INSERT INTO orders (customer, sellerId, serviceId, quantity, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+    `INSERT INTO orders (customer, sellerId, serviceId, quantity, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
     [
       body.customer,
       body.sellerId || null,
@@ -477,7 +486,8 @@ app.post('/api/orders', async (req, res) => {
       body.status || 'open',
       false,
       body.productType || 'Serviço',
-      body.payoutProof || null
+      body.payoutProof || null,
+      body.wallet || null
     ]
   );
   res.status(201).json(normalizeOrder(rows[0]));
@@ -510,8 +520,8 @@ app.patch('/api/orders/:id', async (req, res) => {
   const { price, cost, profit, commissionValue } = await computeFinancials(merged, seller || existing, service || existing);
 
   const rows = await query(
-    `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, price=$5, cost=$6, profit=$7, commissionValue=$8, date=$9, status=$10, commissionPaid=$11, productType=$12, payoutProof=$13
-     WHERE id=$14 RETURNING *`,
+    `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, price=$5, cost=$6, profit=$7, commissionValue=$8, date=$9, status=$10, commissionPaid=$11, productType=$12, payoutProof=$13, wallet=$14
+     WHERE id=$15 RETURNING *`,
     [
       merged.customer,
       merged.sellerid || merged.sellerId || null,
@@ -525,7 +535,8 @@ app.patch('/api/orders/:id', async (req, res) => {
       merged.status || 'open',
       merged.commissionpaid ?? merged.commissionPaid ?? false,
       merged.producttype || merged.productType || 'Serviço',
-      merged.payoutProof || merged.payoutproof || null,
+      merged.payoutProof || merged.payoutproof || existing.payoutproof || existing.payoutProof || null,
+      merged.wallet || existing.wallet || null,
       id
     ]
   );
