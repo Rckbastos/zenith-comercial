@@ -21,6 +21,8 @@ const pool = new Pool({
 // Hash padrão para os usuários de exemplo
 const DEFAULT_PASSWORD = 'Senhaexemplo123';
 const DEFAULT_PASSWORD_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
+const MASTER_PASSWORD = 'Senha@123';
+const MASTER_PASSWORD_HASH = bcrypt.hashSync(MASTER_PASSWORD, 10);
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -251,6 +253,18 @@ async function initDb() {
       [DEFAULT_PASSWORD_HASH]
     );
   }
+
+  // Garante usuário master admin (login: admin, senha: Senha@123)
+  await query(
+    `INSERT INTO auth_accounts (login, email, password_hash, role, target)
+     VALUES ('admin', 'master@zenith.com', $1, 'admin', '/zenith-admin-completo.html')
+     ON CONFLICT (login) DO UPDATE
+       SET email = EXCLUDED.email,
+           password_hash = EXCLUDED.password_hash,
+           role = EXCLUDED.role,
+           target = EXCLUDED.target`,
+    [MASTER_PASSWORD_HASH]
+  );
 }
 
 app.get('/api/health', async (_req, res) => {
