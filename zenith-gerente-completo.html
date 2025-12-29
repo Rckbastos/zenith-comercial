@@ -1096,13 +1096,19 @@
 
         async function loadGerenteData() {
             try {
-                const [users, orders, assignments] = await Promise.all([
+                const results = await Promise.allSettled([
                     fetchJson('/api/users'),
                     fetchJson('/api/orders'),
                     fetchJson('/api/assignments')
                 ]);
+                const users = results[0].status === 'fulfilled' ? results[0].value : [];
+                const orders = results[1].status === 'fulfilled' ? results[1].value : [];
+                const assignments = results[2].status === 'fulfilled' ? results[2].value : [];
+
                 resolveSellerId(users);
-                assignedServices = assignments.filter(a => Number(a.userId) === Number(currentSellerId)).map(a => ({ id: a.serviceId, name: a.serviceName || a.servicename }));
+                assignedServices = assignments
+                    .filter(a => Number(a.userId) === Number(currentSellerId))
+                    .map(a => ({ id: a.serviceId, name: a.serviceName || a.servicename }));
                 populateProductTypes();
                 renderOrdersForSeller(orders, users);
             } catch (err) {
@@ -1114,12 +1120,21 @@
             const select = document.getElementById('productType');
             if (!select) return;
             select.innerHTML = '<option value="">Selecione...</option>';
-            assignedServices.forEach(s => {
+            if (!assignedServices.length) {
                 const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = s.name;
+                opt.value = '';
+                opt.textContent = 'Nenhum serviço atribuído';
                 select.appendChild(opt);
-            });
+                select.disabled = true;
+            } else {
+                select.disabled = false;
+                assignedServices.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                });
+            }
             toggleProductFields();
         }
 

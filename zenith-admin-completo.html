@@ -29,6 +29,7 @@
             background: #0a0a0a;
             color: #ffffff;
             min-height: 100vh;
+            padding-left: 240px;
         }
 
         /* Header */
@@ -105,11 +106,19 @@
 
         /* Navigation Tabs */
         .nav-tabs {
+            position: fixed;
+            top: 120px;
+            left: 20px;
             display: flex;
+            flex-direction: column;
             gap: 0.5rem;
-            margin-bottom: 2rem;
-            overflow-x: auto;
-            padding-bottom: 0.5rem;
+            padding: 1rem;
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 12px;
+            width: 200px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            z-index: 90;
         }
 
         .nav-tab {
@@ -508,6 +517,18 @@
                 padding: 1rem;
             }
 
+            body {
+                padding-left: 0;
+            }
+
+            .nav-tabs {
+                position: static;
+                flex-direction: row;
+                flex-wrap: wrap;
+                width: auto;
+                box-shadow: none;
+            }
+
             .dashboard-header h2 {
                 font-size: 1.5rem;
             }
@@ -901,6 +922,7 @@
                             <th>Cliente</th>
                             <th>Vendedor</th>
                             <th>Serviço</th>
+                            <th>Qtd</th>
                             <th>Custo</th>
                             <th>Preço</th>
                             <th>Lucro</th>
@@ -926,6 +948,7 @@
                             <th>Cliente</th>
                             <th>Vendedor</th>
                             <th>Serviço</th>
+                            <th>Qtd</th>
                             <th>Custo</th>
                             <th>Preço</th>
                             <th>Lucro</th>
@@ -1361,6 +1384,7 @@
                     <td>${order.customer || '-'}</td>
                     <td>${sellerName}</td>
                     <td><span class=\"badge badge-gold\">${serviceName}</span></td>
+                    <td>${order.quantity != null ? order.quantity : '-'}</td>
                     <td>${formatBRL(order.cost)}</td>
                     <td>${formatBRL(order.price)}</td>
                     <td class=\"profit-color\">${formatBRL(order.profit)}</td>
@@ -1379,6 +1403,7 @@
                         <td>#${order.id}</td>
                         <td>${sellerName}</td>
                         <td>${seller?.role || '-'}</td>
+                        <td>${order.quantity != null ? order.quantity : '-'}</td>
                         <td>${order.salesCount || '-'}</td>
                         <td class=\"profit-color\">${formatBRL(order.profit)}</td>
                         <td>${(seller?.commission ?? 0)}%</td>
