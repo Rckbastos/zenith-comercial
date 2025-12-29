@@ -1,6 +1,5 @@
-const CACHE_NAME = 'zenith-comercial-v4';
+const CACHE_NAME = 'zenith-comercial-v5';
 const urlsToCache = [
-  './',
   'index.html',
   'zenith-admin-completo.html',
   'zenith-gerente-completo.html',
@@ -11,13 +10,19 @@ const urlsToCache = [
 
 // Instalação do Service Worker
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Cache aberto');
-        return cache.addAll(urlsToCache);
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    console.log('Cache aberto');
+    await Promise.all(
+      urlsToCache.map(async (url) => {
+        try {
+          await cache.add(url);
+        } catch (err) {
+          console.warn('Falha ao adicionar ao cache (ignorado):', url, err);
+        }
       })
-  );
+    );
+  })());
 });
 
 // Ativação do Service Worker
@@ -48,7 +53,9 @@ self.addEventListener('fetch', event => {
 
   // Navegação: deixa seguir direto para evitar problemas de redirect/SPA
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match('index.html')));
+    event.respondWith(
+      fetch(request).catch(() => caches.match('index.html'))
+    );
     return;
   }
 
