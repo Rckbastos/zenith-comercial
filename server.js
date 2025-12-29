@@ -100,7 +100,19 @@ async function query(sql, params = []) {
   }
 }
 
-function calcCost(price, service) {
+async function fetchUsdtQuote() {
+  try {
+    const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
+    const data = await res.json();
+    const price = Number(data?.price);
+    return Number.isFinite(price) ? price : 0;
+  } catch (err) {
+    console.error('Erro ao buscar cotação USDT:', err.message);
+    return 0;
+  }
+}
+
+function calcCost(price, service, opts = {}) {
   if (!service) return 0;
   const { costtype, costfixo = 0, costpercentual = 0 } = service;
   if (costtype === 'fixo') {
@@ -112,12 +124,20 @@ function calcCost(price, service) {
   if (costtype === 'fixo_percentual') {
     return (Number(costfixo) || 0) + price * ((Number(costpercentual) || 0) / 100);
   }
+  if (costtype === 'cotacao_percentual') {
+    const quote = Number(opts.quote) || 0;
+    return quote * (1 + ((Number(costpercentual) || 0) / 100));
+  }
   return 0;
 }
 
-function computeFinancials(order, seller, service) {
+async function computeFinancials(order, seller, service) {
   const price = Number(order.price) || 0;
-  const cost = order.cost != null ? Number(order.cost) : calcCost(price, service);
+  let quote = null;
+  if (service && service.costType === 'cotacao_percentual') {
+    quote = await fetchUsdtQuote();
+  }
+  const cost = order.cost != null ? Number(order.cost) : calcCost(price, service, { quote });
   const profit = price - cost;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit * (commissionRate / 100);
@@ -425,7 +445,7 @@ app.post('/api/orders', async (req, res) => {
   const [seller] = body.sellerId ? await query('SELECT * FROM users WHERE id=$1', [body.sellerId]) : [null];
   const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
-  const { price, cost, profit, commissionValue } = computeFinancials(body, seller, service);
+  const { price, cost, profit, commissionValue } = await computeFinancials(body, seller, service);
 
   const rows = await query(
     `INSERT INTO orders (customer, sellerId, serviceId, price, cost, profit, commissionValue, date, status, commissionPaid, productType)
@@ -471,7 +491,7 @@ app.patch('/api/orders/:id', async (req, res) => {
   const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
   const merged = { ...existing, ...body, id };
-  const { price, cost, profit, commissionValue } = computeFinancials(merged, seller || existing, service || existing);
+  const { price, cost, profit, commissionValue } = await computeFinancials(merged, seller || existing, service || existing);
 
   const rows = await query(
     `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, price=$4, cost=$5, profit=$6, commissionValue=$7, date=$8, status=$9, commissionPaid=$10, productType=$11

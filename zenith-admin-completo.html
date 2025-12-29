@@ -733,6 +733,7 @@
                                 <option value="fixo">Fixo (R$)</option>
                                 <option value="percentual">Percentual (%)</option>
                                 <option value="fixo_percentual">Fixo + Percentual</option>
+                                <option value="cotacao_percentual">Cotação + Percentual</option>
                             </select>
                         </div>
                         <div class="form-group" id="costFixoGroup" style="display: none;">
@@ -1009,7 +1010,7 @@
         let cachedServices = [];
         let cachedOrders = [];
         let cachedAssignments = [];
-        let currentFilter = 'today';
+        let currentFilter = 'month';
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -1189,6 +1190,9 @@
                 fixoGroup.style.display = 'flex';
                 percentualGroup.style.display = 'flex';
                 fixoInput.setAttribute('required', 'required');
+                percentualInput.setAttribute('required', 'required');
+            } else if (costType === 'cotacao_percentual') {
+                percentualGroup.style.display = 'flex';
                 percentualInput.setAttribute('required', 'required');
             }
         }
@@ -1439,6 +1443,7 @@
 
         window.addEventListener('load', function() {
             atualizarCotacao();
+            setFilter('month');
             loadAdminData();
         });
 
