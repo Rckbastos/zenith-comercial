@@ -24,9 +24,10 @@ app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
     [
-      "default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+      "default-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com",
       "script-src 'self'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data:",
       "connect-src 'self' https://api.binance.com",

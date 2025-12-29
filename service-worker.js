@@ -22,6 +22,7 @@ self.addEventListener('install', event => {
         }
       })
     );
+    self.skipWaiting();
   })());
 });
 
@@ -37,7 +38,7 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
