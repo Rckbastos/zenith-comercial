@@ -41,29 +41,35 @@ app.use(express.static(__dirname));
 
 // Rotas explícitas para HTML principais (evita 404/redirect em produção)
 app.get(['/', '/index', '/index.html'], (_req, res) => {
+  res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/zenith-admin-completo.html', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'zenith-admin-completo.html'));
 });
 
 app.get('/zenith-gerente-completo.html', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'zenith-gerente-completo.html'));
 });
 
 // Rotas sem extensão servindo direto o HTML
 app.get('/zenith-admin-completo', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'zenith-admin-completo.html'));
 });
 
 app.get('/zenith-gerente-completo', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'zenith-gerente-completo.html'));
 });
 
 // Fallback para outras rotas (exceto API e assets), retorna index.html
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.includes('.')) return next();
+  res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

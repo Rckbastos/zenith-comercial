@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zenith-comercial-v6';
+const CACHE_NAME = 'zenith-comercial-v7';
 const urlsToCache = [
   'pwa.js',
   'zenith-logo.png',
