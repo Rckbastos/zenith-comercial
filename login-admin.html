@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - Zenith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0b0f;
+            --card: #15151c;
+            --input: #1e1e26;
+            --gold: #D4AF37;
+            --text: #e8e8f0;
+            --muted: #9ca3af;
+            --danger: #ef4444;
+            --shadow: 0 20px 70px rgba(0,0,0,0.45);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 10% 10%, rgba(212,175,55,0.08), transparent 35%),
+                        radial-gradient(circle at 90% 20%, rgba(96,165,250,0.08), transparent 35%),
+                        var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+        }
+        .card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .brand img { height: 32px; }
+        h1 { margin: 4px 0 12px; font-size: 24px; letter-spacing: -0.02em; }
+        p { margin: 0 0 16px; color: var(--muted); line-height: 1.5; }
+        label { display: block; margin: 12px 0 6px; font-weight: 600; color: #cbd5e1; }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.07);
+            background: var(--input);
+            color: var(--text);
+            font-size: 15px;
+        }
+        input:focus { outline: 2px solid rgba(212,175,55,0.4); border-color: var(--gold); }
+        .btn {
+            width: 100%;
+            margin-top: 18px;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            background: linear-gradient(120deg, #f6e27a, #d4af37, #b88a1c);
+            color: #0b0b0f;
+            box-shadow: 0 10px 30px rgba(212,175,55,0.25);
+        }
+        .helper {
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .error { color: var(--danger); margin-top: 10px; font-weight: 600; }
+        .hint { margin-top: 10px; font-size: 13px; color: #cbd5e1; background: rgba(212,175,55,0.08); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(212,175,55,0.25); }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">
+            <img src="zenith-logo.png" alt="Zenith">
+            <span style="font-weight:700; color: var(--gold);">Zenith • Admin</span>
+        </div>
+        <h1>Entrar como Administrador</h1>
+        <p>Acesse o dashboard administrativo usando e-mail ou username.</p>
+
+        <form id="loginForm">
+            <label for="login">E-mail ou usuário</label>
+            <input id="login" name="login" type="text" placeholder="admin@teste.com" required autocomplete="username">
+
+            <label for="password">Senha</label>
+            <input id="password" name="password" type="password" placeholder="••••••••" required autocomplete="current-password">
+
+            <button class="btn" type="submit">Entrar</button>
+            <div id="error" class="error" style="display:none"></div>
+            <div class="hint">
+                Exemplos: admin@teste.com ou ricardob@email.com<br>
+                Senha: Senhaexemplo123
+            </div>
+        </form>
+        <div class="helper">Apenas administradores têm acesso a este painel.</div>
+    </div>
+
+    <script>
+        async function login(event) {
+            event.preventDefault();
+            const errorEl = document.getElementById('error');
+            errorEl.style.display = 'none';
+
+            const payload = {
+                login: document.getElementById('login').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    throw new Error('Credenciais inválidas');
+                }
+                const data = await res.json();
+                if (data.role !== 'admin') {
+                    throw new Error('Apenas admins podem acessar esta página');
+                }
+                window.location.href = data.target || '/zenith-admin-completo.html';
+            } catch (err) {
+                errorEl.textContent = err.message || 'Erro ao autenticar';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', login);
+    </script>
+</body>
+</html>

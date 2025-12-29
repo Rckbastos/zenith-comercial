@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
 
 const app = express();
@@ -16,6 +17,10 @@ const pool = new Pool({
     ? { rejectUnauthorized: false }
     : false
 });
+
+// Hash padrão para os usuários de exemplo
+const DEFAULT_PASSWORD = 'Senhaexemplo123';
+const DEFAULT_PASSWORD_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -53,6 +58,16 @@ app.get('/zenith-admin-completo.html', (_req, res) => {
 app.get('/zenith-gerente-completo.html', (_req, res) => {
   res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'zenith-gerente-completo.html'));
+});
+
+app.get(['/login-admin', '/login-admin.html'], (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(path.join(__dirname, 'login-admin.html'));
+});
+
+app.get(['/login-gerente', '/login-gerente.html'], (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(path.join(__dirname, 'login-gerente.html'));
 });
 
 // Rotas sem extensão servindo direto o HTML
@@ -215,6 +230,17 @@ async function initDb() {
     );
   `);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS auth_accounts (
+      id SERIAL PRIMARY KEY,
+      login TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL,
+      target TEXT NOT NULL
+    );
+  `);
+
   // Seed inicial se estiver vazio
   const usersCount = (await query('SELECT COUNT(*)::int AS count FROM users'))[0].count;
   if (usersCount === 0) {
@@ -249,6 +275,17 @@ async function initDb() {
        ('Ana Costa', $1, $2, 1100, 450, 650, 97.5, '2025-12-23', 'open', false, 'Consignado FGTS'),
        ('Pedro Santos', $1, $3, 2000, 800, 1200, 180, '2025-12-24', 'concluded', true, 'Refinanciamento')`,
       [firstUser.id, service1, service2]
+    );
+  }
+
+  const authCount = (await query('SELECT COUNT(*)::int AS count FROM auth_accounts'))[0].count;
+  if (authCount === 0) {
+    await query(
+      `INSERT INTO auth_accounts (login, email, password_hash, role, target) VALUES
+      ('Rckbastos', 'ricardob1720@gmail.com', $1, 'gerente', '/zenith-gerente-completo.html'),
+      ('admin', 'admin@teste.com', $1, 'admin', '/zenith-admin-completo.html'),
+      ('ricardob@email.com', 'ricardob@email.com', $1, 'admin', '/zenith-admin-completo.html')`,
+      [DEFAULT_PASSWORD_HASH]
     );
   }
 }
@@ -456,6 +493,31 @@ app.delete('/api/orders/:id', async (req, res) => {
   const id = Number(req.params.id);
   await query('DELETE FROM orders WHERE id=$1', [id]);
   res.status(204).end();
+});
+
+// Login simples (email ou login + senha)
+app.post('/api/login', async (req, res) => {
+  const body = req.body || {};
+  const login = body.login?.trim();
+  const password = body.password;
+  if (!login || !password) {
+    return res.status(400).json({ error: 'login e password são obrigatórios' });
+  }
+
+  const rows = await query(
+    'SELECT * FROM auth_accounts WHERE lower(login)=lower($1) OR lower(email)=lower($1) LIMIT 1',
+    [login]
+  );
+  const account = rows[0];
+  if (!account || !bcrypt.compareSync(password, account.password_hash)) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
+
+  res.json({
+    status: 'ok',
+    role: account.role,
+    target: account.target
+  });
 });
 
 initDb()
