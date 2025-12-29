@@ -30,7 +30,9 @@ async function runMigrations() {
     ALTER TABLE orders
       ADD COLUMN IF NOT EXISTS quantity NUMERIC(14,4) DEFAULT 0,
       ADD COLUMN IF NOT EXISTS payoutProof TEXT,
-      ADD COLUMN IF NOT EXISTS wallet TEXT;
+      ADD COLUMN IF NOT EXISTS wallet TEXT,
+      ADD COLUMN IF NOT EXISTS quote NUMERIC(14,6),
+      ADD COLUMN IF NOT EXISTS unitPrice NUMERIC(14,6);
   `);
 }
 
@@ -159,9 +161,11 @@ async function computeFinancials(order, seller, service) {
 
   const serviceCostType = service?.costType ?? service?.costtype;
   const fallbackQuote = quantity > 0 ? price / quantity : 0;
-  let quote = null;
+  let quote = order.quote != null ? Number(order.quote) : null;
   if (service && serviceCostType === 'cotacao_percentual') {
-    quote = await fetchUsdtQuote();
+    if (!quote) {
+      quote = await fetchUsdtQuote();
+    }
   }
 
   let cost = 0;
@@ -218,6 +222,8 @@ function normalizeOrder(row = {}) {
     sellerId: row.sellerId ?? row.sellerid,
     serviceId: row.serviceId ?? row.serviceid,
     quantity: Number(row.quantity ?? 0),
+    unitPrice: row.unitprice != null ? Number(row.unitprice) : (row.unitPrice != null ? Number(row.unitPrice) : undefined),
+    quote: row.quote != null ? Number(row.quote) : undefined,
     price: Number(row.price ?? 0),
     cost: Number(row.cost ?? 0),
     profit: Number(row.profit ?? 0),
@@ -513,13 +519,15 @@ app.post('/api/orders', async (req, res) => {
   const { price, cost, profit, commissionValue } = await computeFinancials(body, seller, service);
 
   const rows = await query(
-    `INSERT INTO orders (customer, sellerId, serviceId, quantity, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+    `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
     [
       body.customer,
       body.sellerId || null,
       body.serviceId || null,
       body.quantity || 0,
+      body.unitPrice || body.pricePerUnit || null,
+      body.quote || null,
       price,
       cost,
       profit,
@@ -562,13 +570,15 @@ app.patch('/api/orders/:id', async (req, res) => {
   const { price, cost, profit, commissionValue } = await computeFinancials(merged, seller || existing, service || existing);
 
   const rows = await query(
-    `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, price=$5, cost=$6, profit=$7, commissionValue=$8, date=$9, status=$10, commissionPaid=$11, productType=$12, payoutProof=$13, wallet=$14
-     WHERE id=$15 RETURNING *`,
+    `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16
+     WHERE id=$17 RETURNING *`,
     [
       merged.customer,
       merged.sellerid || merged.sellerId || null,
       merged.serviceid || merged.serviceId || null,
       merged.quantity || merged.quantity || 0,
+      merged.unitPrice || merged.pricePerUnit || merged.unitprice || null,
+      merged.quote || merged.quote || existing.quote || null,
       price,
       cost,
       profit,
