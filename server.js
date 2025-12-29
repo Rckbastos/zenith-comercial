@@ -146,18 +146,25 @@ function calcCost(price, service, opts = {}) {
 async function computeFinancials(order, seller, service) {
   const price = Number(order.price) || 0;
   const quantity = Number(order.quantity) || 0;
-  const unitPrice = Number(order.unitPrice ?? order.pricePerUnit ?? 0);
+  const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
+  const unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
+    ? unitPriceRaw
+    : quantity > 0
+      ? price / quantity
+      : price;
   let quote = null;
   if (service && service.costType === 'cotacao_percentual') {
     quote = await fetchUsdtQuote();
   }
   let cost = 0;
   if (service) {
-    cost = calcCost(price, service, { quote, quantity });
+    const fallbackQuote = quantity > 0 ? price / quantity : 0;
+    const totalValue = unitPrice * (quantity || 1);
+    cost = calcCost(totalValue, service, { quote: quote || fallbackQuote, quantity });
   } else if (order.cost != null) {
     cost = Number(order.cost);
   }
-  const salesTotal = quantity > 0 && unitPrice > 0 ? unitPrice * quantity : price;
+  const salesTotal = unitPrice * (quantity || 1);
   const profit = salesTotal - cost;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit * (commissionRate / 100);
