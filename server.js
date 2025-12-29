@@ -460,7 +460,20 @@ app.delete('/api/assignments/:id', async (req, res) => {
 // Orders
 app.get('/api/orders', async (_req, res) => {
   const rows = await query('SELECT * FROM orders ORDER BY id DESC');
-  res.json(rows.map(normalizeOrder));
+  const services = await query('SELECT * FROM services');
+  const users = await query('SELECT * FROM users');
+  const servicesMap = Object.fromEntries(services.map(s => [s.id, normalizeService(s)]));
+  const usersMap = Object.fromEntries(users.map(u => [u.id, normalizeUser(u)]));
+
+  const enriched = await Promise.all(rows.map(async (row) => {
+    const order = normalizeOrder(row);
+    const service = servicesMap[order.serviceId];
+    const seller = usersMap[order.sellerId];
+    const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
+    return { ...order, ...calc };
+  }));
+
+  res.json(enriched);
 });
 
 app.post('/api/orders', async (req, res) => {
