@@ -44,20 +44,20 @@ app.get(['/', '/index', '/index.html'], (_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Rotas sem extensão, para evitar 404 quando omitido .html
-app.get('/zenith-admin-completo', (_req, res) => {
-  res.redirect(301, '/zenith-admin-completo.html');
-});
-
-app.get('/zenith-gerente-completo', (_req, res) => {
-  res.redirect(301, '/zenith-gerente-completo.html');
-});
-
 app.get('/zenith-admin-completo.html', (_req, res) => {
   res.sendFile(path.join(__dirname, 'zenith-admin-completo.html'));
 });
 
 app.get('/zenith-gerente-completo.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'zenith-gerente-completo.html'));
+});
+
+// Rotas sem extensão servindo direto o HTML
+app.get('/zenith-admin-completo', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'zenith-admin-completo.html'));
+});
+
+app.get('/zenith-gerente-completo', (_req, res) => {
   res.sendFile(path.join(__dirname, 'zenith-gerente-completo.html'));
 });
 
