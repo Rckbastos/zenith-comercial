@@ -668,6 +668,10 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label>Senha de acesso</label>
+                            <input type="password" id="userPassword" placeholder="Defina a senha para login">
+                        </div>
+                        <div class="form-group">
                             <label>Comissão sobre Lucro (%) <span>*</span></label>
                             <input type="number" id="userCommission" placeholder="Ex: 15" min="0" max="100" step="0.5" required>
                         </div>
@@ -1003,6 +1007,7 @@
         let cachedUsers = [];
         let cachedServices = [];
         let cachedOrders = [];
+        let cachedAssignments = [];
         let currentFilter = 'today';
 
         function showSection(event, sectionId) {
@@ -1029,7 +1034,8 @@
                 phone: document.getElementById('userPhone').value,
                 role: document.getElementById('userRole').value,
                 commission: document.getElementById('userCommission').value,
-                status: document.getElementById('userStatus').value
+                status: document.getElementById('userStatus').value,
+                password: document.getElementById('userPassword').value || undefined
             };
 
             fetchJson('/api/users', {
@@ -1067,8 +1073,22 @@
 
         document.getElementById('assignForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('✅ Serviço atribuído com sucesso!');
-            this.reset();
+            const payload = {
+                userId: Number(document.getElementById('assignUser').value),
+                serviceId: Number(document.getElementById('assignService').value)
+            };
+            if (!payload.userId || !payload.serviceId) {
+                alert('Selecione usuário e serviço.');
+                return;
+            }
+            fetchJson('/api/assignments', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert('✅ Serviço atribuído com sucesso!');
+                this.reset();
+                loadAdminData();
+            }).catch(showError);
         });
 
         document.getElementById('dolarForm').addEventListener('submit', function(e) {
@@ -1255,6 +1275,59 @@
             });
         }
 
+        function updateAssignSelects(users, services) {
+            const userSelect = document.getElementById('assignUser');
+            const serviceSelect = document.getElementById('assignService');
+            if (!userSelect || !serviceSelect) return;
+            userSelect.innerHTML = '<option value=\"\">Selecione...</option>';
+            serviceSelect.innerHTML = '<option value=\"\">Selecione...</option>';
+
+            users.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                opt.textContent = `${u.name} (${u.role || 'Sem cargo'})`;
+                userSelect.appendChild(opt);
+            });
+
+            services.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                serviceSelect.appendChild(opt);
+            });
+        }
+
+        function renderAssignments(assignments) {
+            const tbody = document.getElementById('assignmentsTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (!assignments.length) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan=\"4\" style=\"text-align:center; color:#aaa;\">Nenhum serviço atribuído.</td>`;
+                tbody.appendChild(tr);
+                return;
+            }
+
+            // Agrupar por usuário
+            const byUser = assignments.reduce((acc, item) => {
+                const key = item.userId;
+                if (!acc[key]) acc[key] = { ...item, services: [] };
+                acc[key].services.push(item.serviceName || item.servicename);
+                return acc;
+            }, {});
+
+            Object.values(byUser).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.username || '—'}</td>
+                    <td>${item.role || '-'}</td>
+                    <td>${(item.services || []).join(', ') || '-'}</td>
+                    <td>-</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         function filterOrdersByPeriod(orders, period) {
             if (!orders || !orders.length) return [];
             const now = new Date();
@@ -1345,16 +1418,20 @@
 
         async function loadAdminData() {
             try {
-                const [users, services, orders] = await Promise.all([
+                const [users, services, orders, assignments] = await Promise.all([
                     fetchJson('/api/users'),
                     fetchJson('/api/services'),
-                    fetchJson('/api/orders')
+                    fetchJson('/api/orders'),
+                    fetchJson('/api/assignments')
                 ]);
                 cachedUsers = users;
                 cachedServices = services;
                 cachedOrders = orders;
+                cachedAssignments = assignments;
                 renderUsers(users);
                 renderServices(services);
+                updateAssignSelects(users, services);
+                renderAssignments(assignments);
                 applyFilterAndRender();
             } catch (err) {
                 showError(err);

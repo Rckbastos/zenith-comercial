@@ -289,6 +289,21 @@ app.post('/api/users', async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
     [body.name, body.email, body.phone, body.role, body.commission || 0, body.status || 'Ativo']
   );
+
+  // Se vier senha, cria/atualiza credencial de login usando email como login
+  if (body.password) {
+    const passwordHash = bcrypt.hashSync(body.password, 10);
+    await query(
+      `INSERT INTO auth_accounts (login, email, password_hash, role, target)
+       VALUES ($1, $2, $3, $4, '/zenith-admin-completo.html')
+       ON CONFLICT (login) DO UPDATE
+         SET email = EXCLUDED.email,
+             password_hash = EXCLUDED.password_hash,
+             role = EXCLUDED.role`,
+      [body.email || body.name, body.email, passwordHash, 'admin']
+    );
+  }
+
   res.status(201).json(normalizeUser(rows[0]));
 });
 
@@ -345,8 +360,15 @@ app.put('/api/services/:id', async (req, res) => {
 
 app.delete('/api/services/:id', async (req, res) => {
   const id = Number(req.params.id);
-  await query('DELETE FROM services WHERE id=$1', [id]);
-  res.status(204).end();
+  try {
+    await query('DELETE FROM services WHERE id=$1', [id]);
+    res.status(204).end();
+  } catch (err) {
+    if (err.code === '23503') {
+      return res.status(409).json({ error: 'Não é possível excluir: serviço vinculado a ordens existentes.' });
+    }
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Assignments
