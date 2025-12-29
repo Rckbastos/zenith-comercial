@@ -556,6 +556,22 @@ app.patch('/api/users/:id/credentials', async (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Remove dados de exemplo legacy (clientes/serviços/usuários mock)
+async function purgeSampleData() {
+  const sampleCustomers = ['Ana Costa', 'Pedro Santos'];
+  const sampleServices = ['Consignado INSS', 'Refinanciamento', 'Consignado FGTS'];
+  const sampleUsers = ['João Silva', 'Maria Santos'];
+
+  try {
+    await query('DELETE FROM assignments WHERE serviceId IN (SELECT id FROM services WHERE name = ANY($1))', [sampleServices]);
+    await query('DELETE FROM orders WHERE customer = ANY($1)', [sampleCustomers]);
+    await query('DELETE FROM services WHERE name = ANY($1)', [sampleServices]);
+    await query('DELETE FROM users WHERE name = ANY($1)', [sampleUsers]);
+  } catch (err) {
+    console.warn('Falha ao limpar dados de exemplo:', err.message);
+  }
+}
+
 // Login simples (email ou login + senha)
 app.post('/api/login', async (req, res) => {
   const body = req.body || {};
@@ -583,6 +599,7 @@ app.post('/api/login', async (req, res) => {
 
 initDb()
   .then(() => {
+    purgeSampleData();
     app.listen(PORT, () => {
       console.log(`Servidor rodando em http://localhost:${PORT}`);
     });

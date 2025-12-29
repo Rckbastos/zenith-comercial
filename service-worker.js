@@ -55,11 +55,9 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Navegação: deixa seguir direto para evitar problemas de redirect/SPA
+  // Navegação: segue direto, sem fallback para index (para não redirecionar ao falhar)
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => caches.match('index.html'))
-    );
+    event.respondWith(fetch(request));
     return;
   }
 
