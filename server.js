@@ -24,6 +24,15 @@ const DEFAULT_PASSWORD_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
 const MASTER_PASSWORD = 'Senha@123';
 const MASTER_PASSWORD_HASH = bcrypt.hashSync(MASTER_PASSWORD, 10);
 
+async function runMigrations() {
+  // adiciona colunas novas sem quebrar deploys anteriores
+  await query(`
+    ALTER TABLE orders
+      ADD COLUMN IF NOT EXISTS quantity NUMERIC(14,4) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS payoutProof TEXT;
+  `);
+}
+
 app.use(express.json({ limit: '1mb' }));
 
 // CSP para permitir Google Fonts e Binance API
@@ -177,6 +186,7 @@ function normalizeOrder(row = {}) {
     customer: row.customer,
     sellerId: row.sellerId ?? row.sellerid,
     serviceId: row.serviceId ?? row.serviceid,
+    quantity: Number(row.quantity ?? 0),
     price: Number(row.price ?? 0),
     cost: Number(row.cost ?? 0),
     profit: Number(row.profit ?? 0),
@@ -184,7 +194,8 @@ function normalizeOrder(row = {}) {
     date: row.date,
     status: row.status,
     commissionPaid: row.commissionPaid ?? row.commissionpaid,
-    productType: row.productType ?? row.producttype
+    productType: row.productType ?? row.producttype,
+    payoutProof: row.payoutProof ?? row.payoutproof
   };
 }
 
@@ -448,12 +459,13 @@ app.post('/api/orders', async (req, res) => {
   const { price, cost, profit, commissionValue } = await computeFinancials(body, seller, service);
 
   const rows = await query(
-    `INSERT INTO orders (customer, sellerId, serviceId, price, cost, profit, commissionValue, date, status, commissionPaid, productType)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+    `INSERT INTO orders (customer, sellerId, serviceId, quantity, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
     [
       body.customer,
       body.sellerId || null,
       body.serviceId || null,
+      body.quantity || 0,
       price,
       cost,
       profit,
@@ -461,7 +473,8 @@ app.post('/api/orders', async (req, res) => {
       body.date || new Date().toISOString().slice(0, 10),
       body.status || 'open',
       false,
-      body.productType || 'Serviço'
+      body.productType || 'Serviço',
+      body.payoutProof || null
     ]
   );
   res.status(201).json(normalizeOrder(rows[0]));
@@ -494,12 +507,13 @@ app.patch('/api/orders/:id', async (req, res) => {
   const { price, cost, profit, commissionValue } = await computeFinancials(merged, seller || existing, service || existing);
 
   const rows = await query(
-    `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, price=$4, cost=$5, profit=$6, commissionValue=$7, date=$8, status=$9, commissionPaid=$10, productType=$11
-     WHERE id=$12 RETURNING *`,
+    `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, price=$5, cost=$6, profit=$7, commissionValue=$8, date=$9, status=$10, commissionPaid=$11, productType=$12, payoutProof=$13
+     WHERE id=$14 RETURNING *`,
     [
       merged.customer,
       merged.sellerid || merged.sellerId || null,
       merged.serviceid || merged.serviceId || null,
+      merged.quantity || merged.quantity || 0,
       price,
       cost,
       profit,
@@ -508,6 +522,7 @@ app.patch('/api/orders/:id', async (req, res) => {
       merged.status || 'open',
       merged.commissionpaid ?? merged.commissionPaid ?? false,
       merged.producttype || merged.productType || 'Serviço',
+      merged.payoutProof || merged.payoutproof || null,
       id
     ]
   );
@@ -599,6 +614,7 @@ app.post('/api/login', async (req, res) => {
 
 initDb()
   .then(() => {
+    runMigrations().catch(err => console.warn('Migration warning:', err.message));
     purgeSampleData();
     app.listen(PORT, () => {
       console.log(`Servidor rodando em http://localhost:${PORT}`);

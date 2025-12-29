@@ -1414,12 +1414,18 @@
 
         async function loadAdminData() {
             try {
-                const [users, services, orders, assignments] = await Promise.all([
+                const results = await Promise.allSettled([
                     fetchJson('/api/users'),
                     fetchJson('/api/services'),
                     fetchJson('/api/orders'),
                     fetchJson('/api/assignments')
                 ]);
+
+                const users = results[0].status === 'fulfilled' ? results[0].value : [];
+                const services = results[1].status === 'fulfilled' ? results[1].value : [];
+                const orders = results[2].status === 'fulfilled' ? results[2].value : [];
+                const assignments = results[3].status === 'fulfilled' ? results[3].value : [];
+
                 cachedUsers = users;
                 cachedServices = services;
                 cachedOrders = orders;
@@ -1429,6 +1435,11 @@
                 updateAssignSelects(users, services);
                 renderAssignments(assignments);
                 applyFilterAndRender();
+
+                const failed = results.filter(r => r.status === 'rejected');
+                if (failed.length) {
+                    console.warn('Algumas fontes falharam ao carregar:', failed.map(f => f.reason?.message || f.reason));
+                }
             } catch (err) {
                 showError(err);
             }

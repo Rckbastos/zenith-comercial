@@ -591,6 +591,7 @@
             <button class="nav-tab" onclick="showSection(event, 'em-analise')">⏳ Em Análise</button>
             <button class="nav-tab" onclick="showSection(event, 'concluidas')">✅ Concluídas</button>
             <button class="nav-tab" onclick="showSection(event, 'minhas-vendas')">📋 Minhas Vendas</button>
+            <button class="nav-tab" onclick="loadGerenteData()">🔄 Atualizar</button>
         </div>
 
         <!-- Dashboard Section -->
@@ -670,11 +671,9 @@
                 <form id="orderForm">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Produto <span>*</span></label>
+                            <label>Produto / Serviço <span>*</span></label>
                             <select id="productType" required onchange="toggleProductFields()">
                                 <option value="">Selecione...</option>
-                                <option value="usdt">USDT</option>
-                                <option value="remessa">Remessa</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -747,11 +746,11 @@
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary" id="orderSubmitBtn">✅ Enviar para Análise</button>
-                        <button type="reset" class="btn btn-secondary" onclick="document.getElementById('fileName').textContent=''">🔄 Limpar</button>
-                    </div>
-                </form>
-            </div>
+                    <button type="submit" class="btn btn-primary" id="orderSubmitBtn">✅ Enviar para Análise</button>
+                    <button type="reset" class="btn btn-secondary" onclick="document.getElementById('fileName').textContent=''">🔄 Limpar</button>
+                </div>
+            </form>
+        </div>
         </div>
 
         <!-- Em Análise Section -->
@@ -852,6 +851,7 @@
         let currentSellerId = null; // será definido pelo login/usuário encontrado
         let currentUser = null;
         let isSubmittingOrder = false;
+        let assignedServices = [];
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -881,12 +881,14 @@
                 input.removeAttribute('required');
             });
 
-            if (productType === 'usdt') {
+            const service = assignedServices.find(s => String(s.id) === String(productType));
+            const name = service?.name?.toLowerCase() || '';
+            if (name.includes('usdt')) {
                 usdtFields.style.display = 'block';
                 document.querySelectorAll('#usdtFields input').forEach(input => {
                     input.setAttribute('required', 'required');
                 });
-            } else if (productType === 'remessa') {
+            } else if (name.includes('remessa')) {
                 remessaFields.style.display = 'block';
                 document.querySelectorAll('#remessaFields input').forEach(input => {
                     input.setAttribute('required', 'required');
@@ -908,6 +910,7 @@
             if (isSubmittingOrder) return;
 
             const productType = document.getElementById('productType').value;
+            const selectedService = assignedServices.find(s => String(s.id) === String(productType));
             const clientName = document.getElementById('clientName').value;
             const fileInput = document.getElementById('paymentProof');
             const usdtQuantity = Number(document.getElementById('usdtQuantity').value || 0);
@@ -921,20 +924,21 @@
             }
 
             let priceBRL = 0;
-            if (productType === 'usdt') {
+            if (selectedService?.name?.toLowerCase().includes('usdt')) {
                 priceBRL = usdtQuantity * usdtPrice;
-            } else if (productType === 'remessa') {
+            } else if (selectedService?.name?.toLowerCase().includes('remessa')) {
                 priceBRL = remessaValue * remessaDolar;
             }
 
             const payload = {
                 customer: clientName,
                 sellerId: currentSellerId,
-                serviceId: null,
+                serviceId: selectedService?.id || null,
+                quantity: usdtQuantity || remessaValue || 0,
                 price: priceBRL,
                 cost: 0,
                 status: 'open',
-                productType: productType.toUpperCase()
+                productType: selectedService?.name || 'Serviço'
             };
 
             const submitBtn = document.getElementById('orderSubmitBtn');
@@ -1092,15 +1096,31 @@
 
         async function loadGerenteData() {
             try {
-                const [users, orders] = await Promise.all([
+                const [users, orders, assignments] = await Promise.all([
                     fetchJson('/api/users'),
-                    fetchJson('/api/orders')
+                    fetchJson('/api/orders'),
+                    fetchJson('/api/assignments')
                 ]);
                 resolveSellerId(users);
+                assignedServices = assignments.filter(a => Number(a.userId) === Number(currentSellerId)).map(a => ({ id: a.serviceId, name: a.serviceName || a.servicename }));
+                populateProductTypes();
                 renderOrdersForSeller(orders, users);
             } catch (err) {
                 showError(err);
             }
+        }
+
+        function populateProductTypes() {
+            const select = document.getElementById('productType');
+            if (!select) return;
+            select.innerHTML = '<option value="">Selecione...</option>';
+            assignedServices.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                select.appendChild(opt);
+            });
+            toggleProductFields();
         }
 
         function updateKpis(orders, user) {
