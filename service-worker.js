@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zenith-comercial-v7';
+const CACHE_NAME = 'zenith-comercial-v8';
 const urlsToCache = [
   'pwa.js',
   'zenith-logo.png',
@@ -46,6 +46,12 @@ self.addEventListener('fetch', event => {
 
   // Ignora esquemas não http(s) (ex.: chrome-extension) para evitar erros
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
+  // APIs sempre buscam direto da rede (evita cache de respostas antigas)
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(request));
     return;
   }
 
