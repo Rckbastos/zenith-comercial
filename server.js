@@ -108,6 +108,60 @@ function computeFinancials(order, seller, service) {
   return { price, cost, profit, commissionValue };
 }
 
+// Normalizadores para manter camelCase na API (PG devolve colunas em minúsculo)
+function normalizeUser(row = {}) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    role: row.role,
+    commission: Number(row.commission ?? 0),
+    status: row.status
+  };
+}
+
+function normalizeService(row = {}) {
+  return {
+    id: row.id,
+    name: row.name,
+    costType: row.costType ?? row.costtype,
+    costFixo: Number(row.costFixo ?? row.costfixo ?? 0),
+    costPercentual: Number(row.costPercentual ?? row.costpercentual ?? 0),
+    price: Number(row.price ?? 0),
+    status: row.status,
+    description: row.description
+  };
+}
+
+function normalizeOrder(row = {}) {
+  return {
+    id: row.id,
+    customer: row.customer,
+    sellerId: row.sellerId ?? row.sellerid,
+    serviceId: row.serviceId ?? row.serviceid,
+    price: Number(row.price ?? 0),
+    cost: Number(row.cost ?? 0),
+    profit: Number(row.profit ?? 0),
+    commissionValue: Number(row.commissionValue ?? row.commissionvalue ?? 0),
+    date: row.date,
+    status: row.status,
+    commissionPaid: row.commissionPaid ?? row.commissionpaid,
+    productType: row.productType ?? row.producttype
+  };
+}
+
+function normalizeAssignment(row = {}) {
+  return {
+    id: row.id,
+    userId: row.userId ?? row.userid,
+    serviceId: row.serviceId ?? row.serviceid,
+    username: row.username,
+    role: row.role,
+    serviceName: row.serviceName ?? row.servicename
+  };
+}
+
 async function initDb() {
   await query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -204,7 +258,7 @@ app.get('/api/health', async (_req, res) => {
 // Users
 app.get('/api/users', async (_req, res) => {
   const rows = await query('SELECT * FROM users ORDER BY id');
-  res.json(rows);
+  res.json(rows.map(normalizeUser));
 });
 
 app.post('/api/users', async (req, res) => {
@@ -214,7 +268,7 @@ app.post('/api/users', async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
     [body.name, body.email, body.phone, body.role, body.commission || 0, body.status || 'Ativo']
   );
-  res.status(201).json(rows[0]);
+  res.status(201).json(normalizeUser(rows[0]));
 });
 
 app.put('/api/users/:id', async (req, res) => {
@@ -225,7 +279,7 @@ app.put('/api/users/:id', async (req, res) => {
     [body.name, body.email, body.phone, body.role, body.commission || 0, body.status || 'Ativo', id]
   );
   if (!rows.length) return res.status(404).json({ error: 'Usuário não encontrado' });
-  res.json(rows[0]);
+  res.json(normalizeUser(rows[0]));
 });
 
 app.delete('/api/users/:id', async (req, res) => {
@@ -244,7 +298,7 @@ app.delete('/api/users/:id', async (req, res) => {
 // Services
 app.get('/api/services', async (_req, res) => {
   const rows = await query('SELECT * FROM services ORDER BY id');
-  res.json(rows);
+  res.json(rows.map(normalizeService));
 });
 
 app.post('/api/services', async (req, res) => {
@@ -254,7 +308,7 @@ app.post('/api/services', async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
     [body.name, body.costType, body.costFixo || 0, body.costPercentual || 0, body.price || 0, body.status || 'Ativo', body.description || '']
   );
-  res.status(201).json(rows[0]);
+  res.status(201).json(normalizeService(rows[0]));
 });
 
 app.put('/api/services/:id', async (req, res) => {
@@ -265,7 +319,7 @@ app.put('/api/services/:id', async (req, res) => {
     [body.name, body.costType, body.costFixo || 0, body.costPercentual || 0, body.price || 0, body.status || 'Ativo', body.description || '', id]
   );
   if (!rows.length) return res.status(404).json({ error: 'Serviço não encontrado' });
-  res.json(rows[0]);
+  res.json(normalizeService(rows[0]));
 });
 
 app.delete('/api/services/:id', async (req, res) => {
@@ -283,7 +337,7 @@ app.get('/api/assignments', async (_req, res) => {
     JOIN services s ON s.id = a.serviceId
     ORDER BY u.name, s.name
   `);
-  res.json(rows);
+  res.json(rows.map(normalizeAssignment));
 });
 
 app.post('/api/assignments', async (req, res) => {
@@ -299,7 +353,7 @@ app.post('/api/assignments', async (req, res) => {
     if (!rows.length) {
       return res.status(200).json({ message: 'Já atribuído' });
     }
-    res.status(201).json(rows[0]);
+    res.status(201).json(normalizeAssignment(rows[0]));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -314,7 +368,7 @@ app.delete('/api/assignments/:id', async (req, res) => {
 // Orders
 app.get('/api/orders', async (_req, res) => {
   const rows = await query('SELECT * FROM orders ORDER BY id DESC');
-  res.json(rows);
+  res.json(rows.map(normalizeOrder));
 });
 
 app.post('/api/orders', async (req, res) => {
@@ -341,21 +395,21 @@ app.post('/api/orders', async (req, res) => {
       body.productType || 'Serviço'
     ]
   );
-  res.status(201).json(rows[0]);
+  res.status(201).json(normalizeOrder(rows[0]));
 });
 
 app.patch('/api/orders/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   const rows = await query('UPDATE orders SET status=$1 WHERE id=$2 RETURNING *', [req.body.status || 'open', id]);
   if (!rows.length) return res.status(404).json({ error: 'Ordem não encontrada' });
-  res.json(rows[0]);
+  res.json(normalizeOrder(rows[0]));
 });
 
 app.patch('/api/orders/:id/commission', async (req, res) => {
   const id = Number(req.params.id);
   const rows = await query('UPDATE orders SET commissionPaid=$1 WHERE id=$2 RETURNING *', [Boolean(req.body.commissionPaid), id]);
   if (!rows.length) return res.status(404).json({ error: 'Ordem não encontrada' });
-  res.json(rows[0]);
+  res.json(normalizeOrder(rows[0]));
 });
 
 app.patch('/api/orders/:id', async (req, res) => {
@@ -388,7 +442,7 @@ app.patch('/api/orders/:id', async (req, res) => {
       id
     ]
   );
-  res.json(rows[0]);
+  res.json(normalizeOrder(rows[0]));
 });
 
 app.delete('/api/orders/:id', async (req, res) => {
