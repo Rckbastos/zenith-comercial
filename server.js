@@ -135,18 +135,21 @@ function calcCost(price, service, opts = {}) {
   }
   if (costtype === 'cotacao_percentual') {
     const quote = Number(opts.quote) || 0;
-    return quote * (1 + ((Number(costpercentual) || 0) / 100));
+    const qty = Number(opts.quantity) || 0;
+    const unitCost = quote * (1 + ((Number(costpercentual) || 0) / 100));
+    return qty > 0 ? unitCost * qty : unitCost;
   }
   return 0;
 }
 
 async function computeFinancials(order, seller, service) {
   const price = Number(order.price) || 0;
+  const quantity = Number(order.quantity) || 0;
   let quote = null;
   if (service && service.costType === 'cotacao_percentual') {
     quote = await fetchUsdtQuote();
   }
-  const cost = order.cost != null ? Number(order.cost) : calcCost(price, service, { quote });
+  const cost = order.cost != null ? Number(order.cost) : calcCost(price, service, { quote, quantity });
   const profit = price - cost;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit * (commissionRate / 100);
