@@ -747,8 +747,8 @@
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">✅ Enviar para Análise</button>
-                        <button type="reset" class="btn btn-secondary">🔄 Limpar</button>
+                        <button type="submit" class="btn btn-primary" id="orderSubmitBtn">✅ Enviar para Análise</button>
+                        <button type="reset" class="btn btn-secondary" onclick="document.getElementById('fileName').textContent=''">🔄 Limpar</button>
                     </div>
                 </form>
             </div>
@@ -768,6 +768,7 @@
                             <th>Data</th>
                             <th>Status</th>
                             <th>Comprovante</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="analysisTbody"></tbody>
@@ -790,6 +791,7 @@
                             <th>Comissão</th>
                             <th>Data</th>
                             <th>Status</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="concludedTbody"></tbody>
@@ -812,6 +814,7 @@
                             <th>Comissão</th>
                             <th>Data</th>
                             <th>Status</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="allSalesTbody"></tbody>
@@ -848,6 +851,7 @@
         const apiBase = '';
         let currentSellerId = null; // será definido pelo login/usuário encontrado
         let currentUser = null;
+        let isSubmittingOrder = false;
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -899,8 +903,9 @@
             }
         }
 
-        document.getElementById('orderForm').addEventListener('submit', function(e) {
+        document.getElementById('orderForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            if (isSubmittingOrder) return;
 
             const productType = document.getElementById('productType').value;
             const clientName = document.getElementById('clientName').value;
@@ -932,17 +937,33 @@
                 productType: productType.toUpperCase()
             };
 
-            fetchJson('/api/orders', {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            }).then(() => {
+            const submitBtn = document.getElementById('orderSubmitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Enviando...';
+            }
+            isSubmittingOrder = true;
+
+            try {
+                await fetchJson('/api/orders', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
                 alert(`✅ Ordem criada com sucesso!\n\nCliente: ${clientName}\nProduto: ${productType.toUpperCase()}\nStatus: Em Análise\n\nAguarde a aprovação do administrador.`);
                 this.reset();
                 document.getElementById('fileName').textContent = '';
                 document.getElementById('usdtFields').style.display = 'none';
                 document.getElementById('remessaFields').style.display = 'none';
-                loadGerenteData();
-            }).catch(showError);
+                await loadGerenteData();
+            } catch (err) {
+                showError(err);
+            } finally {
+                isSubmittingOrder = false;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '🟢 Enviar para Análise';
+                }
+            }
         });
 
         async function atualizarCotacaoGerente() {
@@ -1019,6 +1040,7 @@
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                     <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                     <td>${statusLabel}</td>
+                    <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                 `;
 
                 const trAll = document.createElement('tr');
@@ -1035,6 +1057,7 @@
                         <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                         <td><span class=\"badge badge-pending\">Em Análise</span></td>
                         <td><a href=\"#\" style=\"color: #D4AF37;\">📎 Ver</a></td>
+                        <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                     `;
                     analysisTbody?.appendChild(tr);
                 }
@@ -1050,10 +1073,21 @@
                         <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>
                         <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                         <td><span class=\"badge badge-success\">Aprovada</span></td>
+                        <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                     `;
                     concludedTbody?.appendChild(tr);
                 }
             });
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm('Deseja excluir esta ordem?')) return;
+            try {
+                await fetchJson(`/api/orders/${id}`, { method: 'DELETE' });
+                await loadGerenteData();
+            } catch (err) {
+                showError(err);
+            }
         }
 
         async function loadGerenteData() {
