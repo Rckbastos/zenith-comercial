@@ -1,4 +1,4 @@
-image.pngconst express = require('express');
+const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
