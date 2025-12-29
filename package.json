@@ -4,7 +4,7 @@
   "private": true,
   "description": "Front-end estatico do Sistema de Gestão Comercial Zenith",
   "scripts": {
-    "start": "serve -s . -l ${PORT:-3000}"
+    "start": "serve . -l ${PORT:-3000}"
   },
   "dependencies": {
     "serve": "^14.2.4"
