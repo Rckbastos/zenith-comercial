@@ -235,13 +235,20 @@ async function initDb() {
     );
   }
 
+  // IDs disponíveis para uso nos seeds
+  const [firstUser] = await query('SELECT id FROM users ORDER BY id LIMIT 1');
+  const serviceRows = await query('SELECT id FROM services ORDER BY id LIMIT 3');
+  const service1 = serviceRows[0]?.id || null;
+  const service2 = serviceRows[1]?.id || service1;
+
   const ordersCount = (await query('SELECT COUNT(*)::int AS count FROM orders'))[0].count;
-  if (ordersCount === 0) {
+  if (ordersCount === 0 && firstUser?.id && service1) {
     await query(
       `INSERT INTO orders (customer, sellerId, serviceId, price, cost, profit, commissionValue, date, status, commissionPaid, productType)
        VALUES
-       ('Ana Costa', 1, 3, 1100, 450, 650, 97.5, '2025-12-23', 'open', false, 'Consignado FGTS'),
-       ('Pedro Santos', 1, 2, 2000, 800, 1200, 180, '2025-12-24', 'concluded', true, 'Refinanciamento')`
+       ('Ana Costa', $1, $2, 1100, 450, 650, 97.5, '2025-12-23', 'open', false, 'Consignado FGTS'),
+       ('Pedro Santos', $1, $3, 2000, 800, 1200, 180, '2025-12-24', 'concluded', true, 'Refinanciamento')`,
+      [firstUser.id, service1, service2]
     );
   }
 }
