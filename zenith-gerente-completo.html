@@ -763,26 +763,7 @@
                             <th>Comprovante</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#003</td>
-                            <td>Carlos Mendes</td>
-                            <td><span class="badge badge-gold">USDT</span></td>
-                            <td>R$ 5.420,00</td>
-                            <td>26/12/2025</td>
-                            <td><span class="badge badge-pending">Em Análise</span></td>
-                            <td><a href="#" style="color: #D4AF37;">📎 Ver</a></td>
-                        </tr>
-                        <tr>
-                            <td>#004</td>
-                            <td>Ana Costa</td>
-                            <td><span class="badge badge-gold">Remessa</span></td>
-                            <td>USD 1.845,39</td>
-                            <td>26/12/2025</td>
-                            <td><span class="badge badge-pending">Em Análise</span></td>
-                            <td><a href="#" style="color: #D4AF37;">📎 Ver</a></td>
-                        </tr>
-                    </tbody>
+                    <tbody id="analysisTbody"></tbody>
                 </table>
             </div>
         </div>
@@ -804,28 +785,7 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#001</td>
-                            <td>Maria Oliveira</td>
-                            <td><span class="badge badge-gold">USDT</span></td>
-                            <td>R$ 5.420,00</td>
-                            <td class="profit-value">R$ 850,00</td>
-                            <td class="profit-value">R$ 127,50</td>
-                            <td>25/12/2025</td>
-                            <td><span class="badge badge-success">Aprovada</span></td>
-                        </tr>
-                        <tr>
-                            <td>#002</td>
-                            <td>Pedro Santos</td>
-                            <td><span class="badge badge-gold">Remessa</span></td>
-                            <td>USD 1.845,39</td>
-                            <td class="profit-value">R$ 1.200,00</td>
-                            <td class="profit-value">R$ 180,00</td>
-                            <td>24/12/2025</td>
-                            <td><span class="badge badge-success">Aprovada</span></td>
-                        </tr>
-                    </tbody>
+                    <tbody id="concludedTbody"></tbody>
                 </table>
             </div>
         </div>
@@ -847,44 +807,16 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#003</td>
-                            <td>Carlos Mendes</td>
-                            <td><span class="badge badge-gold">USDT</span></td>
-                            <td>R$ 5.420,00</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>26/12/2025</td>
-                            <td><span class="badge badge-pending">Em Análise</span></td>
-                        </tr>
-                        <tr>
-                            <td>#002</td>
-                            <td>Pedro Santos</td>
-                            <td><span class="badge badge-gold">Remessa</span></td>
-                            <td>USD 1.845,39</td>
-                            <td class="profit-value">R$ 1.200,00</td>
-                            <td class="profit-value">R$ 180,00</td>
-                            <td>24/12/2025</td>
-                            <td><span class="badge badge-success">Aprovada</span></td>
-                        </tr>
-                        <tr>
-                            <td>#001</td>
-                            <td>Maria Oliveira</td>
-                            <td><span class="badge badge-gold">USDT</span></td>
-                            <td>R$ 5.420,00</td>
-                            <td class="profit-value">R$ 850,00</td>
-                            <td class="profit-value">R$ 127,50</td>
-                            <td>25/12/2025</td>
-                            <td><span class="badge badge-success">Aprovada</span></td>
-                        </tr>
-                    </tbody>
+                    <tbody id="allSalesTbody"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
     <script>
+        const apiBase = '';
+        const currentSellerId = 1; // Mock do usuário logado (João Silva)
+
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
@@ -941,17 +873,44 @@
             const productType = document.getElementById('productType').value;
             const clientName = document.getElementById('clientName').value;
             const fileInput = document.getElementById('paymentProof');
+            const usdtQuantity = Number(document.getElementById('usdtQuantity').value || 0);
+            const usdtPrice = Number(document.getElementById('usdtPrice').value || 0);
+            const remessaValue = Number(document.getElementById('remessaValue').value || 0);
+            const remessaDolar = Number(document.getElementById('remessaDolar').value || 0);
 
             if (!fileInput.files.length) {
                 alert('⚠️ Por favor, anexe o comprovante de pagamento!');
                 return;
             }
 
-            alert(`✅ Ordem criada com sucesso!\n\nCliente: ${clientName}\nProduto: ${productType.toUpperCase()}\nStatus: Em Análise\n\nAguarde a aprovação do administrador.`);
-            this.reset();
-            document.getElementById('fileName').textContent = '';
-            document.getElementById('usdtFields').style.display = 'none';
-            document.getElementById('remessaFields').style.display = 'none';
+            let priceBRL = 0;
+            if (productType === 'usdt') {
+                priceBRL = usdtQuantity * usdtPrice;
+            } else if (productType === 'remessa') {
+                priceBRL = remessaValue * remessaDolar;
+            }
+
+            const payload = {
+                customer: clientName,
+                sellerId: currentSellerId,
+                serviceId: null,
+                price: priceBRL,
+                cost: 0,
+                status: 'open',
+                productType: productType.toUpperCase()
+            };
+
+            fetchJson('/api/orders', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert(`✅ Ordem criada com sucesso!\n\nCliente: ${clientName}\nProduto: ${productType.toUpperCase()}\nStatus: Em Análise\n\nAguarde a aprovação do administrador.`);
+                this.reset();
+                document.getElementById('fileName').textContent = '';
+                document.getElementById('usdtFields').style.display = 'none';
+                document.getElementById('remessaFields').style.display = 'none';
+                loadGerenteData();
+            }).catch(showError);
         });
 
         async function atualizarCotacaoGerente() {
@@ -974,7 +933,98 @@
         window.addEventListener('load', function() {
             atualizarCotacaoGerente();
             setInterval(atualizarCotacaoGerente, 30000);
+            loadGerenteData();
         });
+
+        function showError(err) {
+            console.error(err);
+            alert('⚠️ Erro: ' + (err?.message || 'não foi possível completar a ação'));
+        }
+
+        async function fetchJson(path, options = {}) {
+            const res = await fetch(apiBase + path, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || res.statusText);
+            }
+            return res.status === 204 ? null : res.json();
+        }
+
+        function formatBRL(value) {
+            return (value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
+        }
+
+        function renderOrdersForSeller(orders, users) {
+            const sellerOrders = orders.filter(o => Number(o.sellerId) === currentSellerId);
+            const analysisTbody = document.getElementById('analysisTbody');
+            const concludedTbody = document.getElementById('concludedTbody');
+            const allSalesTbody = document.getElementById('allSalesTbody');
+            if (analysisTbody) analysisTbody.innerHTML = '';
+            if (concludedTbody) concludedTbody.innerHTML = '';
+            if (allSalesTbody) allSalesTbody.innerHTML = '';
+
+            sellerOrders.forEach(order => {
+                const statusLabel = order.status === 'concluded' ? '<span class=\"badge badge-success\">Aprovada</span>' : '<span class=\"badge badge-pending\">Em Análise</span>';
+                const baseRow = `
+                    <td>#${order.id}</td>
+                    <td>${order.customer || '-'}</td>
+                    <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
+                    <td>${formatBRL(order.price)}</td>
+                    <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
+                    <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
+                    <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                    <td>${statusLabel}</td>
+                `;
+
+                const trAll = document.createElement('tr');
+                trAll.innerHTML = baseRow;
+                allSalesTbody?.appendChild(trAll);
+
+                if (order.status === 'open') {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${order.id}</td>
+                        <td>${order.customer || '-'}</td>
+                        <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
+                        <td>${formatBRL(order.price)}</td>
+                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td><span class=\"badge badge-pending\">Em Análise</span></td>
+                        <td><a href=\"#\" style=\"color: #D4AF37;\">📎 Ver</a></td>
+                    `;
+                    analysisTbody?.appendChild(tr);
+                }
+
+                if (order.status === 'concluded') {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${order.id}</td>
+                        <td>${order.customer || '-'}</td>
+                        <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
+                        <td>${formatBRL(order.price)}</td>
+                        <td class=\"profit-value\">${formatBRL(order.profit)}</td>
+                        <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>
+                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td><span class=\"badge badge-success\">Aprovada</span></td>
+                    `;
+                    concludedTbody?.appendChild(tr);
+                }
+            });
+        }
+
+        async function loadGerenteData() {
+            try {
+                const [users, orders] = await Promise.all([
+                    fetchJson('/api/users'),
+                    fetchJson('/api/orders')
+                ]);
+                renderOrdersForSeller(orders, users);
+            } catch (err) {
+                showError(err);
+            }
+        }
     </script>
 </body>
 </html>

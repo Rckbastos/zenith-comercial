@@ -969,42 +969,7 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#001</td>
-                            <td>Ana Costa</td>
-                            <td>João Silva</td>
-                            <td><span class="badge badge-gold">Consignado FGTS</span></td>
-                            <td>R$ 450,00</td>
-                            <td>R$ 1.100,00</td>
-                            <td class="profit-color">R$ 650,00</td>
-                            <td class="profit-color">R$ 97,50</td>
-                            <td>23/12/2025</td>
-                            <td>
-                                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="verComprovante(1)">📎 Ver</button>
-                            </td>
-                            <td>
-                                <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="concluirOrdem(1)">✅ Concluir</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#002</td>
-                            <td>Roberto Lima</td>
-                            <td>Maria Santos</td>
-                            <td><span class="badge badge-gold">Refinanciamento</span></td>
-                            <td>R$ 800,00</td>
-                            <td>R$ 2.000,00</td>
-                            <td class="profit-color">R$ 1.200,00</td>
-                            <td class="profit-color">R$ 144,00</td>
-                            <td>24/12/2025</td>
-                            <td>
-                                <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="verComprovante(2)">📎 Ver</button>
-                            </td>
-                            <td>
-                                <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="concluirOrdem(2)">✅ Concluir</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="openOrdersTbody"></tbody>
                 </table>
             </div>
         </div>
@@ -1028,44 +993,7 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#045</td>
-                            <td>Maria Oliveira</td>
-                            <td>João Silva</td>
-                            <td><span class="badge badge-gold">Consignado INSS</span></td>
-                            <td>R$ 500,00</td>
-                            <td>R$ 1.350,00</td>
-                            <td class="profit-color">R$ 850,00</td>
-                            <td class="profit-color">R$ 127,50</td>
-                            <td>25/12/2025</td>
-                            <td><span class="badge badge-success">✅ Concluída</span></td>
-                        </tr>
-                        <tr>
-                            <td>#044</td>
-                            <td>Pedro Santos</td>
-                            <td>João Silva</td>
-                            <td><span class="badge badge-gold">Refinanciamento</span></td>
-                            <td>R$ 800,00</td>
-                            <td>R$ 2.000,00</td>
-                            <td class="profit-color">R$ 1.200,00</td>
-                            <td class="profit-color">R$ 180,00</td>
-                            <td>24/12/2025</td>
-                            <td><span class="badge badge-success">✅ Concluída</span></td>
-                        </tr>
-                        <tr>
-                            <td>#043</td>
-                            <td>Carlos Mendes</td>
-                            <td>João Silva</td>
-                            <td><span class="badge badge-gold">Servidor Público</span></td>
-                            <td>R$ 600,00</td>
-                            <td>R$ 1.580,00</td>
-                            <td class="profit-color">R$ 980,00</td>
-                            <td class="profit-color">R$ 147,00</td>
-                            <td>22/12/2025</td>
-                            <td><span class="badge badge-success">✅ Concluída</span></td>
-                        </tr>
-                    </tbody>
+                    <tbody id="concludedOrdersTbody"></tbody>
                 </table>
             </div>
         </div>
@@ -1088,34 +1016,7 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#C001</td>
-                            <td>João Silva</td>
-                            <td>Gerente de Contas</td>
-                            <td>18 vendas</td>
-                            <td class="profit-color">R$ 8.750,00</td>
-                            <td>15%</td>
-                            <td class="profit-color" style="font-weight: 700; font-size: 1.1rem;">R$ 1.312,50</td>
-                            <td>Dezembro/2025</td>
-                            <td>
-                                <button class="btn btn-success" onclick="darBaixaComissao('C001', 'João Silva', 1312.50)" style="padding: 0.5rem 1rem;">✅ Dar Baixa</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#C002</td>
-                            <td>Maria Santos</td>
-                            <td>Gerente de Contas</td>
-                            <td>12 vendas</td>
-                            <td class="profit-color">R$ 5.200,00</td>
-                            <td>12%</td>
-                            <td class="profit-color" style="font-weight: 700; font-size: 1.1rem;">R$ 624,00</td>
-                            <td>Dezembro/2025</td>
-                            <td>
-                                <button class="btn btn-success" onclick="darBaixaComissao('C002', 'Maria Santos', 624.00)" style="padding: 0.5rem 1rem;">✅ Dar Baixa</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="pendingCommissionsTbody"></tbody>
                 </table>
             </div>
         </div>
@@ -1139,44 +1040,7 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#C045</td>
-                            <td>João Silva</td>
-                            <td>Gerente de Contas</td>
-                            <td>22 vendas</td>
-                            <td class="profit-color">R$ 10.500,00</td>
-                            <td>15%</td>
-                            <td class="profit-color" style="font-weight: 700;">R$ 1.575,00</td>
-                            <td>Novembro/2025</td>
-                            <td>05/12/2025</td>
-                            <td><span class="badge badge-success">✅ Pago</span></td>
-                        </tr>
-                        <tr>
-                            <td>#C044</td>
-                            <td>Maria Santos</td>
-                            <td>Gerente de Contas</td>
-                            <td>15 vendas</td>
-                            <td class="profit-color">R$ 6.800,00</td>
-                            <td>12%</td>
-                            <td class="profit-color" style="font-weight: 700;">R$ 816,00</td>
-                            <td>Novembro/2025</td>
-                            <td>05/12/2025</td>
-                            <td><span class="badge badge-success">✅ Pago</span></td>
-                        </tr>
-                        <tr>
-                            <td>#C043</td>
-                            <td>João Silva</td>
-                            <td>Gerente de Contas</td>
-                            <td>20 vendas</td>
-                            <td class="profit-color">R$ 9.200,00</td>
-                            <td>15%</td>
-                            <td class="profit-color" style="font-weight: 700;">R$ 1.380,00</td>
-                            <td>Outubro/2025</td>
-                            <td>05/11/2025</td>
-                            <td><span class="badge badge-success">✅ Pago</span></td>
-                        </tr>
-                    </tbody>
+                    <tbody id="paidCommissionsTbody"></tbody>
                 </table>
             </div>
         </div>
@@ -1195,6 +1059,11 @@
     </div>
 
     <script>
+        const apiBase = '';
+        let cachedUsers = [];
+        let cachedServices = [];
+        let cachedOrders = [];
+
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
@@ -1213,14 +1082,46 @@
 
         document.getElementById('userForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('✅ Usuário cadastrado com sucesso!');
-            this.reset();
+            const payload = {
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                phone: document.getElementById('userPhone').value,
+                role: document.getElementById('userRole').value,
+                commission: document.getElementById('userCommission').value,
+                status: document.getElementById('userStatus').value
+            };
+
+            fetchJson('/api/users', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert('✅ Usuário cadastrado com sucesso!');
+                this.reset();
+                loadAdminData();
+            }).catch(showError);
         });
 
         document.getElementById('serviceForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('✅ Serviço cadastrado com sucesso!');
-            this.reset();
+            const payload = {
+                name: document.getElementById('serviceName').value,
+                costType: document.getElementById('costType').value,
+                costFixo: document.getElementById('costFixo').value,
+                costPercentual: document.getElementById('costPercentual').value,
+                price: document.getElementById('servicePrice').value,
+                status: document.getElementById('serviceStatus').value,
+                description: document.getElementById('serviceDescription').value
+            };
+
+            fetchJson('/api/services', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert('✅ Serviço cadastrado com sucesso!');
+                this.reset();
+                toggleCostFields();
+                loadAdminData();
+            }).catch(showError);
         });
 
         document.getElementById('assignForm').addEventListener('submit', function(e) {
@@ -1244,9 +1145,14 @@
         }
 
         function concluirOrdem(id) {
-            if (confirm('Deseja marcar esta ordem como concluída?')) {
-                alert('✅ Ordem #' + id + ' concluída com sucesso!');
-            }
+            if (!confirm('Deseja marcar esta ordem como concluída?')) return;
+            fetchJson(`/api/orders/${id}/status`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: 'concluded' })
+            }).then(() => {
+                alert(`✅ Ordem #${id} concluída com sucesso!`);
+                loadAdminData();
+            }).catch(showError);
         }
 
         function verComprovante(id) {
@@ -1285,10 +1191,6 @@
                 alert('⚠️ Erro ao conectar com a API da Binance');
             }
         }
-
-        window.addEventListener('load', function() {
-            atualizarCotacao();
-        });
 
         document.getElementById('userPhone').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
@@ -1331,9 +1233,181 @@
 
         function darBaixaComissao(id, vendedor, valor) {
             if (confirm(`Confirmar pagamento da comissão de R$ ${valor.toFixed(2).replace('.', ',')} para ${vendedor}?`)) {
-                alert(`✅ Comissão #${id} paga com sucesso!\n\nVendedor: ${vendedor}\nValor: R$ ${valor.toFixed(2).replace('.', ',')}\n\nA comissão foi movida para "Comissões Pagas".`);
+                fetchJson(`/api/orders/${id}/commission`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ commissionPaid: true })
+                }).then(() => {
+                    alert(`✅ Comissão #${id} paga com sucesso!`);
+                    loadAdminData();
+                }).catch(showError);
             }
         }
+
+        function showError(err) {
+            console.error(err);
+            alert('⚠️ Erro: ' + (err?.message || 'não foi possível completar a ação'));
+        }
+
+        async function fetchJson(path, options = {}) {
+            const res = await fetch(apiBase + path, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || res.statusText);
+            }
+            return res.status === 204 ? null : res.json();
+        }
+
+        function formatBRL(value) {
+            return (value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
+        }
+
+        function formatDate(value) {
+            if (!value) return '--';
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return value;
+            return d.toLocaleDateString('pt-BR');
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.role || '--'}</td>
+                    <td><span class=\"badge badge-gold\">${(user.commission ?? 0)}%</span></td>
+                    <td><span class=\"badge ${user.status === 'Ativo' ? 'badge-success' : 'badge-warning'}\">${user.status}</span></td>
+                    <td>
+                        <button class=\"btn-icon btn-delete\" title=\"Excluir\" onclick=\"deleteUser(${user.id})\">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderServices(services) {
+            const tbody = document.getElementById('servicesTableBody') || document.querySelector('#servicesTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            services.forEach(service => {
+                const costLabel = service.costType === 'fixo' ? formatBRL(service.costFixo) :
+                    service.costType === 'percentual' ? `${service.costPercentual}%` :
+                    `${formatBRL(service.costFixo)} + ${service.costPercentual}%`;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${service.name}</td>
+                    <td>${costLabel}</td>
+                    <td>${formatBRL(service.price)}</td>
+                    <td class=\"profit-color\">${formatBRL((service.price || 0) - (service.costFixo || 0))}</td>
+                    <td><span class=\"badge ${service.status === 'Ativo' ? 'badge-success' : 'badge-warning'}\">${service.status}</span></td>
+                    <td>
+                        <button class=\"btn-icon btn-delete\" title=\"Excluir\" onclick=\"deleteService(${service.id})\">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderOrders(orders, users, services) {
+            cachedUsers = users;
+            cachedServices = services;
+            cachedOrders = orders;
+            const usersMap = Object.fromEntries(users.map(u => [u.id, u]));
+            const servicesMap = Object.fromEntries(services.map(s => [s.id, s]));
+
+            const openTbody = document.getElementById('openOrdersTbody');
+            const concludedTbody = document.getElementById('concludedOrdersTbody');
+            if (openTbody) openTbody.innerHTML = '';
+            if (concludedTbody) concludedTbody.innerHTML = '';
+
+            const pendingCommissionsTbody = document.getElementById('pendingCommissionsTbody');
+            const paidCommissionsTbody = document.getElementById('paidCommissionsTbody');
+            if (pendingCommissionsTbody) pendingCommissionsTbody.innerHTML = '';
+            if (paidCommissionsTbody) paidCommissionsTbody.innerHTML = '';
+
+            orders.forEach(order => {
+                const seller = usersMap[order.sellerId];
+                const service = servicesMap[order.serviceId];
+                const serviceName = service?.name || order.productType || 'Serviço';
+                const sellerName = seller?.name || '—';
+                const commissionValue = order.commissionValue ?? 0;
+                const status = order.status || 'open';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td>${order.customer || '-'}</td>
+                    <td>${sellerName}</td>
+                    <td><span class=\"badge badge-gold\">${serviceName}</span></td>
+                    <td>${formatBRL(order.cost)}</td>
+                    <td>${formatBRL(order.price)}</td>
+                    <td class=\"profit-color\">${formatBRL(order.profit)}</td>
+                    <td class=\"profit-color\">${formatBRL(commissionValue)}</td>
+                    <td>${formatDate(order.date)}</td>
+                    <td>-</td>
+                    <td>${status === 'open' ? `<button class=\"btn btn-primary\" style=\"padding: 0.5rem 1rem; font-size: 0.875rem;\" onclick=\"concluirOrdem(${order.id})\">✅ Concluir</button>` : '<span class=\"badge badge-success\">Concluída</span>'}</td>
+                `;
+
+                if (status === 'open' && openTbody) openTbody.appendChild(tr);
+                if (status === 'concluded' && concludedTbody) concludedTbody.appendChild(tr.cloneNode(true));
+
+                if (status === 'concluded') {
+                    const commTr = document.createElement('tr');
+                    commTr.innerHTML = `
+                        <td>#${order.id}</td>
+                        <td>${sellerName}</td>
+                        <td>${seller?.role || '-'}</td>
+                        <td>${order.salesCount || '-'}</td>
+                        <td class=\"profit-color\">${formatBRL(order.profit)}</td>
+                        <td>${(seller?.commission ?? 0)}%</td>
+                        <td class=\"profit-color\" style=\"font-weight: 700; font-size: 1.1rem;\">${formatBRL(commissionValue)}</td>
+                        <td>${new Date(order.date || Date.now()).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}</td>
+                        <td>
+                            ${order.commissionPaid ? '<span class=\"badge badge-success\">Pago</span>' : `<button class=\"btn btn-success\" onclick=\"darBaixaComissao(${order.id}, '${sellerName}', ${commissionValue})\" style=\"padding: 0.5rem 1rem;\">✅ Dar Baixa</button>`}
+                        </td>
+                    `;
+                    if (!order.commissionPaid && pendingCommissionsTbody) pendingCommissionsTbody.appendChild(commTr);
+                    if (order.commissionPaid && paidCommissionsTbody) paidCommissionsTbody.appendChild(commTr.cloneNode(true));
+                }
+            });
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Deseja excluir este usuário?')) return;
+            await fetchJson(`/api/users/${id}`, { method: 'DELETE' });
+            loadAdminData();
+        }
+
+        async function deleteService(id) {
+            if (!confirm('Deseja excluir este serviço?')) return;
+            await fetchJson(`/api/services/${id}`, { method: 'DELETE' });
+            loadAdminData();
+        }
+
+        async function loadAdminData() {
+            try {
+                const [users, services, orders] = await Promise.all([
+                    fetchJson('/api/users'),
+                    fetchJson('/api/services'),
+                    fetchJson('/api/orders')
+                ]);
+                renderUsers(users);
+                renderServices(services);
+                renderOrders(orders, users, services);
+            } catch (err) {
+                showError(err);
+            }
+        }
+
+        window.addEventListener('load', function() {
+            atualizarCotacao();
+            loadAdminData();
+        });
     </script>
 </body>
 </html>
