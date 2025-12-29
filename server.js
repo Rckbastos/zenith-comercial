@@ -224,8 +224,15 @@ app.put('/api/users/:id', async (req, res) => {
 
 app.delete('/api/users/:id', async (req, res) => {
   const id = Number(req.params.id);
-  await query('DELETE FROM users WHERE id=$1', [id]);
-  res.status(204).end();
+  try {
+    await query('DELETE FROM assignments WHERE userId=$1', [id]);
+    await query('UPDATE orders SET sellerId = NULL WHERE sellerId=$1', [id]);
+    await query('DELETE FROM users WHERE id=$1', [id]);
+    res.status(204).end();
+  } catch (err) {
+    console.error('Erro ao excluir usuário', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
 });
 
 // Services
