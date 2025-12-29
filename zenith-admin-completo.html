@@ -745,10 +745,6 @@
                             <input type="number" id="costPercentual" placeholder="Ex: 0.80" min="0" max="100" step="0.01">
                         </div>
                         <div class="form-group">
-                            <label>Preço de Venda (R$) <span>*</span></label>
-                            <input type="number" id="servicePrice" placeholder="Ex: 1200" min="0" step="0.01" required>
-                        </div>
-                        <div class="form-group">
                             <label>Status <span>*</span></label>
                             <select id="serviceStatus" required>
                                 <option value="Ativo">Ativo</option>
@@ -762,7 +758,8 @@
                             <strong>Tipos de Custo:</strong><br>
                             • <strong>Fixo:</strong> Valor fixo em reais (Ex: R$ 20,00)<br>
                             • <strong>Percentual:</strong> Percentual sobre o valor da venda (Ex: 0.80%)<br>
-                            • <strong>Fixo + Percentual:</strong> Combinação dos dois (Ex: R$ 20,00 + 0.80%)
+                            • <strong>Fixo + Percentual:</strong> Combinação dos dois (Ex: R$ 20,00 + 0.80%)<br>
+                            • <strong>Cotação + Percentual:</strong> Usa a cotação USDT no momento e aplica o percentual informado
                         </div>
                     </div>
                     <div class="form-group">
@@ -783,8 +780,6 @@
                         <tr>
                             <th>Serviço</th>
                             <th>Custo</th>
-                            <th>Preço</th>
-                            <th>Lucro</th>
                             <th>Status</th>
                             <th>Ações</th>
                         </tr>
@@ -1057,7 +1052,6 @@
                 costType: document.getElementById('costType').value,
                 costFixo: document.getElementById('costFixo').value,
                 costPercentual: document.getElementById('costPercentual').value,
-                price: document.getElementById('servicePrice').value,
                 status: document.getElementById('serviceStatus').value,
                 description: document.getElementById('serviceDescription').value
             };
@@ -1264,13 +1258,12 @@
             services.forEach(service => {
                 const costLabel = service.costType === 'fixo' ? formatBRL(service.costFixo) :
                     service.costType === 'percentual' ? `${service.costPercentual}%` :
-                    `${formatBRL(service.costFixo)} + ${service.costPercentual}%`;
+                    service.costType === 'fixo_percentual' ? `${formatBRL(service.costFixo)} + ${service.costPercentual}%` :
+                    `Cotação + ${service.costPercentual}%`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${service.name}</td>
                     <td>${costLabel}</td>
-                    <td>${formatBRL(service.price)}</td>
-                    <td class=\"profit-color\">${formatBRL((service.price || 0) - (service.costFixo || 0))}</td>
                     <td><span class=\"badge ${service.status === 'Ativo' ? 'badge-success' : 'badge-warning'}\">${service.status}</span></td>
                     <td>
                         <button class=\"btn-icon btn-delete\" title=\"Excluir\" onclick=\"deleteService(${service.id})\">🗑️</button>
