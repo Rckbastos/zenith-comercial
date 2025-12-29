@@ -690,14 +690,18 @@
                                 <label>Quantidade de USDT <span>*</span></label>
                                 <input type="number" id="usdtQuantity" placeholder="Ex: 1000" step="0.01">
                             </div>
-                            <div class="form-group">
-                                <label>Preço Fechado por USDT (R$) <span>*</span></label>
-                                <input type="number" id="usdtPrice" placeholder="Ex: 5.42" step="any" min="0.00001">
+                        <div class="form-group">
+                            <label>Preço Fechado por USDT (R$) <span>*</span></label>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="number" id="usdtPrice" placeholder="Ex: 5.42" step="any" min="0.00001" style="flex: 1;">
+                                <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;" onclick="usarCotacaoAtual()">⟳ Usar cotação</button>
                             </div>
-                            <div class="form-group">
-                                <label>Wallet <span>*</span></label>
-                                <input type="text" id="usdtWallet" placeholder="Endereço da wallet">
-                            </div>
+                            <small id="usdtQuoteLive" style="display: block; margin-top: 0.35rem; color: #D4AF37;">Cotação: --</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Wallet <span>*</span></label>
+                            <input type="text" id="usdtWallet" placeholder="Endereço da wallet">
+                        </div>
                         </div>
                         <div class="info-box">
                             <span class="info-box-icon">💡</span>
@@ -852,6 +856,7 @@
         let currentUser = null;
         let isSubmittingOrder = false;
         let assignedServices = [];
+        let lastUsdtQuote = null;
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -912,6 +917,15 @@
                 reader.onerror = () => reject(reader.error);
                 reader.readAsDataURL(file);
             });
+        }
+
+        function usarCotacaoAtual() {
+            if (!lastUsdtQuote) {
+                alert('Cotação ainda não carregada. Aguarde alguns segundos.');
+                return;
+            }
+            const input = document.getElementById('usdtPrice');
+            input.value = lastUsdtQuote.toFixed(5);
         }
 
         function verComprovanteGerente(id) {
@@ -1008,6 +1022,9 @@
                     const priceFormatted = 'R$ ' + price.replace('.', ',');
                     document.getElementById('usdtPriceGerente').textContent = priceFormatted;
                     document.getElementById('topUsdtPrice').textContent = priceFormatted;
+                    const live = document.getElementById('usdtQuoteLive');
+                    if (live) live.textContent = `Cotação: ${priceFormatted}`;
+                    lastUsdtQuote = Number(price);
                     console.log('Cotação USDT atualizada (Gerente):', price);
                 }
             } catch (error) {
