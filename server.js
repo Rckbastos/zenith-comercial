@@ -124,20 +124,23 @@ async function fetchUsdtQuote() {
 
 function calcCost(price, service, opts = {}) {
   if (!service) return 0;
-  const { costtype, costfixo = 0, costpercentual = 0 } = service;
-  if (costtype === 'fixo') {
-    return Number(costfixo) || 0;
+  const costType = service.costType ?? service.costtype;
+  const costFixo = Number(service.costFixo ?? service.costfixo ?? 0);
+  const costPercentual = Number(service.costPercentual ?? service.costpercentual ?? 0);
+
+  if (costType === 'fixo') {
+    return costFixo || 0;
   }
-  if (costtype === 'percentual') {
-    return price * ((Number(costpercentual) || 0) / 100);
+  if (costType === 'percentual') {
+    return price * (costPercentual / 100);
   }
-  if (costtype === 'fixo_percentual') {
-    return (Number(costfixo) || 0) + price * ((Number(costpercentual) || 0) / 100);
+  if (costType === 'fixo_percentual') {
+    return costFixo + price * (costPercentual / 100);
   }
-  if (costtype === 'cotacao_percentual') {
+  if (costType === 'cotacao_percentual') {
     const quote = Number(opts.quote) || 0;
     const qty = Number(opts.quantity) || 0;
-    const unitCost = quote * (1 + ((Number(costpercentual) || 0) / 100));
+    const unitCost = quote * (1 + (costPercentual / 100));
     return qty > 0 ? unitCost * qty : unitCost;
   }
   return 0;
@@ -153,7 +156,8 @@ async function computeFinancials(order, seller, service) {
       ? price / quantity
       : price;
   let quote = null;
-  if (service && service.costType === 'cotacao_percentual') {
+  const serviceCostType = service?.costType ?? service?.costtype;
+  if (service && serviceCostType === 'cotacao_percentual') {
     quote = await fetchUsdtQuote();
   }
   let cost = 0;
@@ -470,11 +474,20 @@ app.get('/api/orders', async (_req, res) => {
   const services = await query('SELECT * FROM services');
   const users = await query('SELECT * FROM users');
   const servicesMap = Object.fromEntries(services.map(s => [s.id, normalizeService(s)]));
+  const servicesByName = services
+    .map(normalizeService)
+    .reduce((acc, svc) => {
+      if (svc.name) acc[svc.name.toLowerCase()] = svc;
+      return acc;
+    }, {});
   const usersMap = Object.fromEntries(users.map(u => [u.id, normalizeUser(u)]));
 
   const enriched = await Promise.all(rows.map(async (row) => {
     const order = normalizeOrder(row);
-    const service = servicesMap[order.serviceId];
+    let service = servicesMap[order.serviceId];
+    if (!service && order.productType) {
+      service = servicesByName[order.productType.toLowerCase()];
+    }
     const seller = usersMap[order.sellerId];
     const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
     return { ...order, ...calc };
