@@ -1,4 +1,4 @@
-const express = require('express');
+image.pngconst express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
@@ -284,6 +284,14 @@ app.get('/api/users', async (_req, res) => {
 
 app.post('/api/users', async (req, res) => {
   const body = req.body || {};
+  const authLogin = body.login || body.email || body.name;
+  const authRoleRaw = (body.loginRole || '').toLowerCase();
+  const roleLower = (body.role || '').toLowerCase();
+  const authRole = authRoleRaw === 'admin' || authRoleRaw === 'gerente'
+    ? authRoleRaw
+    : (roleLower.includes('admin') ? 'admin' : 'gerente');
+  const authTarget = authRole === 'gerente' ? '/zenith-gerente-completo.html' : '/zenith-admin-completo.html';
+
   const rows = await query(
     `INSERT INTO users (name, email, phone, role, commission, status)
      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
@@ -295,12 +303,13 @@ app.post('/api/users', async (req, res) => {
     const passwordHash = bcrypt.hashSync(body.password, 10);
     await query(
       `INSERT INTO auth_accounts (login, email, password_hash, role, target)
-       VALUES ($1, $2, $3, $4, '/zenith-admin-completo.html')
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (login) DO UPDATE
          SET email = EXCLUDED.email,
              password_hash = EXCLUDED.password_hash,
-             role = EXCLUDED.role`,
-      [body.email || body.name, body.email, passwordHash, 'admin']
+             role = EXCLUDED.role,
+             target = EXCLUDED.target`,
+      [authLogin, body.email, passwordHash, authRole, authTarget]
     );
   }
 
