@@ -1,7 +1,10 @@
-const CACHE_NAME = 'zenith-comercial-v1';
+const CACHE_NAME = 'zenith-comercial-v2';
 const urlsToCache = [
+  '/',
+  '/index.html',
   '/zenith-admin-completo.html',
   '/zenith-gerente-completo.html',
+  '/pwa.js',
   '/zenith-logo.png',
   '/manifest.json'
 ];

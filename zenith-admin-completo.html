@@ -13,6 +13,7 @@
     <meta name="theme-color" content="#D4AF37">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/zenith-logo.png">
+    <script src="pwa.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -370,6 +371,17 @@
             color: #D4AF37;
         }
 
+        .btn-success {
+            background: #10b981;
+            color: #0a0a0a;
+        }
+
+        .btn-success:hover {
+            background: #0e9c75;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
         /* Table Styles */
         .data-table {
             width: 100%;
@@ -549,15 +561,15 @@
     <div class="container">
         <!-- Navigation Tabs -->
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showSection('dashboard')">📊 Dashboard</button>
-            <button class="nav-tab" onclick="showSection('usuarios')">👥 Usuários</button>
-            <button class="nav-tab" onclick="showSection('servicos')">🛠️ Serviços</button>
-            <button class="nav-tab" onclick="showSection('atribuir')">🔗 Atribuir Serviços</button>
-            <button class="nav-tab" onclick="showSection('dolar')">💱 Cotação Dólar</button>
-            <button class="nav-tab" onclick="showSection('ordens-abertas')">📋 Ordens Abertas</button>
-            <button class="nav-tab" onclick="showSection('ordens-concluidas')">✅ Ordens Concluídas</button>
-            <button class="nav-tab" onclick="showSection('comissoes-pendentes')">💵 Comissões Pendentes</button>
-            <button class="nav-tab" onclick="showSection('comissoes-pagas')">✅ Comissões Pagas</button>
+            <button class="nav-tab active" onclick="showSection(event, 'dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="showSection(event, 'usuarios')">👥 Usuários</button>
+            <button class="nav-tab" onclick="showSection(event, 'servicos')">🛠️ Serviços</button>
+            <button class="nav-tab" onclick="showSection(event, 'atribuir')">🔗 Atribuir Serviços</button>
+            <button class="nav-tab" onclick="showSection(event, 'dolar')">💱 Cotação Dólar</button>
+            <button class="nav-tab" onclick="showSection(event, 'ordens-abertas')">📋 Ordens Abertas</button>
+            <button class="nav-tab" onclick="showSection(event, 'ordens-concluidas')">✅ Ordens Concluídas</button>
+            <button class="nav-tab" onclick="showSection(event, 'comissoes-pendentes')">💵 Comissões Pendentes</button>
+            <button class="nav-tab" onclick="showSection(event, 'comissoes-pagas')">✅ Comissões Pagas</button>
         </div>
 
         <!-- Dashboard Section -->
@@ -1168,49 +1180,55 @@
                 </table>
             </div>
         </div>
+    </div>
+
+    <!-- Modal de Comprovante -->
+    <div id="comprovanteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="position: relative; max-width: 90%; max-height: 90%; background: #1a1a1a; border-radius: 12px; padding: 2rem; border: 2px solid #D4AF37;">
+            <button onclick="fecharModal()" style="position: absolute; top: 1rem; right: 1rem; background: #D4AF37; color: #0a0a0a; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; font-weight: bold;">&times;</button>
+            <h3 style="color: #D4AF37; margin-bottom: 1.5rem; text-align: center;">📎 Comprovante de Pagamento</h3>
+            <div style="text-align: center;">
+                <img id="comprovanteImg" src="" alt="Comprovante" style="max-width: 100%; max-height: 70vh; border-radius: 8px; border: 1px solid #333;">
+                <p style="color: #888; margin-top: 1rem; font-size: 0.875rem;">Clique no X para fechar</p>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Navigation
-        function showSection(sectionId) {
-            // Hide all sections
+        function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-            
-            // Remove active from all tabs
+
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-            
-            // Show selected section
+
             document.getElementById(sectionId).classList.add('active');
-            
-            // Activate clicked tab
-            event.target.classList.add('active');
+
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
         }
 
-        // User Form
         document.getElementById('userForm').addEventListener('submit', function(e) {
             e.preventDefault();
             alert('✅ Usuário cadastrado com sucesso!');
             this.reset();
         });
 
-        // Service Form
         document.getElementById('serviceForm').addEventListener('submit', function(e) {
             e.preventDefault();
             alert('✅ Serviço cadastrado com sucesso!');
             this.reset();
         });
 
-        // Assign Form
         document.getElementById('assignForm').addEventListener('submit', function(e) {
             e.preventDefault();
             alert('✅ Serviço atribuído com sucesso!');
             this.reset();
         });
 
-        // Dolar Form
         document.getElementById('dolarForm').addEventListener('submit', function(e) {
             e.preventDefault();
             alert('✅ Configuração salva com sucesso!');
@@ -1228,20 +1246,13 @@
         function concluirOrdem(id) {
             if (confirm('Deseja marcar esta ordem como concluída?')) {
                 alert('✅ Ordem #' + id + ' concluída com sucesso!');
-                // Aqui você recarregaria os dados
             }
         }
 
         function verComprovante(id) {
-            // Simulação de visualização de comprovante
             const modal = document.getElementById('comprovanteModal');
-            const img = document.getElementById('comprovanteImg');
-            
-            // Aqui você carregaria a imagem real do servidor
-            // Por enquanto, mostra uma mensagem
             modal.style.display = 'flex';
-            
-            // Exemplo: img.src = '/uploads/comprovante_' + id + '.jpg';
+
             alert('📎 Visualizando comprovante da ordem #' + id + '\n\nEm produção, a imagem/PDF do comprovante seria exibida aqui.');
         }
 
@@ -1249,24 +1260,22 @@
             document.getElementById('comprovanteModal').style.display = 'none';
         }
 
-        // Atualizar cotação USDT da Binance
         async function atualizarCotacao() {
             try {
                 const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
                 const data = await response.json();
-                
+
                 if (data && data.price) {
                     const price = parseFloat(data.price).toFixed(4);
                     document.getElementById('usdtPrice').textContent = 'R$ ' + price.replace('.', ',');
-                    
-                    // Atualizar data e hora
+
                     const now = new Date();
                     const dateStr = now.toLocaleDateString('pt-BR');
                     const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    
+
                     document.getElementById('lastUpdate').textContent = dateStr;
                     document.getElementById('lastUpdateTime').textContent = timeStr;
-                    
+
                     console.log('Cotação USDT atualizada:', price);
                 } else {
                     alert('⚠️ Erro ao buscar cotação da Binance');
@@ -1277,40 +1286,35 @@
             }
         }
 
-        // Atualizar cotação automaticamente ao carregar a página
         window.addEventListener('load', function() {
             atualizarCotacao();
         });
 
-        // Phone mask
         document.getElementById('userPhone').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 11) value = value.substring(0, 11);
-            
+
             if (value.length > 6) {
                 value = `(${value.substring(0, 2)}) ${value.substring(2, 7)}-${value.substring(7)}`;
             } else if (value.length > 2) {
                 value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
             }
-            
+
             e.target.value = value;
         });
 
-        // Toggle cost fields based on cost type
         function toggleCostFields() {
             const costType = document.getElementById('costType').value;
             const fixoGroup = document.getElementById('costFixoGroup');
             const percentualGroup = document.getElementById('costPercentualGroup');
             const fixoInput = document.getElementById('costFixo');
             const percentualInput = document.getElementById('costPercentual');
-            
-            // Hide all and remove required
+
             fixoGroup.style.display = 'none';
             percentualGroup.style.display = 'none';
             fixoInput.removeAttribute('required');
             percentualInput.removeAttribute('required');
-            
-            // Show based on selection
+
             if (costType === 'fixo') {
                 fixoGroup.style.display = 'flex';
                 fixoInput.setAttribute('required', 'required');
@@ -1325,53 +1329,11 @@
             }
         }
 
-        // Função para dar baixa em comissão
         function darBaixaComissao(id, vendedor, valor) {
             if (confirm(`Confirmar pagamento da comissão de R$ ${valor.toFixed(2).replace('.', ',')} para ${vendedor}?`)) {
                 alert(`✅ Comissão #${id} paga com sucesso!\n\nVendedor: ${vendedor}\nValor: R$ ${valor.toFixed(2).replace('.', ',')}\n\nA comissão foi movida para "Comissões Pagas".`);
-                // Aqui você pode adicionar lógica para mover a comissão para a tabela de pagas
             }
         }
     </script>
-        // Registrar Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('Service Worker registrado com sucesso:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Falha ao registrar Service Worker:', error);
-                    });
-            });
-        }
-
-        // Detectar instalação do PWA
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Mostrar botão de instalação customizado (opcional)
-            console.log('PWA pode ser instalado!');
-        });
-
-        // Detectar quando o app foi instalado
-        window.addEventListener('appinstalled', () => {
-            console.log('PWA instalado com sucesso!');
-            deferredPrompt = null;
-        });
-
-    <!-- Modal de Comprovante -->
-    <div id="comprovanteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center;">
-        <div style="position: relative; max-width: 90%; max-height: 90%; background: #1a1a1a; border-radius: 12px; padding: 2rem; border: 2px solid #D4AF37;">
-            <button onclick="fecharModal()" style="position: absolute; top: 1rem; right: 1rem; background: #D4AF37; color: #0a0a0a; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; font-weight: bold;">&times;</button>
-            <h3 style="color: #D4AF37; margin-bottom: 1.5rem; text-align: center;">📎 Comprovante de Pagamento</h3>
-            <div style="text-align: center;">
-                <img id="comprovanteImg" src="" alt="Comprovante" style="max-width: 100%; max-height: 70vh; border-radius: 8px; border: 1px solid #333;">
-                <p style="color: #888; margin-top: 1rem; font-size: 0.875rem;">Clique no X para fechar</p>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

@@ -13,6 +13,7 @@
     <meta name="theme-color" content="#D4AF37">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/zenith-logo.png">
+    <script src="pwa.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -578,11 +579,11 @@
     <div class="container">
         <!-- Navigation Tabs -->
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showSection('dashboard')">📊 Dashboard</button>
-            <button class="nav-tab" onclick="showSection('nova-ordem')">➕ Nova Ordem</button>
-            <button class="nav-tab" onclick="showSection('em-analise')">⏳ Em Análise</button>
-            <button class="nav-tab" onclick="showSection('concluidas')">✅ Concluídas</button>
-            <button class="nav-tab" onclick="showSection('minhas-vendas')">📋 Minhas Vendas</button>
+            <button class="nav-tab active" onclick="showSection(event, 'dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="showSection(event, 'nova-ordem')">➕ Nova Ordem</button>
+            <button class="nav-tab" onclick="showSection(event, 'em-analise')">⏳ Em Análise</button>
+            <button class="nav-tab" onclick="showSection(event, 'concluidas')">✅ Concluídas</button>
+            <button class="nav-tab" onclick="showSection(event, 'minhas-vendas')">📋 Minhas Vendas</button>
         </div>
 
         <!-- Dashboard Section -->
@@ -884,41 +885,34 @@
     </div>
 
     <script>
-        // Navigation
-        function showSection(sectionId) {
-            // Hide all sections
+        function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-            
-            // Remove active from all tabs
+
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-            
-            // Show selected section
+
             document.getElementById(sectionId).classList.add('active');
-            
-            // Activate clicked tab
-            event.target.classList.add('active');
+
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
         }
 
-        // Toggle product fields
         function toggleProductFields() {
             const productType = document.getElementById('productType').value;
             const usdtFields = document.getElementById('usdtFields');
             const remessaFields = document.getElementById('remessaFields');
-            
-            // Hide all
+
             usdtFields.style.display = 'none';
             remessaFields.style.display = 'none';
-            
-            // Clear required attributes
+
             document.querySelectorAll('#usdtFields input, #remessaFields input').forEach(input => {
                 input.removeAttribute('required');
             });
-            
-            // Show based on selection
+
             if (productType === 'usdt') {
                 usdtFields.style.display = 'block';
                 document.querySelectorAll('#usdtFields input').forEach(input => {
@@ -932,7 +926,6 @@
             }
         }
 
-        // Show file name
         function showFileName(input) {
             const fileNameDiv = document.getElementById('fileName');
             if (input.files.length > 0) {
@@ -942,19 +935,18 @@
             }
         }
 
-        // Order Form
         document.getElementById('orderForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const productType = document.getElementById('productType').value;
             const clientName = document.getElementById('clientName').value;
             const fileInput = document.getElementById('paymentProof');
-            
+
             if (!fileInput.files.length) {
                 alert('⚠️ Por favor, anexe o comprovante de pagamento!');
                 return;
             }
-            
+
             alert(`✅ Ordem criada com sucesso!\n\nCliente: ${clientName}\nProduto: ${productType.toUpperCase()}\nStatus: Em Análise\n\nAguarde a aprovação do administrador.`);
             this.reset();
             document.getElementById('fileName').textContent = '';
@@ -962,12 +954,11 @@
             document.getElementById('remessaFields').style.display = 'none';
         });
 
-        // Atualizar cotação USDT da Binance
         async function atualizarCotacaoGerente() {
             try {
                 const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
                 const data = await response.json();
-                
+
                 if (data && data.price) {
                     const price = parseFloat(data.price).toFixed(4);
                     const priceFormatted = 'R$ ' + price.replace('.', ',');
@@ -980,40 +971,10 @@
             }
         }
 
-        // Atualizar cotação automaticamente ao carregar a página
         window.addEventListener('load', function() {
             atualizarCotacaoGerente();
-            // Atualizar a cada 30 segundos
             setInterval(atualizarCotacaoGerente, 30000);
         });
     </script>
-        // Registrar Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('Service Worker registrado com sucesso:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Falha ao registrar Service Worker:', error);
-                    });
-            });
-        }
-
-        // Detectar instalação do PWA
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Mostrar botão de instalação customizado (opcional)
-            console.log('PWA pode ser instalado!');
-        });
-
-        // Detectar quando o app foi instalado
-        window.addEventListener('appinstalled', () => {
-            console.log('PWA instalado com sucesso!');
-            deferredPrompt = null;
-        });
 </body>
 </html>
