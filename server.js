@@ -20,6 +20,23 @@ const pool = new Pool({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(__dirname));
 
+// CSP para permitir Google Fonts e Binance API
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data:",
+      "connect-src 'self' https://api.binance.com",
+      "manifest-src 'self'"
+    ].join('; ')
+  );
+  next();
+});
+
 // Rotas explícitas para HTML principais (evita 404/redirect em produção)
 app.get(['/', '/index', '/index.html'], (_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
