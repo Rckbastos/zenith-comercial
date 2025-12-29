@@ -25,7 +25,7 @@ app.use((req, res, next) => {
     'Content-Security-Policy',
     [
       "default-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com",
-      "script-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
@@ -145,6 +145,16 @@ async function initDb() {
     );
   `);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS assignments (
+      id SERIAL PRIMARY KEY,
+      userId INT REFERENCES users(id) ON DELETE CASCADE,
+      serviceId INT REFERENCES services(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ DEFAULT now(),
+      UNIQUE(userId, serviceId)
+    );
+  `);
+
   // Seed inicial se estiver vazio
   const usersCount = (await query('SELECT COUNT(*)::int AS count FROM users'))[0].count;
   if (usersCount === 0) {
@@ -248,6 +258,43 @@ app.put('/api/services/:id', async (req, res) => {
 app.delete('/api/services/:id', async (req, res) => {
   const id = Number(req.params.id);
   await query('DELETE FROM services WHERE id=$1', [id]);
+  res.status(204).end();
+});
+
+// Assignments
+app.get('/api/assignments', async (_req, res) => {
+  const rows = await query(`
+    SELECT a.id, a.userid, a.serviceid, u.name AS username, u.role, s.name AS servicename
+    FROM assignments a
+    JOIN users u ON u.id = a.userId
+    JOIN services s ON s.id = a.serviceId
+    ORDER BY u.name, s.name
+  `);
+  res.json(rows);
+});
+
+app.post('/api/assignments', async (req, res) => {
+  const body = req.body || {};
+  const userId = Number(body.userId);
+  const serviceId = Number(body.serviceId);
+  if (!userId || !serviceId) return res.status(400).json({ error: 'userId e serviceId são obrigatórios' });
+  try {
+    const rows = await query(
+      `INSERT INTO assignments (userId, serviceId) VALUES ($1,$2) ON CONFLICT DO NOTHING RETURNING *`,
+      [userId, serviceId]
+    );
+    if (!rows.length) {
+      return res.status(200).json({ message: 'Já atribuído' });
+    }
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/assignments/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  await query('DELETE FROM assignments WHERE id=$1', [id]);
   res.status(204).end();
 });
 
