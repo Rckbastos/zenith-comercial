@@ -655,7 +655,7 @@
                         </div>
                         <div class="form-group">
                             <label>Telefone <span>*</span></label>
-                            <input type="tel" id="userPhone" placeholder="(11) 99999-9999" required>
+                            <input type="tel" id="userPhone" placeholder="(11) 99999-9999" required autocomplete="tel">
                         </div>
                         <div class="form-group">
                             <label>Cargo <span>*</span></label>
@@ -1309,21 +1309,13 @@
                 return;
             }
 
-            // Agrupar por usuário
-            const byUser = assignments.reduce((acc, item) => {
-                const key = item.userId;
-                if (!acc[key]) acc[key] = { ...item, services: [] };
-                acc[key].services.push(item.serviceName || item.servicename);
-                return acc;
-            }, {});
-
-            Object.values(byUser).forEach(item => {
+            assignments.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${item.username || '—'}</td>
                     <td>${item.role || '-'}</td>
-                    <td>${(item.services || []).join(', ') || '-'}</td>
-                    <td>-</td>
+                    <td>${item.serviceName || item.servicename || '-'}</td>
+                    <td><button class=\"btn-icon btn-delete\" title=\"Remover\" onclick=\"deleteAssignment(${item.id})\">🗑️</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1414,6 +1406,12 @@
         async function deleteService(id) {
             if (!confirm('Deseja excluir este serviço?')) return;
             await fetchJson(`/api/services/${id}`, { method: 'DELETE' });
+            loadAdminData();
+        }
+
+        async function deleteAssignment(id) {
+            if (!confirm('Remover este serviço atribuído?')) return;
+            await fetchJson(`/api/assignments/${id}`, { method: 'DELETE' });
             loadAdminData();
         }
 
