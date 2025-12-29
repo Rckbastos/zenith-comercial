@@ -554,7 +554,7 @@
         <div style="height: 20px; width: 1px; background: #D4AF37;"></div>
         <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="color: #D4AF37; font-weight: 600; font-size: 0.875rem;">🔸 Custo Remessa:</span>
-            <span style="color: #10b981; font-weight: 700; font-size: 1rem;">R$ 20,00 + 0,80%</span>
+            <span style="color: #10b981; font-weight: 700; font-size: 1rem;">USD 25,00 + 0,80%</span>
         </div>
     </div>
 
@@ -569,11 +569,15 @@
                 <p>Dashboard do Gerente</p>
             </div>
         </div>
-        <div class="user-info">
+        <div class="user-info" id="userMenuTrigger" style="cursor: pointer; position: relative;">
             <div class="user-avatar" id="userAvatar">JS</div>
             <div class="user-details">
                 <span class="user-name" id="userName">Usuário</span>
                 <span class="user-role" id="userRole">Cargo • Comissão</span>
+            </div>
+            <div id="userMenu" style="display:none; position:absolute; right:0; top:64px; background:#111; border:1px solid #2a2a2a; border-radius:12px; min-width:220px; box-shadow:0 10px 30px rgba(0,0,0,0.35); z-index:999;">
+                <button class="nav-tab" style="width:100%; text-align:left; border:none; background:transparent; padding:0.75rem 1rem; color:#eaeaea;" onclick="openProfileModal()">👤 Perfil</button>
+                <button class="nav-tab" style="width:100%; text-align:left; border:none; background:transparent; padding:0.75rem 1rem; color:#eaeaea;" onclick="logout()">🚪 Logout</button>
             </div>
         </div>
     </div>
@@ -816,9 +820,34 @@
         </div>
     </div>
 
+    <!-- Modal de Perfil -->
+    <div id="profileModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:#0f0f14; border:1px solid #2a2a2a; border-radius:14px; padding:24px; width:95%; max-width:520px; box-shadow:0 20px 70px rgba(0,0,0,0.45); position:relative;">
+            <button onclick="closeProfileModal()" style="position:absolute; top:10px; right:10px; background:#222; border:1px solid #333; color:#eee; width:32px; height:32px; border-radius:50%;">✕</button>
+            <h3 style="color:#D4AF37; margin-top:0;">👤 Perfil do Usuário</h3>
+            <form id="profileForm" style="display:grid; gap:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div id="profileAvatarPreview" style="width:64px; height:64px; border-radius:50%; background:#D4AF37; color:#0a0a0a; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px;">?</div>
+                    <label style="cursor:pointer; color:#D4AF37;">📤 Trocar foto
+                        <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+                    </label>
+                </div>
+                <label>Nome<input type="text" id="profileName" required></label>
+                <label>E-mail<input type="email" id="profileEmail" required></label>
+                <label>Telefone<input type="tel" id="profilePhone"></label>
+                <label>Nova senha (opcional)<input type="password" id="profilePassword" autocomplete="new-password"></label>
+                <div style="display:flex; gap:12px; margin-top:8px;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">💾 Salvar</button>
+                    <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeProfileModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const apiBase = '';
         let currentSellerId = null; // será definido pelo login/usuário encontrado
+        let currentUser = null;
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -937,6 +966,8 @@
             atualizarCotacaoGerente();
             setInterval(atualizarCotacaoGerente, 30000);
             loadGerenteData();
+            setupUserMenu();
+            restoreProfileImage();
         });
 
         function showError(err) {
@@ -1068,6 +1099,7 @@
             document.getElementById('emAnalise').textContent = openCount;
             document.getElementById('taxaAprovacao').textContent = `${approvalRate}%`;
             document.getElementById('taxaAprovacaoSub').textContent = `${concludedCount} aprovadas`;
+            restoreProfileImage();
         }
 
         function resolveSellerId(users) {
@@ -1076,12 +1108,138 @@
                 const found = users.find(u => (u.email || '').toLowerCase() === storedLogin || (u.name || '').toLowerCase() === storedLogin);
                 if (found) {
                     currentSellerId = found.id;
+                    currentUser = found;
                     return;
                 }
             }
             if (!currentSellerId && users.length) {
                 currentSellerId = users[0].id;
+                currentUser = users[0];
             }
+        }
+
+        // --- Perfil / Menu ---
+        function setupUserMenu() {
+            const trigger = document.getElementById('userMenuTrigger');
+            const menu = document.getElementById('userMenu');
+            if (!trigger || !menu) return;
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            });
+            document.addEventListener('click', () => {
+                menu.style.display = 'none';
+            });
+        }
+
+        function openProfileModal() {
+            if (!currentUser) {
+                alert('Usuário não identificado.');
+                return;
+            }
+            document.getElementById('profileName').value = currentUser.name || '';
+            document.getElementById('profileEmail').value = currentUser.email || '';
+            document.getElementById('profilePhone').value = currentUser.phone || '';
+            document.getElementById('profilePassword').value = '';
+            updateProfileAvatarPreview(currentUser);
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        function logout() {
+            localStorage.removeItem('loggedLogin');
+            window.location.href = '/login-gerente.html';
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!currentUser) return alert('Usuário não identificado.');
+            const payload = {
+                name: document.getElementById('profileName').value,
+                email: document.getElementById('profileEmail').value,
+                phone: document.getElementById('profilePhone').value,
+                role: currentUser.role,
+                commission: currentUser.commission,
+                status: currentUser.status
+            };
+            const newPassword = document.getElementById('profilePassword').value;
+            try {
+                await fetchJson(`/api/users/${currentUser.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                await fetchJson(`/api/users/${currentUser.id}/credentials`, { method: 'PATCH', body: JSON.stringify({ email: payload.email, password: newPassword, role: payload.role }) });
+                if (payload.email) localStorage.setItem('loggedLogin', payload.email);
+                saveProfileImage();
+                alert('✅ Perfil atualizado!');
+                closeProfileModal();
+                loadGerenteData();
+            } catch (err) {
+                showError(err);
+            }
+        });
+
+        document.getElementById('profileImageInput').addEventListener('change', handleProfileImage);
+
+        function handleProfileImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                setAvatarImages(dataUrl);
+                if (currentUser?.id) {
+                    localStorage.setItem(`profile_img_${currentUser.id}`, dataUrl);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function restoreProfileImage() {
+            if (!currentUser?.id) return;
+            const dataUrl = localStorage.getItem(`profile_img_${currentUser.id}`);
+            if (dataUrl) {
+                setAvatarImages(dataUrl);
+            } else {
+                setAvatarInitials(currentUser);
+            }
+        }
+
+        function setAvatarImages(dataUrl) {
+            const avatar = document.getElementById('userAvatar');
+            const preview = document.getElementById('profileAvatarPreview');
+            [avatar, preview].forEach(el => {
+                if (el) {
+                    el.style.backgroundImage = `url(${dataUrl})`;
+                    el.style.backgroundSize = 'cover';
+                    el.textContent = '';
+                }
+            });
+        }
+
+        function setAvatarInitials(user) {
+            const initials = (user?.name || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+            const avatar = document.getElementById('userAvatar');
+            const preview = document.getElementById('profileAvatarPreview');
+            [avatar, preview].forEach(el => {
+                if (el) {
+                    el.style.backgroundImage = '';
+                    el.textContent = initials;
+                }
+            });
+        }
+
+        function updateProfileAvatarPreview(user) {
+            const dataUrl = localStorage.getItem(`profile_img_${user.id}`);
+            if (dataUrl) {
+                setAvatarImages(dataUrl);
+            } else {
+                setAvatarInitials(user);
+            }
+        }
+
+        function saveProfileImage() {
+            restoreProfileImage();
         }
     </script>
 </body>

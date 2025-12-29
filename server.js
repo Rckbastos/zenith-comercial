@@ -500,6 +500,42 @@ app.delete('/api/orders/:id', async (req, res) => {
   res.status(204).end();
 });
 
+// Atualiza credenciais (email/senha) vinculadas a um usuário
+app.patch('/api/users/:id/credentials', async (req, res) => {
+  const id = Number(req.params.id);
+  const body = req.body || {};
+  const [user] = await query('SELECT * FROM users WHERE id=$1', [id]);
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+  const login = (body.email || user.email || user.name || '').trim();
+  if (!login) return res.status(400).json({ error: 'Email é obrigatório para atualizar credenciais' });
+
+  const roleLower = (body.role || user.role || '').toLowerCase();
+  const authRole = roleLower.includes('admin') ? 'admin' : 'gerente';
+  const authTarget = authRole === 'gerente' ? '/zenith-gerente-completo.html' : '/zenith-admin-completo.html';
+
+  let passwordHash = null;
+  if (body.password) {
+    passwordHash = bcrypt.hashSync(body.password, 10);
+  } else {
+    const existing = await query('SELECT password_hash FROM auth_accounts WHERE lower(login)=lower($1) OR lower(email)=lower($1) LIMIT 1', [login]);
+    passwordHash = existing[0]?.password_hash || undefined;
+  }
+
+  await query(
+    `INSERT INTO auth_accounts (login, email, password_hash, role, target)
+     VALUES ($1,$2,$3,$4,$5)
+     ON CONFLICT (login) DO UPDATE
+       SET email = EXCLUDED.email,
+           password_hash = COALESCE(EXCLUDED.password_hash, auth_accounts.password_hash),
+           role = EXCLUDED.role,
+           target = EXCLUDED.target`,
+    [login, body.email || user.email, passwordHash, authRole, authTarget]
+  );
+
+  res.json({ status: 'ok' });
+});
+
 // Login simples (email ou login + senha)
 app.post('/api/login', async (req, res) => {
   const body = req.body || {};
