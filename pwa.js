@@ -1,5 +1,5 @@
 (() => {
-    const serviceWorkerPath = '/service-worker.js';
+    const serviceWorkerPath = 'service-worker.js';
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
