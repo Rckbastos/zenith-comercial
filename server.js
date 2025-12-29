@@ -52,6 +52,12 @@ app.get('/zenith-gerente-completo.html', (_req, res) => {
   res.sendFile(path.join(__dirname, 'zenith-gerente-completo.html'));
 });
 
+// Fallback para outras rotas (exceto API e assets), retorna index.html
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.includes('.')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 async function query(sql, params = []) {
   const client = await pool.connect();
   try {
