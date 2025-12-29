@@ -583,9 +583,9 @@
             </div>
 
             <div class="filter-buttons">
-                <button class="filter-btn active">Hoje</button>
-                <button class="filter-btn">Semanal</button>
-                <button class="filter-btn">Mensal</button>
+                <button class="filter-btn active" onclick="setFilter('today')">Hoje</button>
+                <button class="filter-btn" onclick="setFilter('week')">Semanal</button>
+                <button class="filter-btn" onclick="setFilter('month')">Mensal</button>
             </div>
 
             <div class="kpi-grid">
@@ -1003,6 +1003,7 @@
         let cachedUsers = [];
         let cachedServices = [];
         let cachedOrders = [];
+        let currentFilter = 'today';
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -1253,10 +1254,22 @@
             });
         }
 
+        function filterOrdersByPeriod(orders, period) {
+            if (!orders || !orders.length) return [];
+            const now = new Date();
+            const start = new Date();
+            if (period === 'today') start.setHours(0, 0, 0, 0);
+            if (period === 'week') start.setDate(now.getDate() - 7);
+            if (period === 'month') start.setDate(now.getDate() - 30);
+            return orders.filter(o => {
+                const d = new Date(o.date || o.created_at || now);
+                if (Number.isNaN(d.getTime())) return true;
+                if (period === 'today') return d.toDateString() === now.toDateString();
+                return d >= start;
+            });
+        }
+
         function renderOrders(orders, users, services) {
-            cachedUsers = users;
-            cachedServices = services;
-            cachedOrders = orders;
             const usersMap = Object.fromEntries(users.map(u => [u.id, u]));
             const servicesMap = Object.fromEntries(services.map(s => [s.id, s]));
 
@@ -1336,9 +1349,12 @@
                     fetchJson('/api/services'),
                     fetchJson('/api/orders')
                 ]);
+                cachedUsers = users;
+                cachedServices = services;
+                cachedOrders = orders;
                 renderUsers(users);
                 renderServices(services);
-                renderOrders(orders, users, services);
+                applyFilterAndRender();
             } catch (err) {
                 showError(err);
             }
@@ -1348,6 +1364,20 @@
             atualizarCotacao();
             loadAdminData();
         });
+
+        function setFilter(period) {
+            currentFilter = period;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            const index = period === 'today' ? 0 : period === 'week' ? 1 : 2;
+            const btn = document.querySelectorAll('.filter-btn')[index];
+            if (btn) btn.classList.add('active');
+            applyFilterAndRender();
+        }
+
+        function applyFilterAndRender() {
+            const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter);
+            renderOrders(filteredOrders, cachedUsers, cachedServices);
+        }
     </script>
 </body>
 </html>
