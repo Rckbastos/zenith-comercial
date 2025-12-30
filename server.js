@@ -153,7 +153,8 @@ async function computeFinancials(order, seller, service) {
   const rawQty = Number(order.quantity);
   const quantity = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 0;
 
-  const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
+  // Preço unitário informado (preço fechado por USDT)
+  const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit ?? order.price);
   const unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
     ? unitPriceRaw
     : quantity > 0
@@ -165,13 +166,13 @@ async function computeFinancials(order, seller, service) {
   if (serviceCostType === 'cotacao_percentual') {
     quote = await fetchUsdtQuote();
   }
-  const fallbackQuote = quantity > 0 ? unitPrice : 0;
+  const fallbackQuote = unitPrice;
   if (!Number.isFinite(quote) || quote <= 0) quote = fallbackQuote;
 
-  // Preço de venda total sempre baseado no preço unitário informado
-  const salesTotal = unitPrice * quantity;
-  const price = salesTotal;
+  // Preço de venda total (o que o cliente paga)
+  const price = unitPrice * quantity;
 
+  // Custo de compra
   let cost = 0;
   if (service) {
     if (serviceCostType === 'cotacao_percentual') {
@@ -179,7 +180,7 @@ async function computeFinancials(order, seller, service) {
       cost = quote * quantity;
       cost = cost + (cost * (pct / 100));
     } else {
-      cost = calcCost(salesTotal, service, { quote: quote || fallbackQuote, quantity });
+      cost = calcCost(price, service, { quote: quote || fallbackQuote, quantity });
     }
   } else if (order.cost != null) {
     cost = Number(order.cost);
@@ -187,7 +188,7 @@ async function computeFinancials(order, seller, service) {
 
   const profit = price - cost;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
-  const commissionValue = profit * (commissionRate / 100);
+  const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
 
   return {
     price,
@@ -514,10 +515,7 @@ app.get('/api/orders', async (_req, res) => {
       service = servicesByName[order.productType.toLowerCase()];
     }
     const seller = usersMap[order.sellerId];
-    // Recalcula só se custo não existir; evita oscilar com cotação nova
-    if (order.cost > 0 || order.profit) {
-      return order;
-    }
+    // Recalcula sempre para garantir consistência com a lógica atual
     const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
     return { ...order, ...calc, quote: calc.quoteUsed, unitPrice: calc.unitPriceUsed };
   }));
