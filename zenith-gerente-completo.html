@@ -1020,13 +1020,13 @@
                     document.getElementById('usdtPriceGerente').textContent = priceFormatted;
                     document.getElementById('topUsdtPrice').textContent = priceFormatted;
                     const live = document.getElementById('usdtQuoteLive');
-                    if (live) live.textContent = `Cotação: ${priceFormatted}`;
-                    lastUsdtQuote = Number(price);
-
                     // custo com spread 0,30%
                     const spreadPercent = 0.30;
                     const costWithSpread = priceNum * (1 + (spreadPercent / 100));
                     const costFormatted = 'R$ ' + costWithSpread.toFixed(4).replace('.', ',');
+                    if (live) live.textContent = `Cotação: ${priceFormatted} • c/ spread 0,30%: ${costFormatted}`;
+                    lastUsdtQuote = Number(price);
+
                     const costEl = document.getElementById('usdtCostPrice');
                     if (costEl) costEl.textContent = costFormatted;
 

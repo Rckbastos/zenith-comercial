@@ -97,6 +97,46 @@
             color: #0a0a0a;
         }
 
+        .top-info-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: linear-gradient(135deg, #1a3a52 0%, #0a2a42 100%);
+            border-bottom: 2px solid #D4AF37;
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .top-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .top-info-label {
+            color: #D4AF37;
+            font-weight: 600;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .top-info-value {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        .top-info-sep {
+            height: 20px;
+            width: 1px;
+            background: #D4AF37;
+        }
+
         /* Container */
         .container {
             max-width: 1400px;
@@ -484,6 +524,66 @@
             color: #fff;
         }
 
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-card {
+            background: #0f0f0f;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            border-radius: 12px;
+            padding: 1.75rem;
+            width: min(900px, 94vw);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .modal-header h3 {
+            color: #D4AF37;
+        }
+
+        .modal-close {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            color: #D4AF37;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #D4AF37;
+            color: #0a0a0a;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
         .info-box {
             background: rgba(212, 175, 55, 0.1);
             border: 1px solid rgba(212, 175, 55, 0.3);
@@ -562,6 +662,22 @@
     </style>
 </head>
 <body>
+    <div class="top-info-bar">
+        <div class="top-info-item">
+            <span class="top-info-label">💰 Dólar:</span>
+            <span id="topUsdtPrice" class="top-info-value">R$ --</span>
+        </div>
+        <div class="top-info-sep"></div>
+        <div class="top-info-item">
+            <span class="top-info-label">🔹 Custo USDT:</span>
+            <span class="top-info-value" style="color: #10b981;">0,30%</span>
+        </div>
+        <div class="top-info-sep"></div>
+        <div class="top-info-item">
+            <span class="top-info-label">🔸 Custo Remessa:</span>
+            <span class="top-info-value" style="color: #10b981;">USD 25,00 + 0,80%</span>
+        </div>
+    </div>
     <!-- Header -->
     <div class="header">
         <div class="logo-section">
@@ -741,20 +857,27 @@
                 <h3><span>🛠️</span> Cadastrar Serviço</h3>
                 <form id="serviceForm">
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label>Nome do Serviço <span>*</span></label>
-                            <input type="text" id="serviceName" placeholder="Ex: Consignado INSS" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Tipo de Custo <span>*</span></label>
-                            <select id="costType" required onchange="toggleCostFields()">
-                                <option value="">Selecione...</option>
-                                <option value="fixo">Fixo (R$)</option>
-                                <option value="percentual">Percentual (%)</option>
-                                <option value="fixo_percentual">Fixo + Percentual</option>
-                                <option value="cotacao_percentual">Cotação + Percentual</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label>Nome do Serviço <span>*</span></label>
+                        <input type="text" id="serviceName" placeholder="Ex: Consignado INSS" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Moeda <span>*</span></label>
+                        <select id="serviceCurrency" required>
+                            <option value="BRL" selected>BRL - Real (R$)</option>
+                            <option value="USD">USD - Dólar ($)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Custo <span>*</span></label>
+                        <select id="costType" required onchange="toggleCostFields()">
+                            <option value="">Selecione...</option>
+                            <option value="fixo">Fixo (valor)</option>
+                            <option value="percentual">Percentual (%)</option>
+                            <option value="fixo_percentual">Fixo + Percentual</option>
+                            <option value="cotacao_percentual">Cotação + Percentual</option>
+                        </select>
+                    </div>
                         <div class="form-group" id="costFixoGroup" style="display: none;">
                             <label>Custo Fixo (R$) <span>*</span></label>
                             <input type="number" id="costFixo" placeholder="Ex: 20" min="0" step="0.01">
@@ -1011,6 +1134,68 @@
         </div>
     </div>
 
+    <!-- Modal de Edição de Usuário -->
+    <div id="editUserModal" class="modal-overlay">
+        <div class="modal-card" onclick="event.stopPropagation();">
+            <div class="modal-header">
+                <h3>✏️ Editar Usuário</h3>
+                <button type="button" class="modal-close" onclick="closeEditUserModal()">&times;</button>
+            </div>
+            <form id="editUserForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome completo <span>*</span></label>
+                        <input type="text" id="editUserName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail <span>*</span></label>
+                        <input type="email" id="editUserEmail" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone <span>*</span></label>
+                        <input type="tel" id="editUserPhone" required autocomplete="tel">
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo <span>*</span></label>
+                        <select id="editUserRole" required>
+                            <option value="">Selecione...</option>
+                            <option value="Administrador">Administrador</option>
+                            <option value="Gerente de Contas">Gerente de Contas</option>
+                            <option value="Consultor Comercial">Consultor Comercial</option>
+                            <option value="Executivo de Vendas">Executivo de Vendas</option>
+                            <option value="Analista Comercial">Analista Comercial</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nova Senha</label>
+                        <input type="password" id="editUserPassword" placeholder="Deixe em branco para manter" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label>Comissão sobre Lucro (%) <span>*</span></label>
+                        <input type="number" id="editUserCommission" placeholder="Ex: 15" min="0" max="100" step="0.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status <span>*</span></label>
+                        <select id="editUserStatus" required>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Inativo">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="info-box" style="margin-top: 1rem;">
+                    <span class="info-box-icon">ℹ️</span>
+                    <div class="info-box-text">
+                        Atualize a senha apenas se desejar trocá-la. Os demais campos também sincronizam o login desse usuário.
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">💾 Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal de Comprovante -->
     <div id="comprovanteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center;">
         <div style="position: relative; max-width: 90%; max-height: 90%; background: #1a1a1a; border-radius: 12px; padding: 2rem; border: 2px solid #D4AF37;">
@@ -1034,6 +1219,7 @@
         let cachedOrders = [];
         let cachedAssignments = [];
         let currentFilter = 'month';
+        let editingUserId = null;
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -1077,6 +1263,7 @@
             e.preventDefault();
             const payload = {
                 name: document.getElementById('serviceName').value,
+                currency: document.getElementById('serviceCurrency').value || 'BRL',
                 costType: document.getElementById('costType').value,
                 costFixo: document.getElementById('costFixo').value,
                 costPercentual: document.getElementById('costPercentual').value,
@@ -1129,6 +1316,87 @@
             alert('🔍 Testando API...\n\nResultado: Conexão bem-sucedida!\nCotação: R$ 5,42');
         }
 
+        function openEditUserModal(id) {
+            const modal = document.getElementById('editUserModal');
+            const user = (cachedUsers || []).find(u => Number(u.id) === Number(id));
+            if (!modal || !user) {
+                alert('⚠️ Usuário não encontrado para edição.');
+                return;
+            }
+
+            editingUserId = user.id;
+            document.getElementById('editUserName').value = user.name || '';
+            document.getElementById('editUserEmail').value = user.email || '';
+            document.getElementById('editUserPhone').value = user.phone || '';
+            document.getElementById('editUserRole').value = user.role || '';
+            document.getElementById('editUserCommission').value = user.commission ?? 0;
+            document.getElementById('editUserStatus').value = user.status || 'Ativo';
+            document.getElementById('editUserPassword').value = '';
+
+            modal.style.display = 'flex';
+        }
+
+        function closeEditUserModal() {
+            const modal = document.getElementById('editUserModal');
+            const form = document.getElementById('editUserForm');
+            editingUserId = null;
+            if (form) form.reset();
+            if (modal) modal.style.display = 'none';
+        }
+
+        function handleEditUserOverlay(event) {
+            if (event.target.id === 'editUserModal') {
+                closeEditUserModal();
+            }
+        }
+
+        const editUserModalEl = document.getElementById('editUserModal');
+        if (editUserModalEl) {
+            editUserModalEl.addEventListener('click', handleEditUserOverlay);
+        }
+
+        document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!editingUserId) {
+                alert('Nenhum usuário selecionado para edição.');
+                return;
+            }
+
+            const commissionValue = parseFloat(document.getElementById('editUserCommission').value);
+            const password = document.getElementById('editUserPassword').value;
+
+            const payload = {
+                name: document.getElementById('editUserName').value,
+                email: document.getElementById('editUserEmail').value,
+                phone: document.getElementById('editUserPhone').value,
+                role: document.getElementById('editUserRole').value,
+                commission: Number.isFinite(commissionValue) ? commissionValue : 0,
+                status: document.getElementById('editUserStatus').value
+            };
+
+            try {
+                await fetchJson(`/api/users/${editingUserId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+
+                await fetchJson(`/api/users/${editingUserId}/credentials`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        email: payload.email,
+                        role: payload.role,
+                        password: password || undefined
+                    })
+                });
+
+                alert('✅ Usuário atualizado com sucesso!');
+                closeEditUserModal();
+                loadAdminData();
+            } catch (err) {
+                showError(err);
+            }
+        });
+
         function concluirOrdem(id) {
             if (!confirm('Deseja marcar esta ordem como concluída?')) return;
             fetchJson(`/api/orders/${id}/status`, {
@@ -1173,6 +1441,10 @@
                 if (data && data.price) {
                     const price = parseFloat(data.price).toFixed(4);
                     document.getElementById('usdtPrice').textContent = 'R$ ' + price.replace('.', ',');
+                    const topPriceEl = document.getElementById('topUsdtPrice');
+                    if (topPriceEl) {
+                        topPriceEl.textContent = 'R$ ' + price.replace('.', ',');
+                    }
 
                     const now = new Date();
                     const dateStr = now.toLocaleDateString('pt-BR');
@@ -1191,18 +1463,25 @@
             }
         }
 
-        document.getElementById('userPhone').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.substring(0, 11);
+        function attachPhoneMask(elementId) {
+            const input = document.getElementById(elementId);
+            if (!input) return;
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 11) value = value.substring(0, 11);
 
-            if (value.length > 6) {
-                value = `(${value.substring(0, 2)}) ${value.substring(2, 7)}-${value.substring(7)}`;
-            } else if (value.length > 2) {
-                value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
-            }
+                if (value.length > 6) {
+                    value = `(${value.substring(0, 2)}) ${value.substring(2, 7)}-${value.substring(7)}`;
+                } else if (value.length > 2) {
+                    value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+                }
 
-            e.target.value = value;
-        });
+                e.target.value = value;
+            });
+        }
+
+        attachPhoneMask('userPhone');
+        attachPhoneMask('editUserPhone');
 
         function toggleCostFields() {
             const costType = document.getElementById('costType').value;
@@ -1267,6 +1546,15 @@
             return (value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
         }
 
+        function formatCurrencyValue(currency, value) {
+            const num = Number(value ?? 0);
+            if (!Number.isFinite(num)) return value ?? '-';
+            if ((currency || '').toUpperCase() === 'USD') {
+                return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            return formatBRL(num);
+        }
+
         function formatDate(value) {
             if (!value) return '--';
             const d = new Date(value);
@@ -1286,6 +1574,7 @@
                     <td><span class=\"badge badge-gold\">${(user.commission ?? 0)}%</span></td>
                     <td><span class=\"badge ${user.status === 'Ativo' ? 'badge-success' : 'badge-warning'}\">${user.status}</span></td>
                     <td>
+                        <button class=\"btn-icon btn-edit\" title=\"Editar\" onclick=\"openEditUserModal(${user.id})\">✏️</button>
                         <button class=\"btn-icon btn-delete\" title=\"Excluir\" onclick=\"deleteUser(${user.id})\">🗑️</button>
                     </td>
                 `;
@@ -1298,10 +1587,12 @@
             if (!tbody) return;
             tbody.innerHTML = '';
             services.forEach(service => {
-                const costLabel = service.costType === 'fixo' ? formatBRL(service.costFixo) :
+                const currency = (service.currency || 'BRL').toUpperCase();
+                const fixedValue = formatCurrencyValue(currency, service.costFixo);
+                const costLabel = service.costType === 'fixo' ? fixedValue :
                     service.costType === 'percentual' ? `${service.costPercentual}%` :
-                    service.costType === 'fixo_percentual' ? `${formatBRL(service.costFixo)} + ${service.costPercentual}%` :
-                    `Cotação + ${service.costPercentual}%`;
+                    service.costType === 'fixo_percentual' ? `${fixedValue} + ${service.costPercentual}%` :
+                    `Cotação (${currency}) + ${service.costPercentual}%`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${service.name}</td>

@@ -34,6 +34,11 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS quote NUMERIC(14,6),
       ADD COLUMN IF NOT EXISTS unitPrice NUMERIC(14,6);
   `);
+
+  await query(`
+    ALTER TABLE services
+      ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'BRL';
+  `);
 }
 
 // aceita payloads maiores (comprovantes base64)
@@ -238,6 +243,7 @@ function normalizeService(row = {}) {
     costPercentual: Number(row.costPercentual ?? row.costpercentual ?? 0),
     price: Number(row.price ?? 0),
     status: row.status,
+    currency: row.currency || 'BRL',
     description: row.description
   };
 }
@@ -297,6 +303,7 @@ async function initDb() {
       costPercentual NUMERIC(7,4) DEFAULT 0,
       price NUMERIC(14,2) DEFAULT 0,
       status TEXT DEFAULT 'Ativo',
+      currency TEXT DEFAULT 'BRL',
       description TEXT
     );
   `);
@@ -442,9 +449,9 @@ app.get('/api/services', async (_req, res) => {
 app.post('/api/services', async (req, res) => {
   const body = req.body || {};
   const rows = await query(
-    `INSERT INTO services (name, costType, costFixo, costPercentual, price, status, description)
-     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-    [body.name, body.costType, body.costFixo || 0, body.costPercentual || 0, body.price || 0, body.status || 'Ativo', body.description || '']
+    `INSERT INTO services (name, costType, costFixo, costPercentual, price, status, currency, description)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+    [body.name, body.costType, body.costFixo || 0, body.costPercentual || 0, body.price || 0, body.status || 'Ativo', body.currency || 'BRL', body.description || '']
   );
   res.status(201).json(normalizeService(rows[0]));
 });
@@ -453,8 +460,8 @@ app.put('/api/services/:id', async (req, res) => {
   const id = Number(req.params.id);
   const body = req.body || {};
   const rows = await query(
-    `UPDATE services SET name=$1, costType=$2, costFixo=$3, costPercentual=$4, price=$5, status=$6, description=$7 WHERE id=$8 RETURNING *`,
-    [body.name, body.costType, body.costFixo || 0, body.costPercentual || 0, body.price || 0, body.status || 'Ativo', body.description || '', id]
+    `UPDATE services SET name=$1, costType=$2, costFixo=$3, costPercentual=$4, price=$5, status=$6, currency=$7, description=$8 WHERE id=$9 RETURNING *`,
+    [body.name, body.costType, body.costFixo || 0, body.costPercentual || 0, body.price || 0, body.status || 'Ativo', body.currency || 'BRL', body.description || '', id]
   );
   if (!rows.length) return res.status(404).json({ error: 'Serviço não encontrado' });
   res.json(normalizeService(rows[0]));
