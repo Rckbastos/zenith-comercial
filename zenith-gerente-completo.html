@@ -951,6 +951,7 @@
             const remessaValue = Number(document.getElementById('remessaValue').value || 0);
             const remessaDolar = Number(document.getElementById('remessaDolar').value || 0);
             const wallet = document.getElementById('usdtWallet').value || null;
+            const isRemessa = (selectedService?.name || '').trim().toLowerCase() === 'remessa';
 
             if (!fileInput.files.length) {
                 alert('⚠️ Por favor, anexe o comprovante de pagamento!');
@@ -969,6 +970,7 @@
                 sellerId: currentSellerId,
                 serviceId: selectedService?.id || null,
                 quantity: usdtQuantity || remessaValue || 0,
+                unitPrice: isRemessa ? remessaDolar : usdtPrice,
                 price: priceBRL,
                 cost: 0,
                 status: 'open',

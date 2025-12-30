@@ -168,6 +168,31 @@ async function computeFinancials(order, seller, service) {
     unitPrice = priceFromPayload / quantity; // deriva unitário apenas se não veio
   }
 
+  // Regra específica apenas para o serviço "Remessa": custo = (cotação + 0,30%) * qtd + 25 USD
+  const serviceName = (service?.name || order.productType || '').toString().trim().toLowerCase();
+  const isRemessa = serviceName === 'remessa';
+  if (isRemessa) {
+    let quote = await fetchUsdtQuote();
+    if (!Number.isFinite(quote) || quote <= 0) {
+      quote = unitPrice || priceFromPayload / (quantity || 1) || 0;
+    }
+    const quoteWithSpread = quote * 1.003; // +0,30%
+    const price = priceFromPayload > 0 ? priceFromPayload : unitPrice * quantity;
+    const cost = (quoteWithSpread * quantity) + (25 * quoteWithSpread);
+    const profit = cost - price;
+    const commissionRate = seller ? Number(seller.commission || 0) : 0;
+    const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
+
+    return {
+      price,
+      cost,
+      profit,
+      commissionValue,
+      quoteUsed: quoteWithSpread,
+      unitPriceUsed: unitPrice || quoteWithSpread
+    };
+  }
+
   const serviceCostType = service?.costType ?? service?.costtype;
   let quote = null;
   if (serviceCostType === 'cotacao_percentual') {
