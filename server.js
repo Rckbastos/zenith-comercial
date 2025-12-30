@@ -171,10 +171,13 @@ async function computeFinancials(order, seller, service) {
   const quantity = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 0;
 
   const priceFromPayload = Number(order.price) || 0; // pode ser total informado
+  const servicePrice = service ? Number(service.price ?? 0) : 0;
 
   // Preço unitário informado (preço fechado por USDT)
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
-  let unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0 ? unitPriceRaw : 0;
+  let unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
+    ? unitPriceRaw
+    : (Number.isFinite(servicePrice) && servicePrice > 0 ? servicePrice : 0);
 
   if (!unitPrice && priceFromPayload > 0 && quantity > 0) {
     unitPrice = priceFromPayload / quantity; // deriva unitário apenas se não veio
@@ -184,28 +187,31 @@ async function computeFinancials(order, seller, service) {
   const serviceName = (service?.name || order.productType || '').toString().trim().toLowerCase();
   const isRemessa = serviceName === 'remessa';
   if (isRemessa) {
-    // Cotação USD (não USDT) com spread 0,80% + taxa fixa 25 USD convertida na cotação base
+    // Cotação USD (não USDT) com spread configurável (costPercentual) e taxa fixa (costFixo) cadastrados no serviço
     let quote = await fetchUsdQuote();
     if (!Number.isFinite(quote) || quote <= 0) {
       quote = Number(unitPrice) || (priceFromPayload / (quantity || 1)) || 5.5;
     }
-    const spreadPercent = 0.80;
+    const spreadPercent = Number(service?.costPercentual ?? 0.8);
     const quoteWithSpread = quote * (1 + (spreadPercent / 100));
 
     const price = priceFromPayload > 0 ? priceFromPayload : unitPrice * quantity;
     const custoBase = quoteWithSpread * quantity;
-    const taxa25usd = 25 * quote; // 25 USD convertidos na cotação base (sem spread)
-    const cost = custoBase + taxa25usd;
-    const profit = price - cost; // lucro = venda - custo
+    const fixedUsdFee = Number.isFinite(Number(service?.costFixo)) ? Number(service.costFixo) : 25;
+    const taxaFixaConvertida = fixedUsdFee * quote; // taxa fixa em USD convertida pela cotação base (sem spread)
+    const cost = custoBase + taxaFixaConvertida;
+    const profit = price - cost; // lucro = venda - custo (positivo = ganho)
     const commissionRate = seller ? Number(seller.commission || 0) : 0;
     const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
 
     console.log('=== DEBUG REMESSA ===');
     console.log('quantity:', quantity);
     console.log('quote (dólar):', quote);
-    console.log('quote com spread 0,80%:', quoteWithSpread);
+    console.log('spread aplicado (%):', spreadPercent);
+    console.log('quote com spread:', quoteWithSpread);
     console.log('custo_base:', custoBase);
-    console.log('taxa_25usd:', taxa25usd);
+    console.log('taxa_fixa_usd:', fixedUsdFee);
+    console.log('taxa_fixa_convertida:', taxaFixaConvertida);
     console.log('cost (total):', cost);
     console.log('unitPrice (venda):', unitPrice);
     console.log('price (total venda):', price);
@@ -247,7 +253,7 @@ async function computeFinancials(order, seller, service) {
     cost = Number(order.cost);
   }
 
-  const profit = cost - price;
+  const profit = price - cost; // lucro = venda - custo
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
 
