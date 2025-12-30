@@ -661,6 +661,14 @@
                     <div class="stat-value" id="usdtPriceGerente" style="color: #D4AF37;">R$ 5,54</div>
                     <div class="stat-subtitle" style="color: #10b981;">● Tempo real</div>
                 </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #52341a 0%, #42250a 100%); border: 2px solid #ff6b35;">
+                    <div class="stat-header">
+                        <span class="stat-title">Custo USDT (c/ spread)</span>
+                        <span class="stat-icon">📈</span>
+                    </div>
+                    <div class="stat-value" id="usdtCostPrice" style="color: #ff6b35;">R$ 0,00</div>
+                    <div class="stat-subtitle" style="color: #94a3b8;">Cotação + 0,30%</div>
+                </div>
             </div>
         </div>
 
@@ -1006,17 +1014,28 @@
                 const data = await response.json();
 
                 if (data && data.price) {
-                    const price = parseFloat(data.price).toFixed(4);
+                    const priceNum = parseFloat(data.price);
+                    const price = priceNum.toFixed(4);
                     const priceFormatted = 'R$ ' + price.replace('.', ',');
                     document.getElementById('usdtPriceGerente').textContent = priceFormatted;
                     document.getElementById('topUsdtPrice').textContent = priceFormatted;
                     const live = document.getElementById('usdtQuoteLive');
                     if (live) live.textContent = `Cotação: ${priceFormatted}`;
                     lastUsdtQuote = Number(price);
+
+                    // custo com spread 0,30%
+                    const spreadPercent = 0.30;
+                    const costWithSpread = priceNum * (1 + (spreadPercent / 100));
+                    const costFormatted = 'R$ ' + costWithSpread.toFixed(4).replace('.', ',');
+                    const costEl = document.getElementById('usdtCostPrice');
+                    if (costEl) costEl.textContent = costFormatted;
+
                     console.log('Cotação USDT atualizada (Gerente):', price);
                 }
             } catch (error) {
                 console.error('Erro ao buscar cotação:', error);
+                const costEl = document.getElementById('usdtCostPrice');
+                if (costEl) costEl.textContent = 'R$ --';
             }
         }
 

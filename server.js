@@ -188,7 +188,7 @@ async function computeFinancials(order, seller, service) {
     cost = Number(order.cost);
   }
 
-  const profit = price - cost;
+  const profit = cost - price;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
 
