@@ -153,13 +153,15 @@ async function computeFinancials(order, seller, service) {
   const rawQty = Number(order.quantity);
   const quantity = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 0;
 
+  const priceFromPayload = Number(order.price) || 0; // pode ser total informado
+
   // Preço unitário informado (preço fechado por USDT)
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
-  const unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
-    ? unitPriceRaw
-    : quantity > 0
-      ? (Number(order.price) || 0) / quantity
-      : 0;
+  let unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0 ? unitPriceRaw : 0;
+
+  if (!unitPrice && priceFromPayload > 0 && quantity > 0) {
+    unitPrice = priceFromPayload / quantity; // deriva unitário apenas se não veio
+  }
 
   const serviceCostType = service?.costType ?? service?.costtype;
   let quote = null;
@@ -170,7 +172,7 @@ async function computeFinancials(order, seller, service) {
   if (!Number.isFinite(quote) || quote <= 0) quote = fallbackQuote;
 
   // Preço de venda total (o que o cliente paga)
-  const price = unitPrice * quantity;
+  const price = priceFromPayload > 0 ? priceFromPayload : unitPrice * quantity;
 
   // Custo de compra
   let cost = 0;
