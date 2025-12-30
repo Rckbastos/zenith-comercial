@@ -178,7 +178,8 @@ async function computeFinancials(order, seller, service) {
     }
     const quoteWithSpread = quote * 1.003; // +0,30%
     const price = priceFromPayload > 0 ? priceFromPayload : unitPrice * quantity;
-    const cost = (quoteWithSpread * quantity) + (25 * quoteWithSpread);
+    // custo: cotação com spread * qty + taxa fixa 25 USD convertida pela cotação base (sem spread)
+    const cost = (quoteWithSpread * quantity) + (25 * quote);
     const profit = cost - price;
     const commissionRate = seller ? Number(seller.commission || 0) : 0;
     const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
@@ -188,8 +189,8 @@ async function computeFinancials(order, seller, service) {
       cost,
       profit,
       commissionValue,
-      quoteUsed: quoteWithSpread,
-      unitPriceUsed: unitPrice || quoteWithSpread
+      quoteUsed: quote,
+      unitPriceUsed: unitPrice || quote
     };
   }
 
