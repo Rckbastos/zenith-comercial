@@ -584,6 +584,42 @@
             margin-top: 1rem;
         }
 
+        .modal-subtitle {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .checkbox-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.65rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 0.75rem;
+            background: #0f0f0f;
+            border: 1px solid #1f1f1f;
+            border-radius: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #D4AF37;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+
         .info-box {
             background: rgba(212, 175, 55, 0.1);
             border: 1px solid rgba(212, 175, 55, 0.3);
@@ -867,6 +903,11 @@
                             <option value="BRL" selected>BRL - Real (R$)</option>
                             <option value="USD">USD - Dólar ($)</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Preço de Venda (na moeda selecionada) <span>*</span></label>
+                        <input type="number" id="servicePrice" placeholder="Ex: 5.60 (valor por USDT/dólar)" min="0" step="0.01" required>
+                        <small style="color: #D4AF37; display: block; margin-top: 0.35rem;">É o valor que o gerente venderá cada dólar/USDT para o cliente.</small>
                     </div>
                     <div class="form-group">
                         <label>Tipo de Custo <span>*</span></label>
@@ -1196,6 +1237,91 @@
         </div>
     </div>
 
+    <!-- Modal de Edição de Serviço -->
+    <div id="editServiceModal" class="modal-overlay">
+        <div class="modal-card" onclick="event.stopPropagation();">
+            <div class="modal-header">
+                <h3>🛠️ Editar Serviço</h3>
+                <button type="button" class="modal-close" onclick="closeEditServiceModal()">&times;</button>
+            </div>
+            <div class="modal-subtitle">Atualize dados, moeda, custos e status do serviço.</div>
+            <form id="editServiceForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome do Serviço <span>*</span></label>
+                        <input type="text" id="editServiceName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Moeda <span>*</span></label>
+                        <select id="editServiceCurrency" required>
+                            <option value="BRL">BRL - Real (R$)</option>
+                            <option value="USD">USD - Dólar ($)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Preço de Venda (na moeda selecionada) <span>*</span></label>
+                        <input type="number" id="editServicePrice" placeholder="Ex: 5.60 (valor por USDT/dólar)" min="0" step="0.01" required>
+                        <small style="color: #D4AF37; display: block; margin-top: 0.35rem;">É o valor que o gerente venderá cada dólar/USDT para o cliente.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Custo <span>*</span></label>
+                        <select id="editCostType" required onchange="toggleCostFieldsEdit()">
+                            <option value="">Selecione...</option>
+                            <option value="fixo">Fixo (valor)</option>
+                            <option value="percentual">Percentual (%)</option>
+                            <option value="fixo_percentual">Fixo + Percentual</option>
+                            <option value="cotacao_percentual">Cotação + Percentual</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="editCostFixoGroup" style="display: none;">
+                        <label>Custo Fixo</label>
+                        <input type="number" id="editCostFixo" placeholder="Ex: 25" min="0" step="0.01">
+                    </div>
+                    <div class="form-group" id="editCostPercentualGroup" style="display: none;">
+                        <label>Custo Percentual (%)</label>
+                        <input type="number" id="editCostPercentual" placeholder="Ex: 0.8" min="0" max="100" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Status <span>*</span></label>
+                        <select id="editServiceStatus" required>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Inativo">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="editServiceDescription" placeholder="Descrição detalhada do serviço..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditServiceModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">💾 Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Atribuições -->
+    <div id="editAssignmentsModal" class="modal-overlay">
+        <div class="modal-card" onclick="event.stopPropagation();">
+            <div class="modal-header">
+                <h3>🔗 Atribuir Serviços ao Usuário</h3>
+                <button type="button" class="modal-close" onclick="closeEditAssignmentsModal()">&times;</button>
+            </div>
+            <div class="modal-subtitle" id="editAssignmentsUserInfo">Selecione os serviços que este usuário poderá vender.</div>
+            <form id="editAssignmentsForm">
+                <div class="form-group">
+                    <label>Serviços disponíveis</label>
+                    <div id="assignServiceList" class="checkbox-list"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditAssignmentsModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">💾 Salvar Atribuições</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal de Comprovante -->
     <div id="comprovanteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center;">
         <div style="position: relative; max-width: 90%; max-height: 90%; background: #1a1a1a; border-radius: 12px; padding: 2rem; border: 2px solid #D4AF37;">
@@ -1220,6 +1346,8 @@
         let cachedAssignments = [];
         let currentFilter = 'month';
         let editingUserId = null;
+        let editingServiceId = null;
+        let editingAssignmentsUserId = null;
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -1264,6 +1392,7 @@
             const payload = {
                 name: document.getElementById('serviceName').value,
                 currency: document.getElementById('serviceCurrency').value || 'BRL',
+                price: document.getElementById('servicePrice').value,
                 costType: document.getElementById('costType').value,
                 costFixo: document.getElementById('costFixo').value,
                 costPercentual: document.getElementById('costPercentual').value,
@@ -1354,6 +1483,208 @@
         if (editUserModalEl) {
             editUserModalEl.addEventListener('click', handleEditUserOverlay);
         }
+
+        function openEditServiceModal(id) {
+            const modal = document.getElementById('editServiceModal');
+            const service = (cachedServices || []).find(s => Number(s.id) === Number(id));
+            if (!modal || !service) {
+                alert('⚠️ Serviço não encontrado para edição.');
+                return;
+            }
+
+            editingServiceId = service.id;
+            document.getElementById('editServiceName').value = service.name || '';
+            document.getElementById('editServiceCurrency').value = (service.currency || 'BRL').toUpperCase();
+            document.getElementById('editCostType').value = service.costType || '';
+            document.getElementById('editCostFixo').value = service.costFixo ?? '';
+            document.getElementById('editCostPercentual').value = service.costPercentual ?? '';
+            document.getElementById('editServiceStatus').value = service.status || 'Ativo';
+            document.getElementById('editServiceDescription').value = service.description || '';
+            document.getElementById('editServicePrice').value = service.price ?? '';
+            toggleCostFieldsEdit();
+
+            modal.style.display = 'flex';
+        }
+
+        function closeEditServiceModal() {
+            const modal = document.getElementById('editServiceModal');
+            const form = document.getElementById('editServiceForm');
+            editingServiceId = null;
+            if (form) form.reset();
+            if (modal) modal.style.display = 'none';
+        }
+
+        function handleEditServiceOverlay(event) {
+            if (event.target.id === 'editServiceModal') {
+                closeEditServiceModal();
+            }
+        }
+
+        const editServiceModalEl = document.getElementById('editServiceModal');
+            if (editServiceModalEl) {
+            editServiceModalEl.addEventListener('click', handleEditServiceOverlay);
+        }
+
+        function toggleCostFieldsEdit() {
+            const costType = document.getElementById('editCostType').value;
+            const fixoGroup = document.getElementById('editCostFixoGroup');
+            const percentualGroup = document.getElementById('editCostPercentualGroup');
+            const fixoInput = document.getElementById('editCostFixo');
+            const percentualInput = document.getElementById('editCostPercentual');
+
+            fixoGroup.style.display = 'none';
+            percentualGroup.style.display = 'none';
+            fixoInput.removeAttribute('required');
+            percentualInput.removeAttribute('required');
+
+            if (costType === 'fixo') {
+                fixoGroup.style.display = 'flex';
+                fixoInput.setAttribute('required', 'required');
+            } else if (costType === 'percentual') {
+                percentualGroup.style.display = 'flex';
+                percentualInput.setAttribute('required', 'required');
+            } else if (costType === 'fixo_percentual') {
+                fixoGroup.style.display = 'flex';
+                percentualGroup.style.display = 'flex';
+                fixoInput.setAttribute('required', 'required');
+                percentualInput.setAttribute('required', 'required');
+            } else if (costType === 'cotacao_percentual') {
+                percentualGroup.style.display = 'flex';
+                percentualInput.setAttribute('required', 'required');
+            }
+        }
+
+        document.getElementById('editServiceForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!editingServiceId) {
+                alert('Nenhum serviço selecionado para edição.');
+                return;
+            }
+
+            const payload = {
+                name: document.getElementById('editServiceName').value,
+                currency: document.getElementById('editServiceCurrency').value,
+                price: document.getElementById('editServicePrice').value,
+                costType: document.getElementById('editCostType').value,
+                costFixo: document.getElementById('editCostFixo').value,
+                costPercentual: document.getElementById('editCostPercentual').value,
+                status: document.getElementById('editServiceStatus').value,
+                description: document.getElementById('editServiceDescription').value
+            };
+
+            try {
+                await fetchJson(`/api/services/${editingServiceId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                alert('✅ Serviço atualizado com sucesso!');
+                closeEditServiceModal();
+                loadAdminData();
+            } catch (err) {
+                showError(err);
+            }
+        });
+
+        function openEditAssignmentsModal(userId) {
+            const modal = document.getElementById('editAssignmentsModal');
+            const user = (cachedUsers || []).find(u => Number(u.id) === Number(userId));
+            if (!modal || !user) {
+                alert('⚠️ Usuário não encontrado para atribuição.');
+                return;
+            }
+
+            editingAssignmentsUserId = user.id;
+            const infoEl = document.getElementById('editAssignmentsUserInfo');
+            if (infoEl) infoEl.textContent = `Selecione os serviços para ${user.name} (${user.role || 'Sem cargo'})`;
+
+            const currentServices = new Set(
+                (cachedAssignments || [])
+                    .filter(a => Number(a.userId ?? a.userid) === Number(userId))
+                    .map(a => Number(a.serviceId ?? a.serviceid))
+            );
+
+            const listEl = document.getElementById('assignServiceList');
+            listEl.innerHTML = '';
+
+            if (!cachedServices.length) {
+                listEl.innerHTML = '<p style="color:#aaa;">Nenhum serviço cadastrado.</p>';
+            } else {
+                cachedServices.forEach(service => {
+                    const id = service.id;
+                    const checkboxId = `assign-service-${id}`;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'checkbox-item';
+                    wrapper.innerHTML = `
+                        <input type="checkbox" id="${checkboxId}" value="${id}" ${currentServices.has(id) ? 'checked' : ''}>
+                        <label for="${checkboxId}">${service.name} ${service.status === 'Inativo' ? '(Inativo)' : ''}</label>
+                    `;
+                    listEl.appendChild(wrapper);
+                });
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeEditAssignmentsModal() {
+            const modal = document.getElementById('editAssignmentsModal');
+            const form = document.getElementById('editAssignmentsForm');
+            editingAssignmentsUserId = null;
+            if (form) form.reset();
+            if (modal) modal.style.display = 'none';
+        }
+
+        function handleEditAssignmentsOverlay(event) {
+            if (event.target.id === 'editAssignmentsModal') {
+                closeEditAssignmentsModal();
+            }
+        }
+
+        const editAssignmentsModalEl = document.getElementById('editAssignmentsModal');
+        if (editAssignmentsModalEl) {
+            editAssignmentsModalEl.addEventListener('click', handleEditAssignmentsOverlay);
+        }
+
+        document.getElementById('editAssignmentsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!editingAssignmentsUserId) {
+                alert('Nenhum usuário selecionado para atribuir.');
+                return;
+            }
+
+            const selectedServiceIds = Array.from(document.querySelectorAll('#assignServiceList input[type="checkbox"]:checked'))
+                .map(input => Number(input.value));
+
+            const currentAssignments = (cachedAssignments || []).filter(a => Number(a.userId ?? a.userid) === Number(editingAssignmentsUserId));
+            const currentServiceIds = new Set(currentAssignments.map(a => Number(a.serviceId ?? a.serviceid)));
+            const assignmentIdByService = currentAssignments.reduce((acc, a) => {
+                const sid = Number(a.serviceId ?? a.serviceid);
+                acc[sid] = a.id;
+                return acc;
+            }, {});
+
+            const toAdd = selectedServiceIds.filter(id => !currentServiceIds.has(id));
+            const toRemove = Array.from(currentServiceIds).filter(id => !selectedServiceIds.includes(id));
+
+            try {
+                await Promise.all(toAdd.map(serviceId => fetchJson('/api/assignments', {
+                    method: 'POST',
+                    body: JSON.stringify({ userId: editingAssignmentsUserId, serviceId })
+                })));
+
+                for (const serviceId of toRemove) {
+                    const assignId = assignmentIdByService[serviceId];
+                    if (assignId) {
+                        await fetchJson(`/api/assignments/${assignId}`, { method: 'DELETE' });
+                    }
+                }
+
+                alert('✅ Atribuições atualizadas com sucesso!');
+                closeEditAssignmentsModal();
+                loadAdminData();
+            } catch (err) {
+                showError(err);
+            }
+        });
 
         document.getElementById('editUserForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -1599,6 +1930,7 @@
                     <td>${costLabel}</td>
                     <td><span class=\"badge ${service.status === 'Ativo' ? 'badge-success' : 'badge-warning'}\">${service.status}</span></td>
                     <td>
+                        <button class=\"btn-icon btn-edit\" title=\"Editar\" onclick=\"openEditServiceModal(${service.id})\">✏️</button>
                         <button class=\"btn-icon btn-delete\" title=\"Excluir\" onclick=\"deleteService(${service.id})\">🗑️</button>
                     </td>
                 `;
@@ -1639,13 +1971,38 @@
                 return;
             }
 
-            assignments.forEach(item => {
+            // Agrupa serviços por usuário
+            const grouped = assignments.reduce((acc, item) => {
+                const userId = item.userId ?? item.userid;
+                if (!userId) return acc;
+                if (!acc[userId]) {
+                    acc[userId] = {
+                        userId,
+                        username: item.username || '—',
+                        role: item.role || '-',
+                        services: [],
+                        serviceIds: [],
+                        assignmentIds: {}
+                    };
+                }
+                const serviceName = item.serviceName || item.servicename || '-';
+                const serviceId = item.serviceId ?? item.serviceid;
+                acc[userId].services.push(serviceName);
+                if (serviceId) acc[userId].serviceIds.push(serviceId);
+                if (serviceId && item.id) acc[userId].assignmentIds[serviceId] = item.id;
+                return acc;
+            }, {});
+
+            Object.values(grouped).forEach(user => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${item.username || '—'}</td>
-                    <td>${item.role || '-'}</td>
-                    <td>${item.serviceName || item.servicename || '-'}</td>
-                    <td><button class=\"btn-icon btn-delete\" title=\"Remover\" onclick=\"deleteAssignment(${item.id})\">🗑️</button></td>
+                    <td>${user.username}</td>
+                    <td>${user.role}</td>
+                    <td>${user.services.join(', ')}</td>
+                    <td>
+                        <button class=\"btn-icon btn-edit\" title=\"Editar serviços\" onclick=\"openEditAssignmentsModal(${user.userId})\">✏️</button>
+                        <button class=\"btn-icon btn-delete\" title=\"Remover todos\" onclick=\"removeAllAssignmentsForUser(${user.userId})\">🗑️</button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1745,6 +2102,17 @@
         async function deleteAssignment(id) {
             if (!confirm('Remover este serviço atribuído?')) return;
             await fetchJson(`/api/assignments/${id}`, { method: 'DELETE' });
+            loadAdminData();
+        }
+
+        async function removeAllAssignmentsForUser(userId) {
+            const user = (cachedUsers || []).find(u => Number(u.id) === Number(userId));
+            if (!user) return;
+            if (!confirm(`Remover todas as atribuições de ${user.name}?`)) return;
+            const assignments = (cachedAssignments || []).filter(a => Number(a.userId ?? a.userid) === Number(userId));
+            for (const assign of assignments) {
+                await fetchJson(`/api/assignments/${assign.id}`, { method: 'DELETE' });
+            }
             loadAdminData();
         }
 
