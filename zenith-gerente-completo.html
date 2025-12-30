@@ -723,7 +723,7 @@
                         <div class="form-grid">
                         <div class="form-group">
                             <label>Valor da Remessa (USD) <span>*</span></label>
-                            <input type="number" id="remessaValue" placeholder="Ex: 1845.39" step="any" min="0.00001">
+                            <input type="number" id="remessaQtd" placeholder="Ex: 1845.39" step="any" min="0.00001">
                             </div>
                             <div class="form-group">
                                 <label>Cotação Dólar Negociada <span>*</span></label>
@@ -954,7 +954,7 @@
             const fileInput = document.getElementById('paymentProof');
             const usdtQuantity = Number(document.getElementById('usdtQuantity').value || 0);
             const usdtPrice = Number(document.getElementById('usdtPrice').value || 0);
-            const remessaValue = Number(document.getElementById('remessaValue').value || 0);
+            const remessaQtd = Number(document.getElementById('remessaQtd').value || 0);
             const remessaDolar = Number(document.getElementById('remessaDolar').value || 0);
             const wallet = document.getElementById('usdtWallet').value || null;
             const isRemessa = (selectedService?.name || '').trim().toLowerCase() === 'remessa';
@@ -968,14 +968,18 @@
             if (selectedService?.name?.toLowerCase().includes('usdt')) {
                 priceBRL = usdtQuantity * usdtPrice;
             } else if (selectedService?.name?.toLowerCase().includes('remessa')) {
-                priceBRL = remessaValue * remessaDolar;
+                priceBRL = remessaQtd * remessaDolar;
+            }
+
+            if (isRemessa) {
+                console.log('📊 Remessa - Qtd:', remessaQtd, 'Preço/unit:', remessaDolar);
             }
 
             const payload = {
                 customer: clientName,
                 sellerId: currentSellerId,
                 serviceId: selectedService?.id || null,
-                quantity: usdtQuantity || remessaValue || 0,
+                quantity: remessaQtd || usdtQuantity || 0,
                 unitPrice: isRemessa ? remessaDolar : usdtPrice,
                 price: priceBRL,
                 cost: 0,
