@@ -130,6 +130,18 @@ async function fetchUsdtQuote() {
   }
 }
 
+async function fetchUsdQuote() {
+  try {
+    const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDBRL');
+    const data = await res.json();
+    const price = Number(data?.price);
+    return Number.isFinite(price) ? price : 0;
+  } catch (err) {
+    console.error('Erro ao buscar cotação USD:', err.message);
+    return 0;
+  }
+}
+
 function calcCost(price, service, opts = {}) {
   if (!service) return 0;
   const costType = service.costType ?? service.costtype;
@@ -172,17 +184,33 @@ async function computeFinancials(order, seller, service) {
   const serviceName = (service?.name || order.productType || '').toString().trim().toLowerCase();
   const isRemessa = serviceName === 'remessa';
   if (isRemessa) {
-    let quote = await fetchUsdtQuote();
+    // Cotação USD (não USDT) com spread 0,80% + taxa fixa 25 USD convertida na cotação base
+    let quote = await fetchUsdQuote();
     if (!Number.isFinite(quote) || quote <= 0) {
-      quote = unitPrice || priceFromPayload / (quantity || 1) || 0;
+      quote = Number(unitPrice) || (priceFromPayload / (quantity || 1)) || 5.5;
     }
-    const quoteWithSpread = quote * 1.003; // +0,30%
+    const spreadPercent = 0.80;
+    const quoteWithSpread = quote * (1 + (spreadPercent / 100));
+
     const price = priceFromPayload > 0 ? priceFromPayload : unitPrice * quantity;
-    // custo: cotação com spread * qty + taxa fixa 25 USD convertida pela cotação base (sem spread)
-    const cost = (quoteWithSpread * quantity) + (25 * quote);
-    const profit = cost - price;
+    const custoBase = quoteWithSpread * quantity;
+    const taxa25usd = 25 * quote; // 25 USD convertidos na cotação base (sem spread)
+    const cost = custoBase + taxa25usd;
+    const profit = price - cost; // lucro = venda - custo
     const commissionRate = seller ? Number(seller.commission || 0) : 0;
     const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
+
+    console.log('=== DEBUG REMESSA ===');
+    console.log('quantity:', quantity);
+    console.log('quote (dólar):', quote);
+    console.log('quote com spread 0,80%:', quoteWithSpread);
+    console.log('custo_base:', custoBase);
+    console.log('taxa_25usd:', taxa25usd);
+    console.log('cost (total):', cost);
+    console.log('unitPrice (venda):', unitPrice);
+    console.log('price (total venda):', price);
+    console.log('profit:', profit);
+    console.log('====================');
 
     return {
       price,
