@@ -36,7 +36,8 @@ async function runMigrations() {
   `);
 }
 
-app.use(express.json({ limit: '1mb' }));
+// aceita payloads maiores (comprovantes base64)
+app.use(express.json({ limit: '6mb' }));
 
 // CSP para permitir Google Fonts e Binance API
 app.use((req, res, next) => {
@@ -167,13 +168,15 @@ async function computeFinancials(order, seller, service) {
   const fallbackQuote = quantity > 0 ? unitPrice : 0;
   if (!Number.isFinite(quote) || quote <= 0) quote = fallbackQuote;
 
-  const salesTotal = unitPrice * quantity; // preço de venda total
+  // Preço de venda total sempre baseado no preço unitário informado
+  const salesTotal = unitPrice * quantity;
+  const price = salesTotal;
 
   let cost = 0;
   if (service) {
     if (serviceCostType === 'cotacao_percentual') {
       const pct = Number(service.costPercentual ?? service.costpercentual ?? 0);
-      cost = (quote * quantity);
+      cost = quote * quantity;
       cost = cost + (cost * (pct / 100));
     } else {
       cost = calcCost(salesTotal, service, { quote: quote || fallbackQuote, quantity });
@@ -182,7 +185,7 @@ async function computeFinancials(order, seller, service) {
     cost = Number(order.cost);
   }
 
-  const profit = salesTotal - cost;
+  const profit = price - cost;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit * (commissionRate / 100);
 
@@ -523,35 +526,40 @@ app.get('/api/orders', async (_req, res) => {
 });
 
 app.post('/api/orders', async (req, res) => {
-  const body = req.body || {};
-  const [seller] = body.sellerId ? await query('SELECT * FROM users WHERE id=$1', [body.sellerId]) : [null];
-  const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
+  try {
+    const body = req.body || {};
+    const [seller] = body.sellerId ? await query('SELECT * FROM users WHERE id=$1', [body.sellerId]) : [null];
+    const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
-  const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(body, seller, service);
+    const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(body, seller, service);
 
-  const rows = await query(
-    `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-    [
-      body.customer,
-      body.sellerId || null,
-      body.serviceId || null,
-      body.quantity || 0,
-      unitPriceUsed || body.unitPrice || body.pricePerUnit || null,
-      quoteUsed || body.quote || null,
-      price,
-      cost,
-      profit,
-      commissionValue,
-      body.date || new Date().toISOString().slice(0, 10),
-      body.status || 'open',
-      false,
-      body.productType || 'Serviço',
-      body.payoutProof || null,
-      body.wallet || null
-    ]
-  );
-  res.status(201).json(normalizeOrder(rows[0]));
+    const rows = await query(
+      `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+      [
+        body.customer,
+        body.sellerId || null,
+        body.serviceId || null,
+        body.quantity || 0,
+        unitPriceUsed || body.unitPrice || body.pricePerUnit || null,
+        quoteUsed || body.quote || null,
+        price,
+        cost,
+        profit,
+        commissionValue,
+        body.date || new Date().toISOString().slice(0, 10),
+        body.status || 'open',
+        false,
+        body.productType || 'Serviço',
+        body.payoutProof || null,
+        body.wallet || null
+      ]
+    );
+    res.status(201).json(normalizeOrder(rows[0]));
+  } catch (err) {
+    console.error('Erro ao criar ordem:', err);
+    res.status(500).json({ error: 'Falha ao criar ordem', detail: err.message });
+  }
 });
 
 app.patch('/api/orders/:id/status', async (req, res) => {
@@ -571,39 +579,44 @@ app.patch('/api/orders/:id/commission', async (req, res) => {
 app.patch('/api/orders/:id', async (req, res) => {
   const id = Number(req.params.id);
   const body = req.body || {};
-  const [existing] = await query('SELECT * FROM orders WHERE id=$1', [id]);
-  if (!existing) return res.status(404).json({ error: 'Ordem não encontrada' });
+  try {
+    const [existing] = await query('SELECT * FROM orders WHERE id=$1', [id]);
+    if (!existing) return res.status(404).json({ error: 'Ordem não encontrada' });
 
-  const [seller] = body.sellerId ? await query('SELECT * FROM users WHERE id=$1', [body.sellerId]) : [null];
-  const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
+    const [seller] = body.sellerId ? await query('SELECT * FROM users WHERE id=$1', [body.sellerId]) : [null];
+    const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
-  const merged = { ...existing, ...body, id };
-  const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(merged, seller || existing, service || existing);
+    const merged = { ...existing, ...body, id };
+    const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(merged, seller || existing, service || existing);
 
-  const rows = await query(
-    `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16
-     WHERE id=$17 RETURNING *`,
-    [
-      merged.customer,
-      merged.sellerid || merged.sellerId || null,
-      merged.serviceid || merged.serviceId || null,
-      merged.quantity || merged.quantity || 0,
-      unitPriceUsed || merged.unitPrice || merged.pricePerUnit || merged.unitprice || null,
-      quoteUsed || merged.quote || merged.quote || existing.quote || null,
-      price,
-      cost,
-      profit,
-      commissionValue,
-      merged.date || new Date().toISOString().slice(0, 10),
-      merged.status || 'open',
-      merged.commissionpaid ?? merged.commissionPaid ?? false,
-      merged.producttype || merged.productType || 'Serviço',
-      merged.payoutProof || merged.payoutproof || existing.payoutproof || existing.payoutProof || null,
-      merged.wallet || existing.wallet || null,
-      id
-    ]
-  );
-  res.json(normalizeOrder(rows[0]));
+    const rows = await query(
+      `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16
+       WHERE id=$17 RETURNING *`,
+      [
+        merged.customer,
+        merged.sellerid || merged.sellerId || null,
+        merged.serviceid || merged.serviceId || null,
+        merged.quantity || merged.quantity || 0,
+        unitPriceUsed || merged.unitPrice || merged.pricePerUnit || merged.unitprice || null,
+        quoteUsed || merged.quote || merged.quote || existing.quote || null,
+        price,
+        cost,
+        profit,
+        commissionValue,
+        merged.date || new Date().toISOString().slice(0, 10),
+        merged.status || 'open',
+        merged.commissionpaid ?? merged.commissionPaid ?? false,
+        merged.producttype || merged.productType || 'Serviço',
+        merged.payoutProof || merged.payoutproof || existing.payoutproof || existing.payoutProof || null,
+        merged.wallet || existing.wallet || null,
+        id
+      ]
+    );
+    res.json(normalizeOrder(rows[0]));
+  } catch (err) {
+    console.error('Erro ao atualizar ordem:', err);
+    res.status(500).json({ error: 'Falha ao atualizar ordem', detail: err.message });
+  }
 });
 
 app.delete('/api/orders/:id', async (req, res) => {

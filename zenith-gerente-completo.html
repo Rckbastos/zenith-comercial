@@ -692,10 +692,7 @@
                             </div>
                         <div class="form-group">
                             <label>Preço Fechado por USDT (R$) <span>*</span></label>
-                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <input type="number" id="usdtPrice" placeholder="Ex: 5.42" step="any" min="0.00001" style="flex: 1;">
-                                <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;" onclick="usarCotacaoAtual()">⟳ Usar cotação</button>
-                            </div>
+                            <input type="number" id="usdtPrice" placeholder="Ex: 5.42" step="any" min="0.00001">
                             <small id="usdtQuoteLive" style="display: block; margin-top: 0.35rem; color: #D4AF37;">Cotação: --</small>
                         </div>
                         <div class="form-group">
@@ -917,15 +914,6 @@
                 reader.onerror = () => reject(reader.error);
                 reader.readAsDataURL(file);
             });
-        }
-
-        function usarCotacaoAtual() {
-            if (!lastUsdtQuote) {
-                alert('Cotação ainda não carregada. Aguarde alguns segundos.');
-                return;
-            }
-            const input = document.getElementById('usdtPrice');
-            input.value = lastUsdtQuote.toFixed(5);
         }
 
         function verComprovanteGerente(id) {
