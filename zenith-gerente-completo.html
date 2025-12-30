@@ -440,17 +440,18 @@
         }
 
         .data-table th {
-            padding: 1rem;
+            padding: 1.2rem 1.25rem;
             text-align: left;
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #D4AF37;
             border-bottom: 2px solid #D4AF37;
         }
 
         .data-table td {
-            padding: 1rem;
+            padding: 1.2rem 1.25rem;
             border-bottom: 1px solid #333;
+            font-size: 1rem;
         }
 
         .data-table tbody tr {
@@ -772,6 +773,7 @@
                             <th>ID</th>
                             <th>Cliente</th>
                             <th>Produto</th>
+                            <th>Preço (un.)</th>
                             <th>Valor</th>
                             <th>Data</th>
                             <th>Status</th>
@@ -794,6 +796,7 @@
                             <th>ID</th>
                             <th>Cliente</th>
                             <th>Produto</th>
+                            <th>Preço (un.)</th>
                             <th>Valor</th>
                             <th>Lucro</th>
                             <th>Comissão</th>
@@ -1099,10 +1102,12 @@
 
             sellerOrders.forEach(order => {
                 const statusLabel = order.status === 'concluded' ? '<span class=\"badge badge-success\">Aprovada</span>' : '<span class=\"badge badge-pending\">Em Análise</span>';
+                const unitPriceDisplay = Number(order.unitPrice) || (order.price && order.quantity ? Number(order.price) / Number(order.quantity) : null);
                 const baseRow = `
                     <td>#${order.id}</td>
                     <td>${order.customer || '-'}</td>
                     <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
+                    <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
                     <td>${formatBRL5(order.price)}</td>
                     <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
@@ -1122,6 +1127,7 @@
                         <td>#${order.id}</td>
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
+                    <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
                     <td>${formatBRL5(order.price)}</td>
                     <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                     <td><span class=\"badge badge-pending\">Em Análise</span></td>
@@ -1137,6 +1143,7 @@
                         <td>#${order.id}</td>
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
+                    <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
                     <td>${formatBRL5(order.price)}</td>
                     <td class=\"profit-value\">${formatBRL(order.profit)}</td>
                     <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>

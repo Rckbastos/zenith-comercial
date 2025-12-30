@@ -444,17 +444,18 @@
         }
 
         .data-table th {
-            padding: 1rem;
+            padding: 1.2rem 1.25rem;
             text-align: left;
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #D4AF37;
             border-bottom: 2px solid #D4AF37;
         }
 
         .data-table td {
-            padding: 1rem;
+            padding: 1.2rem 1.25rem;
             border-bottom: 1px solid #333;
+            font-size: 1rem;
         }
 
         .data-table tbody tr {
@@ -1080,6 +1081,7 @@
                             <th>Vendedor</th>
                             <th>Serviço</th>
                             <th>Qtd</th>
+                            <th>Preço (un.)</th>
                             <th>Wallet</th>
                             <th>Venda</th>
                             <th>Custo</th>
@@ -1107,6 +1109,7 @@
                             <th>Vendedor</th>
                             <th>Serviço</th>
                             <th>Qtd</th>
+                            <th>Preço (un.)</th>
                             <th>Wallet</th>
                             <th>Venda</th>
                             <th>Custo</th>
@@ -2031,6 +2034,7 @@
                 const sellerName = seller?.name || '—';
                 const commissionValue = order.commissionValue ?? 0;
                 const status = order.status || 'open';
+                const unitPriceDisplay = Number(order.unitPrice) || (order.price && order.quantity ? Number(order.price) / Number(order.quantity) : null);
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -2039,9 +2043,10 @@
                     <td>${sellerName}</td>
                     <td><span class=\"badge badge-gold\">${serviceName}</span></td>
                     <td>${order.quantity != null ? order.quantity : '-'}</td>
+                    <td>${unitPriceDisplay != null ? formatBRL(unitPriceDisplay) : '-'}</td>
                     <td>${order.wallet ? `<span title=\"${order.wallet}\">${order.wallet}</span>` : '-'}</td>
-                    <td>${formatBRL(order.cost)}</td>
                     <td>${formatBRL(order.price)}</td>
+                    <td>${formatBRL(order.cost)}</td>
                     <td class=\"profit-color\">${formatBRL(order.profit)}</td>
                     <td class=\"profit-color\">${formatBRL(commissionValue)}</td>
                     <td>${formatDate(order.date)}</td>
