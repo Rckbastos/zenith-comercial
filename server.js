@@ -187,13 +187,13 @@ async function computeFinancials(order, seller, service) {
   const serviceName = (service?.name || order.productType || '').toString().trim().toLowerCase();
   const isRemessa = serviceName === 'remessa';
   if (isRemessa) {
-    // Cotação USD (não USDT) com spread configurável (costPercentual) e taxa fixa (costFixo) cadastrados no serviço
-    let quote = await fetchUsdQuote();
+    // Cotação USDT com spread configurável (costPercentual) e taxa fixa (costFixo) cadastrados no serviço
+    let quote = await fetchUsdtQuote();
     if (!Number.isFinite(quote) || quote <= 0) {
       quote = Number(unitPrice) || (priceFromPayload / (quantity || 1)) || 5.5;
     }
-    const spreadPercent = Number(service?.costPercentual ?? 0.8);
-    const quoteWithSpread = quote * (1 + (spreadPercent / 100));
+    const spreadPercent = Number(service?.costPercentual ?? 0.80);
+    const quoteWithSpread = quote + (quote * spreadPercent / 100);
 
     const price = priceFromPayload > 0 ? priceFromPayload : unitPrice * quantity;
     const custoBase = quoteWithSpread * quantity;
@@ -208,6 +208,8 @@ async function computeFinancials(order, seller, service) {
     console.log('quantity:', quantity);
     console.log('quote (dólar):', quote);
     console.log('spread aplicado (%):', spreadPercent);
+    console.log('cotação base:', quote.toFixed(4));
+    console.log('spread valor (R$):', (quote * spreadPercent / 100).toFixed(4));
     console.log('quote com spread:', quoteWithSpread);
     console.log('custo_base:', custoBase);
     console.log('taxa_fixa_usd:', fixedUsdFee);
