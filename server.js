@@ -186,7 +186,14 @@ async function computeFinancials(order, seller, service) {
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit * (commissionRate / 100);
 
-  return { price, cost, profit, commissionValue };
+  return {
+    price,
+    cost,
+    profit,
+    commissionValue,
+    quoteUsed: (Number.isFinite(quote) && quote > 0) ? quote : (Number.isFinite(fallbackQuote) ? fallbackQuote : null),
+    unitPriceUsed: unitPrice
+  };
 }
 
 // Normalizadores para manter camelCase na API (PG devolve colunas em minúsculo)
@@ -504,8 +511,12 @@ app.get('/api/orders', async (_req, res) => {
       service = servicesByName[order.productType.toLowerCase()];
     }
     const seller = usersMap[order.sellerId];
+    // Recalcula só se custo não existir; evita oscilar com cotação nova
+    if (order.cost > 0 || order.profit) {
+      return order;
+    }
     const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
-    return { ...order, ...calc };
+    return { ...order, ...calc, quote: calc.quoteUsed, unitPrice: calc.unitPriceUsed };
   }));
 
   res.json(enriched);
@@ -516,7 +527,7 @@ app.post('/api/orders', async (req, res) => {
   const [seller] = body.sellerId ? await query('SELECT * FROM users WHERE id=$1', [body.sellerId]) : [null];
   const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
-  const { price, cost, profit, commissionValue } = await computeFinancials(body, seller, service);
+  const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(body, seller, service);
 
   const rows = await query(
     `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet)
@@ -526,8 +537,8 @@ app.post('/api/orders', async (req, res) => {
       body.sellerId || null,
       body.serviceId || null,
       body.quantity || 0,
-      body.unitPrice || body.pricePerUnit || null,
-      body.quote || null,
+      unitPriceUsed || body.unitPrice || body.pricePerUnit || null,
+      quoteUsed || body.quote || null,
       price,
       cost,
       profit,
@@ -567,7 +578,7 @@ app.patch('/api/orders/:id', async (req, res) => {
   const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
   const merged = { ...existing, ...body, id };
-  const { price, cost, profit, commissionValue } = await computeFinancials(merged, seller || existing, service || existing);
+  const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(merged, seller || existing, service || existing);
 
   const rows = await query(
     `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16
@@ -577,8 +588,8 @@ app.patch('/api/orders/:id', async (req, res) => {
       merged.sellerid || merged.sellerId || null,
       merged.serviceid || merged.serviceId || null,
       merged.quantity || merged.quantity || 0,
-      merged.unitPrice || merged.pricePerUnit || merged.unitprice || null,
-      merged.quote || merged.quote || existing.quote || null,
+      unitPriceUsed || merged.unitPrice || merged.pricePerUnit || merged.unitprice || null,
+      quoteUsed || merged.quote || merged.quote || existing.quote || null,
       price,
       cost,
       profit,
