@@ -116,7 +116,7 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 2.5rem 2rem 3.5rem 2rem;
         }
 
         /* Navigation Tabs */
@@ -773,6 +773,7 @@
                             <th>ID</th>
                             <th>Cliente</th>
                             <th>Produto</th>
+                            <th>Qtd</th>
                             <th>Preço (un.)</th>
                             <th>Valor</th>
                             <th>Data</th>
@@ -796,6 +797,7 @@
                             <th>ID</th>
                             <th>Cliente</th>
                             <th>Produto</th>
+                            <th>Qtd</th>
                             <th>Preço (un.)</th>
                             <th>Valor</th>
                             <th>Lucro</th>
@@ -820,6 +822,7 @@
                             <th>ID</th>
                             <th>Cliente</th>
                             <th>Produto</th>
+                            <th>Qtd</th>
                             <th>Valor</th>
                             <th>Lucro</th>
                             <th>Comissão</th>
@@ -1103,10 +1106,12 @@
             sellerOrders.forEach(order => {
                 const statusLabel = order.status === 'concluded' ? '<span class=\"badge badge-success\">Aprovada</span>' : '<span class=\"badge badge-pending\">Em Análise</span>';
                 const unitPriceDisplay = Number(order.unitPrice) || (order.price && order.quantity ? Number(order.price) / Number(order.quantity) : null);
+                const quantityDisplay = order.quantity != null ? order.quantity : '-';
                 const baseRow = `
                     <td>#${order.id}</td>
                     <td>${order.customer || '-'}</td>
                     <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
+                    <td>${quantityDisplay}</td>
                     <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
                     <td>${formatBRL5(order.price)}</td>
                     <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
@@ -1127,15 +1132,16 @@
                         <td>#${order.id}</td>
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
-                    <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
-                    <td>${formatBRL5(order.price)}</td>
-                    <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
-                    <td><span class=\"badge badge-pending\">Em Análise</span></td>
-                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
-                    <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
-                `;
-                analysisTbody?.appendChild(tr);
-            }
+                        <td>${quantityDisplay}</td>
+                        <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
+                        <td>${formatBRL5(order.price)}</td>
+                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td><span class=\"badge badge-pending\">Em Análise</span></td>
+                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                        <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
+                    `;
+                    analysisTbody?.appendChild(tr);
+                }
 
                 if (order.status === 'concluded') {
                     const tr = document.createElement('tr');
@@ -1143,18 +1149,19 @@
                         <td>#${order.id}</td>
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
-                    <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
-                    <td>${formatBRL5(order.price)}</td>
-                    <td class=\"profit-value\">${formatBRL(order.profit)}</td>
-                    <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>
-                    <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
-                    <td><span class=\"badge badge-success\">Aprovada</span></td>
-                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
-                    <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
-                `;
-                concludedTbody?.appendChild(tr);
-            }
-        });
+                        <td>${quantityDisplay}</td>
+                        <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
+                        <td class=\"profit-value\">${formatBRL(order.price)}</td>
+                        <td class=\"profit-value\">${formatBRL(order.profit)}</td>
+                        <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>
+                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td><span class=\"badge badge-success\">Aprovada</span></td>
+                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                        <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
+                    `;
+                    concludedTbody?.appendChild(tr);
+                }
+            });
         }
 
         async function deleteOrder(id) {
