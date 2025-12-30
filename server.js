@@ -154,7 +154,7 @@ async function computeFinancials(order, seller, service) {
   const quantity = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 0;
 
   // Preço unitário informado (preço fechado por USDT)
-  const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit ?? order.price);
+  const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
   const unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
     ? unitPriceRaw
     : quantity > 0
@@ -177,8 +177,8 @@ async function computeFinancials(order, seller, service) {
   if (service) {
     if (serviceCostType === 'cotacao_percentual') {
       const pct = Number(service.costPercentual ?? service.costpercentual ?? 0);
-      cost = quote * quantity;
-      cost = cost + (cost * (pct / 100));
+      const unitCost = quote * (1 + pct / 100);
+      cost = unitCost * quantity;
     } else {
       cost = calcCost(price, service, { quote: quote || fallbackQuote, quantity });
     }
@@ -189,6 +189,20 @@ async function computeFinancials(order, seller, service) {
   const profit = price - cost;
   const commissionRate = seller ? Number(seller.commission || 0) : 0;
   const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
+
+  console.log('=== DEBUG ORDEM ===');
+  console.log('quantity:', quantity);
+  console.log('quote:', quote);
+  if (serviceCostType === 'cotacao_percentual') {
+    const pct = Number(service.costPercentual ?? service.costpercentual ?? 0);
+    const unitCost = quote * (1 + pct / 100);
+    console.log('unitCost:', unitCost);
+  }
+  console.log('cost (total):', cost);
+  console.log('unitPrice:', unitPrice);
+  console.log('price (total):', price);
+  console.log('profit:', profit);
+  console.log('===================');
 
   return {
     price,
