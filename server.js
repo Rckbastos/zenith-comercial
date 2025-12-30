@@ -120,13 +120,53 @@ async function query(sql, params = []) {
 
 async function fetchUsdtQuote() {
   try {
-    const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
+    console.log('🔄 Consultando Binance API USDTBRL...');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL', {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json'
+      }
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+
     const data = await res.json();
     const price = Number(data?.price);
-    return Number.isFinite(price) ? price : 0;
+
+    if (!Number.isFinite(price) || price <= 0) {
+      throw new Error(`Cotação inválida: ${data?.price}`);
+    }
+
+    console.log('✅ Cotação USDT Binance:', price.toFixed(4));
+    return price;
+
   } catch (err) {
-    console.error('Erro ao buscar cotação USDT:', err.message);
-    return 0;
+    console.error('❌ ERRO ao buscar cotação USDT:', err.message);
+
+    try {
+      console.log('🔄 Tentando API alternativa (Mercado Bitcoin)...');
+      const resMB = await fetch('https://www.mercadobitcoin.net/api/USDT/ticker/');
+      const dataMB = await resMB.json();
+      const priceMB = Number(dataMB?.ticker?.last);
+
+      if (Number.isFinite(priceMB) && priceMB > 0) {
+        console.log('✅ Cotação USDT (Mercado Bitcoin):', priceMB.toFixed(4));
+        return priceMB;
+      }
+    } catch (errMB) {
+      console.error('❌ API alternativa também falhou:', errMB.message);
+    }
+
+    throw new Error('Todas as APIs de cotação USDT estão indisponíveis');
   }
 }
 
@@ -188,9 +228,12 @@ async function computeFinancials(order, seller, service) {
   const isRemessa = serviceName === 'remessa';
   if (isRemessa) {
     // Cotação USDT com spread configurável (costPercentual) e taxa fixa (costFixo) cadastrados no serviço
-    let quote = await fetchUsdtQuote();
-    if (!Number.isFinite(quote) || quote <= 0) {
-      quote = Number(unitPrice) || (priceFromPayload / (quantity || 1)) || 5.5;
+    let quote;
+    try {
+      quote = await fetchUsdtQuote();
+    } catch (err) {
+      console.error('⚠️ Impossível criar ordem sem cotação USDT:', err.message);
+      throw new Error('Cotação USDT indisponível. Aguarde alguns instantes e tente novamente.');
     }
     const spreadPercent = Number(service?.costPercentual ?? 0.80);
     const quoteWithSpread = quote + (quote * spreadPercent / 100);
@@ -641,7 +684,18 @@ app.post('/api/orders', async (req, res) => {
     res.status(201).json(normalizeOrder(rows[0]));
   } catch (err) {
     console.error('Erro ao criar ordem:', err);
-    res.status(500).json({ error: 'Falha ao criar ordem', detail: err.message });
+
+    if (err.message.includes('Cotação USDT indisponível')) {
+      return res.status(503).json({
+        error: 'Cotação USDT temporariamente indisponível',
+        message: 'Por favor, aguarde alguns instantes e tente novamente.'
+      });
+    }
+
+    res.status(500).json({
+      error: 'Falha ao criar ordem',
+      detail: err.message
+    });
   }
 });
 
