@@ -149,32 +149,32 @@ function calcCost(price, service, opts = {}) {
 }
 
 async function computeFinancials(order, seller, service) {
-  const price = Number(order.price) || 0; // total informado
-  const quantity = Number(order.quantity) || 0;
+  const rawQty = Number(order.quantity);
+  const quantity = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 0;
+
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
   const unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
     ? unitPriceRaw
     : quantity > 0
-      ? price / quantity
-      : price;
-  const salesTotal = unitPrice * (quantity || 1);
+      ? (Number(order.price) || 0) / quantity
+      : 0;
 
   const serviceCostType = service?.costType ?? service?.costtype;
-  const fallbackQuote = quantity > 0 ? price / quantity : 0;
-  let quote = order.quote != null ? Number(order.quote) : null;
-  if (service && serviceCostType === 'cotacao_percentual') {
-    if (!quote) {
-      quote = await fetchUsdtQuote();
-    }
+  let quote = null;
+  if (serviceCostType === 'cotacao_percentual') {
+    quote = await fetchUsdtQuote();
   }
+  const fallbackQuote = quantity > 0 ? unitPrice : 0;
+  if (!Number.isFinite(quote) || quote <= 0) quote = fallbackQuote;
+
+  const salesTotal = unitPrice * quantity; // preço de venda total
 
   let cost = 0;
   if (service) {
     if (serviceCostType === 'cotacao_percentual') {
-      const baseQuote = (Number.isFinite(quote) && quote > 0) ? quote : fallbackQuote;
       const pct = Number(service.costPercentual ?? service.costpercentual ?? 0);
-      const qty = quantity || 1;
-      cost = baseQuote * (1 + (pct / 100)) * qty;
+      cost = (quote * quantity);
+      cost = cost + (cost * (pct / 100));
     } else {
       cost = calcCost(salesTotal, service, { quote: quote || fallbackQuote, quantity });
     }
