@@ -956,6 +956,7 @@
             const usdtPrice = Number(document.getElementById('usdtPrice').value || 0);
             const remessaQtd = Number(document.getElementById('remessaQtd').value || 0);
             const remessaDolar = Number(document.getElementById('remessaDolar').value || 0);
+            const remessaInvoice = Number(document.getElementById('remessaInvoice').value || 0);
             const wallet = document.getElementById('usdtWallet').value || null;
             const isRemessa = (selectedService?.name || '').trim().toLowerCase() === 'remessa';
 
@@ -972,7 +973,7 @@
             }
 
             if (isRemessa) {
-                console.log('📊 Remessa - Qtd:', remessaQtd, 'Preço/unit:', remessaDolar);
+                console.log('📊 Remessa - Qtd:', remessaQtd, 'Preço/unit:', remessaDolar, 'Invoice USD:', remessaInvoice);
             }
 
             const payload = {
@@ -982,6 +983,7 @@
                 quantity: remessaQtd || usdtQuantity || 0,
                 unitPrice: isRemessa ? remessaDolar : usdtPrice,
                 price: priceBRL,
+                invoiceUsd: remessaInvoice,
                 cost: 0,
                 status: 'open',
                 productType: selectedService?.name || 'Serviço',

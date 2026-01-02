@@ -56,6 +56,7 @@ async function computeFinancials(order, seller, service) {
 
   const priceFromPayload = Number(order.price) || 0;
   const servicePrice = service ? Number(service.price ?? 0) : 0;
+  const invoiceUsd = Number(order.invoiceUsd ?? order.invoiceusd ?? 0);
 
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
   let unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
@@ -80,7 +81,8 @@ async function computeFinancials(order, seller, service) {
     const custoBase = quoteWithSpread * quantity;
     const fixedUsdFee = Number.isFinite(Number(service?.costFixo)) ? Number(service.costFixo) : 25;
     const taxaFixaConvertida = fixedUsdFee * quote;
-    const cost = custoBase + taxaFixaConvertida;
+    const invoiceTax = invoiceUsd > 0 ? invoiceUsd * quote : 0;
+    const cost = custoBase + taxaFixaConvertida + invoiceTax;
     const profit = price - cost;
     const commissionRate = seller ? Number(seller.commission || 0) : 0;
     const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;

@@ -32,7 +32,8 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS payoutProof TEXT,
       ADD COLUMN IF NOT EXISTS wallet TEXT,
       ADD COLUMN IF NOT EXISTS quote NUMERIC(14,6),
-      ADD COLUMN IF NOT EXISTS unitPrice NUMERIC(14,6);
+      ADD COLUMN IF NOT EXISTS unitPrice NUMERIC(14,6),
+      ADD COLUMN IF NOT EXISTS invoiceUsd NUMERIC(14,4) DEFAULT 0;
   `);
 
   await query(`
@@ -212,6 +213,7 @@ async function computeFinancials(order, seller, service) {
 
   const priceFromPayload = Number(order.price) || 0; // pode ser total informado
   const servicePrice = service ? Number(service.price ?? 0) : 0;
+  const invoiceUsd = Number(order.invoiceUsd ?? order.invoiceusd ?? 0);
 
   // Preço unitário informado (preço fechado por USDT)
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
@@ -242,7 +244,8 @@ async function computeFinancials(order, seller, service) {
     const custoBase = quoteWithSpread * quantity;
     const fixedUsdFee = Number.isFinite(Number(service?.costFixo)) ? Number(service.costFixo) : 25;
     const taxaFixaConvertida = fixedUsdFee * quote; // taxa fixa em USD convertida pela cotação base (sem spread)
-    const cost = custoBase + taxaFixaConvertida;
+    const invoiceTax = invoiceUsd > 0 ? invoiceUsd * quote : 0; // invoice em USD convertido pela cotação base
+    const cost = custoBase + taxaFixaConvertida + invoiceTax;
     const profit = price - cost; // lucro = venda - custo (positivo = ganho)
     const commissionRate = seller ? Number(seller.commission || 0) : 0;
     const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
@@ -257,6 +260,7 @@ async function computeFinancials(order, seller, service) {
     console.log('custo_base:', custoBase);
     console.log('taxa_fixa_usd:', fixedUsdFee);
     console.log('taxa_fixa_convertida:', taxaFixaConvertida);
+    console.log('invoice_usd:', invoiceUsd, 'invoice_convertido:', invoiceTax);
     console.log('cost (total):', cost);
     console.log('unitPrice (venda):', unitPrice);
     console.log('price (total venda):', price);
@@ -362,6 +366,7 @@ function normalizeOrder(row = {}) {
     quantity: Number(row.quantity ?? 0),
     unitPrice: row.unitprice != null ? Number(row.unitprice) : (row.unitPrice != null ? Number(row.unitPrice) : undefined),
     quote: row.quote != null ? Number(row.quote) : undefined,
+    invoiceUsd: row.invoiceusd != null ? Number(row.invoiceusd) : (row.invoiceUsd != null ? Number(row.invoiceUsd) : 0),
     price: Number(row.price ?? 0),
     cost: Number(row.cost ?? 0),
     profit: Number(row.profit ?? 0),
@@ -419,6 +424,7 @@ async function initDb() {
       customer TEXT,
       sellerId INT REFERENCES users(id),
       serviceId INT REFERENCES services(id),
+      invoiceUsd NUMERIC(14,4) DEFAULT 0,
       price NUMERIC(14,2) DEFAULT 0,
       cost NUMERIC(14,2) DEFAULT 0,
       profit NUMERIC(14,2) DEFAULT 0,
@@ -660,8 +666,8 @@ app.post('/api/orders', async (req, res) => {
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(body, seller, service);
 
     const rows = await query(
-      `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+      `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
       [
         body.customer,
         body.sellerId || null,
@@ -678,7 +684,8 @@ app.post('/api/orders', async (req, res) => {
         false,
         body.productType || 'Serviço',
         body.payoutProof || null,
-        body.wallet || null
+        body.wallet || null,
+        body.invoiceUsd || body.invoiceusd || 0
       ]
     );
     res.status(201).json(normalizeOrder(rows[0]));
@@ -727,8 +734,8 @@ app.patch('/api/orders/:id', async (req, res) => {
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(merged, seller || existing, service || existing);
 
     const rows = await query(
-      `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16
-       WHERE id=$17 RETURNING *`,
+      `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16, invoiceUsd=$17
+       WHERE id=$18 RETURNING *`,
       [
         merged.customer,
         merged.sellerid || merged.sellerId || null,
@@ -746,6 +753,7 @@ app.patch('/api/orders/:id', async (req, res) => {
         merged.producttype || merged.productType || 'Serviço',
         merged.payoutProof || merged.payoutproof || existing.payoutproof || existing.payoutProof || null,
         merged.wallet || existing.wallet || null,
+        merged.invoiceUsd ?? merged.invoiceusd ?? existing.invoiceusd ?? existing.invoiceUsd ?? 0,
         id
       ]
     );
