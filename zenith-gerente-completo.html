@@ -1082,14 +1082,9 @@
             return (value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
         }
 
-        function formatBRL5(value) {
+        function formatBRL4(value) {
             const num = Number(value) || 0;
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 5
-            }).format(num);
+            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 4, maximumFractionDigits: 4 });
         }
 
         function renderOrdersForSeller(orders, users) {
@@ -1118,8 +1113,8 @@
                     <td>${order.customer || '-'}</td>
                     <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                     <td>${quantityDisplay}</td>
-                    <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
-                    <td>${formatBRL5(order.price)}</td>
+                    <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
+                    <td>${formatBRL(order.price)}</td>
                     <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                     <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
@@ -1139,13 +1134,13 @@
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                         <td>${quantityDisplay}</td>
-                        <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
-                        <td>${formatBRL5(order.price)}</td>
-                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
-                        <td><span class=\"badge badge-pending\">Em Análise</span></td>
-                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
-                        <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
-                    `;
+                        <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
+                    <td>${formatBRL(order.price)}</td>
+                    <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                    <td><span class=\"badge badge-pending\">Em Análise</span></td>
+                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                    <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
+                `;
                     analysisTbody?.appendChild(tr);
                 }
 
@@ -1156,13 +1151,13 @@
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                         <td>${quantityDisplay}</td>
-                        <td>${unitPriceDisplay != null ? formatBRL5(unitPriceDisplay) : '-'}</td>
-                        <td class=\"profit-value\">${formatBRL(order.price)}</td>
-                        <td class=\"profit-value\">${formatBRL(order.profit)}</td>
-                        <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>
-                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
-                        <td><span class=\"badge badge-success\">Aprovada</span></td>
-                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                    <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
+                    <td class=\"profit-value\">${formatBRL(order.price)}</td>
+                    <td class=\"profit-value\">${formatBRL(order.profit)}</td>
+                    <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>
+                    <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                    <td><span class=\"badge badge-success\">Aprovada</span></td>
+                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
                         <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                     `;
                     concludedTbody?.appendChild(tr);

@@ -1868,6 +1868,11 @@
             return (value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
         }
 
+        function formatBRL4(value) {
+            const num = Number(value) || 0;
+            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 4, maximumFractionDigits: 4 });
+        }
+
         function formatCurrencyValue(currency, value) {
             const num = Number(value ?? 0);
             if (!Number.isFinite(num)) return value ?? '-';
@@ -2044,7 +2049,7 @@
                     <td>${sellerName}</td>
                     <td><span class=\"badge badge-gold\">${serviceName}</span></td>
                     <td>${order.quantity != null ? order.quantity : '-'}</td>
-                    <td>${unitPriceDisplay != null ? formatBRL(unitPriceDisplay) : '-'}</td>
+                    <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
                     <td>${order.wallet ? `<span title=\"${order.wallet}\">${order.wallet}</span>` : '-'}</td>
                     <td>${formatBRL(order.price)}</td>
                     <td>${formatBRL(order.cost)}</td>

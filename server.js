@@ -229,42 +229,41 @@ async function computeFinancials(order, seller, service) {
   const serviceName = (service?.name || order.productType || '').toString().trim().toLowerCase();
   const isRemessa = serviceName === 'remessa';
   if (isRemessa) {
-    // Cotação USDT com spread configurável (costPercentual) e taxa fixa (costFixo) cadastrados no serviço
+    console.log('🔍 ===== COMPUTANDO REMESSA =====');
+    console.log('order.quantity:', order.quantity);
+    console.log('order.unitPrice:', order.unitPrice);
+    console.log('order.price:', order.price);
+    console.log('order.invoiceUsd:', invoiceUsd);
+
     let quote;
     try {
       quote = await fetchUsdtQuote();
     } catch (err) {
       console.error('⚠️ Impossível criar ordem sem cotação USDT:', err.message);
-      throw new Error('Cotação USDT indisponível. Aguarde alguns instantes e tente novamente.');
+      throw new Error('Cotação USDT indisponível. Aguarde e tente novamente.');
     }
-    const spreadPercent = Number(service?.costPercentual ?? 0.80);
-    const quoteWithSpread = quote + (quote * spreadPercent / 100);
 
+    const spreadPercent = Number(service?.costPercentual ?? 1.2);
+    const spreadEmReais = quote * (spreadPercent / 100);
+    const cotacaoFinal = quote + spreadEmReais;
+    const quantidadeTotal = quantity + invoiceUsd;
+    const cost = quantidadeTotal * cotacaoFinal;
     const price = priceFromPayload > 0 ? priceFromPayload : unitPrice * quantity;
-    const custoBase = quoteWithSpread * quantity;
-    const fixedUsdFee = Number.isFinite(Number(service?.costFixo)) ? Number(service.costFixo) : 25;
-    const taxaFixaConvertida = fixedUsdFee * quote; // taxa fixa em USD convertida pela cotação base (sem spread)
-    const invoiceTax = invoiceUsd > 0 ? invoiceUsd * quote : 0; // invoice em USD convertido pela cotação base
-    const cost = custoBase + taxaFixaConvertida + invoiceTax;
-    const profit = price - cost; // lucro = venda - custo (positivo = ganho)
+    const profit = price - cost;
     const commissionRate = seller ? Number(seller.commission || 0) : 0;
     const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
 
     console.log('=== DEBUG REMESSA ===');
-    console.log('quantity:', quantity);
-    console.log('quote (dólar):', quote);
-    console.log('spread aplicado (%):', spreadPercent);
-    console.log('cotação base:', quote.toFixed(4));
-    console.log('spread valor (R$):', (quote * spreadPercent / 100).toFixed(4));
-    console.log('quote com spread:', quoteWithSpread);
-    console.log('custo_base:', custoBase);
-    console.log('taxa_fixa_usd:', fixedUsdFee);
-    console.log('taxa_fixa_convertida:', taxaFixaConvertida);
-    console.log('invoice_usd:', invoiceUsd, 'invoice_convertido:', invoiceTax);
-    console.log('cost (total):', cost);
-    console.log('unitPrice (venda):', unitPrice);
-    console.log('price (total venda):', price);
-    console.log('profit:', profit);
+    console.log('quantity (USDT):', quantity.toFixed(2));
+    console.log('invoice (USD):', invoiceUsd.toFixed(2));
+    console.log('quantidade_total:', quantidadeTotal.toFixed(2));
+    console.log('cotação_binance:', quote.toFixed(4));
+    console.log('spread (%):', spreadPercent);
+    console.log('spread (R$):', spreadEmReais.toFixed(4));
+    console.log('cotação_final:', cotacaoFinal.toFixed(4));
+    console.log('cost:', cost.toFixed(2));
+    console.log('price:', price.toFixed(2));
+    console.log('profit:', profit.toFixed(2));
     console.log('====================');
 
     return {
@@ -272,8 +271,8 @@ async function computeFinancials(order, seller, service) {
       cost,
       profit,
       commissionValue,
-      quoteUsed: quote,
-      unitPriceUsed: unitPrice || quote
+      quoteUsed: cotacaoFinal,
+      unitPriceUsed: unitPrice || cotacaoFinal
     };
   }
 
