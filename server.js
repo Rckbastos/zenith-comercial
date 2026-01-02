@@ -234,9 +234,9 @@ async function computeFinancials(order, seller, service) {
   if (isRemessa) {
     console.log('🔍 ===== COMPUTANDO REMESSA =====');
     console.log('🔹 isRetroactive:', order.isRetroactive ?? false);
-    console.log('🔹 quantity (remessa USD):', order.quantity);
-    console.log('🔹 invoiceUsd:', invoiceUsd);
-    console.log('🔹 unitPrice (cotação negociada):', order.unitPrice);
+    console.log('🔹 remessaUSD:', quantity);
+    console.log('🔹 invoiceFeeUsd (fee cobrada):', invoiceUsd);
+    console.log('🔹 unitPrice (cotação negociada/repasse):', order.unitPrice ?? unitPrice);
     console.log('🔹 historicalQuote (cotação fechamento):', historicalQuote);
 
     let cotacaoFechamento;
@@ -253,15 +253,19 @@ async function computeFinancials(order, seller, service) {
       }
     }
 
-    const cotacaoNegociada = Number(order.unitPrice ?? unitPrice) || 0;
-    const quantidadeTotal = quantity + invoiceUsd;
-
+    const cotacaoNegociada = Number(order.unitPrice ?? unitPrice) || 0; // preço que o cliente paga por USD
     const spreadPercent = Number(service?.costPercentual ?? service?.costpercentual ?? 1.2);
-    const spreadEmReais = cotacaoFechamento * (spreadPercent / 100);
-    const cotacaoComCusto = cotacaoFechamento + spreadEmReais;
-    const cost = quantidadeTotal * cotacaoComCusto;
+    const costRate = cotacaoFechamento * (1 + spreadPercent / 100); // cotação com spread (custo real)
 
-    const price = quantidadeTotal * cotacaoNegociada;
+    const invoiceCostUsd = invoiceUsd > 0 ? 25 : 0; // custo fixo real do envio da invoice (25 USD) apenas se houver fee
+
+    // Custo: remessa + (25 USD se tiver invoice) multiplicados pela cotação de custo
+    const costBaseUsd = quantity + invoiceCostUsd;
+    const cost = costBaseUsd * costRate;
+
+    // Venda: remessa + fee cobrada (80/40/0) multiplicados pela cotação negociada
+    const saleBaseUsd = invoiceUsd > 0 ? (quantity + invoiceUsd) : quantity;
+    const price = saleBaseUsd * cotacaoNegociada;
 
     const profit = price - cost;
     const commissionRate = seller ? Number(seller.commission || 0) : 0;
@@ -270,25 +274,22 @@ async function computeFinancials(order, seller, service) {
     console.log('┌─────────────────────────────────┐');
     console.log('│   REMESSA - CÁLCULO DETALHADO   │');
     console.log('├─────────────────────────────────┤');
-    console.log('│ QUANTIDADES (USD):              │');
-    console.log(`│   Remessa.......: ${quantity.toFixed(2).padStart(12)}`);
-    console.log(`│   Invoice.......: ${invoiceUsd.toFixed(2).padStart(12)}`);
-    console.log(`│   TOTAL.........: ${quantidadeTotal.toFixed(2).padStart(12)}`);
+    console.log('│ ENTRADAS:                       │');
+    console.log(`│   Remessa USD.....: ${quantity.toFixed(2)}`);
+    console.log(`│   Invoice fee USD.: ${invoiceUsd.toFixed(2)}`);
+    console.log(`│   Invoice cost USD: ${invoiceCostUsd.toFixed(2)}`);
     console.log('├─────────────────────────────────┤');
-    console.log('│ CUSTO (o que PAGAMOS):          │');
-    console.log(`│   Cotação base..: R$ ${cotacaoFechamento.toFixed(4)}`);
-    console.log(`│   Spread %......: ${spreadPercent.toFixed(2)}%`);
-    console.log(`│   Spread R$.....: R$ ${spreadEmReais.toFixed(4)}`);
-    console.log(`│   Cotação final.: R$ ${cotacaoComCusto.toFixed(4)}`);
-    console.log(`│   CUSTO TOTAL...: R$ ${cost.toFixed(2)}`);
+    console.log('│ COTAÇÕES:                       │');
+    console.log(`│   Cot. base (Binance/Hist)..: R$ ${cotacaoFechamento.toFixed(4)}`);
+    console.log(`│   Spread %..................: ${spreadPercent.toFixed(2)}%`);
+    console.log(`│   Cot. custo (c/ spread)....: R$ ${costRate.toFixed(4)}`);
+    console.log(`│   Cot. repasse (cliente)....: R$ ${cotacaoNegociada.toFixed(4)}`);
     console.log('├─────────────────────────────────┤');
-    console.log('│ VENDA (o que CLIENTE PAGA):     │');
-    console.log(`│   Cotação negoc.: R$ ${cotacaoNegociada.toFixed(4)}`);
-    console.log(`│   VENDA TOTAL...: R$ ${price.toFixed(2)}`);
-    console.log('├─────────────────────────────────┤');
-    console.log('│ RESULTADO:                      │');
-    console.log(`│   LUCRO.........: R$ ${profit.toFixed(2)}`);
-    console.log(`│   Comissão......: R$ ${commissionValue.toFixed(2)}`);
+    console.log('│ VALORES (BRL):                 │');
+    console.log(`│   Custo total.....: R$ ${cost.toFixed(2)}`);
+    console.log(`│   Venda total.....: R$ ${price.toFixed(2)}`);
+    console.log(`│   Lucro...........: R$ ${profit.toFixed(2)}`);
+    console.log(`│   Comissão........: R$ ${commissionValue.toFixed(2)}`);
     console.log('└─────────────────────────────────┘');
 
     return {

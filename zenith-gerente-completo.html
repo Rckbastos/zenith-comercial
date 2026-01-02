@@ -701,14 +701,6 @@
                     <div class="stat-value" id="usdtPriceGerente" style="color: #D4AF37;">R$ 5,54</div>
                     <div class="stat-subtitle" style="color: #10b981;">● Tempo real</div>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #52341a 0%, #42250a 100%); border: 2px solid #ff6b35;">
-                    <div class="stat-header">
-                        <span class="stat-title">Custo USDT (c/ spread)</span>
-                        <span class="stat-icon">📈</span>
-                    </div>
-                    <div class="stat-value" id="usdtCostPrice" style="color: #ff6b35;">R$ 0,00</div>
-                    <div class="stat-subtitle" style="color: #94a3b8;">USDT Cotação + 0,30%</div>co
-                </div>
             </div>
         </div>
 
@@ -815,7 +807,11 @@
                             <th>Produto</th>
                             <th>Qtd</th>
                             <th>Preço (un.)</th>
-                            <th>Valor</th>
+                            <th>Wallet</th>
+                            <th>Venda</th>
+                            <th>Custo</th>
+                            <th>Lucro</th>
+                            <th>Comissão</th>
                             <th>Data</th>
                             <th>Status</th>
                             <th>Comprovante</th>
@@ -839,11 +835,14 @@
                             <th>Produto</th>
                             <th>Qtd</th>
                             <th>Preço (un.)</th>
-                            <th>Valor</th>
+                            <th>Wallet</th>
+                            <th>Venda</th>
+                            <th>Custo</th>
                             <th>Lucro</th>
                             <th>Comissão</th>
                             <th>Data</th>
                             <th>Status</th>
+                            <th>Comprovante</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -863,11 +862,15 @@
                             <th>Cliente</th>
                             <th>Produto</th>
                             <th>Qtd</th>
-                            <th>Valor</th>
+                            <th>Preço (un.)</th>
+                            <th>Wallet</th>
+                            <th>Venda</th>
+                            <th>Custo</th>
                             <th>Lucro</th>
                             <th>Comissão</th>
                             <th>Data</th>
                             <th>Status</th>
+                            <th>Comprovante</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -1245,13 +1248,16 @@
                 const statusLabel = order.status === 'concluded' ? '<span class=\"badge badge-success\">Aprovada</span>' : '<span class=\"badge badge-pending\">Em Análise</span>';
                 const unitPriceDisplay = Number(order.unitPrice) || (order.price && order.quantity ? Number(order.price) / Number(order.quantity) : null);
                 const quantityDisplay = order.quantity != null ? order.quantity : '-';
+                const walletDisplay = order.wallet ? `<span title=\"${order.wallet}\">${order.wallet}</span>` : '-';
                 const baseRow = `
                     <td>#${order.id}</td>
                     <td>${order.customer || '-'}</td>
                     <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                     <td>${quantityDisplay}</td>
                     <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
+                    <td>${walletDisplay}</td>
                     <td>${formatBRL(order.price)}</td>
+                    <td>${formatBRL(order.cost)}</td>
                     <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                     <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
@@ -1272,11 +1278,15 @@
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                         <td>${quantityDisplay}</td>
                         <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
-                    <td>${formatBRL(order.price)}</td>
-                    <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
-                    <td><span class=\"badge badge-pending\">Em Análise</span></td>
-                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
-                    <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
+                        <td>${walletDisplay}</td>
+                        <td>${formatBRL(order.price)}</td>
+                        <td>${formatBRL(order.cost)}</td>
+                        <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
+                        <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
+                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td><span class=\"badge badge-pending\">Em Análise</span></td>
+                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                        <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                 `;
                     analysisTbody?.appendChild(tr);
                 }
@@ -1288,13 +1298,15 @@
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                         <td>${quantityDisplay}</td>
-                    <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
-                    <td class=\"profit-value\">${formatBRL(order.price)}</td>
-                    <td class=\"profit-value\">${formatBRL(order.profit)}</td>
-                    <td class=\"profit-value\">${formatBRL(order.commissionValue)}</td>
-                    <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
-                    <td><span class=\"badge badge-success\">Aprovada</span></td>
-                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                        <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
+                        <td>${walletDisplay}</td>
+                        <td>${formatBRL(order.price)}</td>
+                        <td>${formatBRL(order.cost)}</td>
+                        <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
+                        <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
+                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td><span class=\"badge badge-success\">Aprovada</span></td>
+                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
                         <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                     `;
                     concludedTbody?.appendChild(tr);
