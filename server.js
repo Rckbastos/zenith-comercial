@@ -216,7 +216,7 @@ async function computeFinancials(order, seller, service) {
   const invoiceUsd = Number(order.invoiceUsd ?? order.invoiceusd ?? 0);
 
   // Preço unitário informado (preço fechado por USDT)
-  const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit);
+  const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit ?? order.unitprice);
   let unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
     ? unitPriceRaw
     : (Number.isFinite(servicePrice) && servicePrice > 0 ? servicePrice : 0);
