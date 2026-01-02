@@ -709,6 +709,25 @@
             <div class="form-card">
                 <h3><span>➕</span> Criar Nova Ordem de Pagamento</h3>
                 <form id="orderForm">
+                    <div class="info-box" style="margin-bottom: 1.5rem;">
+                        <span class="info-box-icon">💡</span>
+                        <div class="info-box-text">
+                            <strong>Ordem Retroativa:</strong> Use para registrar vendas com cotação do dia do fechamento. Se informar a cotação histórica, usaremos essa cotação; se deixar vazio, buscamos a cotação atual.
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Data da Venda <span>*</span></label>
+                            <input type="date" id="orderDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cotação USDT no Fechamento (R$) <span style="color:#888;">(opcional)</span></label>
+                            <input type="number" id="historicalQuote" placeholder="Ex: 5.4523" step="0.0001" min="0.0001">
+                            <small style="display:block; margin-top:0.35rem; color:#D4AF37;">Informe para ordem retroativa; se vazio, usa cotação atual.</small>
+                        </div>
+                    </div>
+
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Produto / Serviço <span>*</span></label>
@@ -756,14 +775,18 @@
                             <label>Valor da Remessa (USD) <span>*</span></label>
                             <input type="number" id="remessaQtd" placeholder="Ex: 1845.39" step="any" min="0.00001">
                             </div>
-                            <div class="form-group">
-                                <label>Cotação Dólar Negociada <span>*</span></label>
-                                <input type="number" id="remessaDolar" placeholder="Ex: 5.42" step="any" min="0.00001">
+                        <div class="form-group">
+                            <label>Cotação Dólar Negociada <span>*</span></label>
+                            <input type="number" id="remessaDolar" placeholder="Ex: 5.42" step="any" min="0.00001">
+                        </div>
+                        <div class="form-group">
+                            <label>Invoice aplicada (USD)</label>
+                            <div id="remessaInvoiceInfo" class="info-box" style="padding: 0.75rem 1rem; margin:0; background: rgba(212,175,55,0.06); border: 1px dashed #D4AF37;">
+                                <div><strong>Valor:</strong> --</div>
+                                <div><strong>Lucro da invoice:</strong> --</div>
+                                <small style="display:block; margin-top:0.35rem; color:#888;">Regra automática: até 5000 → 80 | até 10000 → 40 | acima de 10000 → 0 (custo fixo 25 USD quando houver)</small>
                             </div>
-                            <div class="form-group">
-                                <label>Valor da Invoice (USD) <span>*</span></label>
-                                <input type="number" id="remessaInvoice" placeholder="Ex: 1845.39" step="any" min="0.00001">
-                            </div>
+                        </div>
                         </div>
                         <div class="info-box">
                             <span class="info-box-icon">💡</span>
@@ -787,8 +810,7 @@
                     </div>
 
                     <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" id="orderSubmitBtn">✅ Enviar para Análise</button>
-                    <button type="button" class="btn btn-secondary" onclick="openRetroactiveModal()" style="background: rgba(251, 191, 36, 0.2); border-color: #fbbf24; color: #fbbf24;">📅 Enviar Ordem Retroativa</button>
+                    <button type="submit" class="btn btn-primary" id="orderSubmitBtn">✅ Enviar Ordem</button>
                     <button type="reset" class="btn btn-secondary" onclick="document.getElementById('fileName').textContent=''">🔄 Limpar</button>
                 </div>
             </form>
@@ -904,102 +926,6 @@
         </div>
     </div>
 
-    <!-- Modal Ordem Retroativa -->
-    <div id="retroactiveModal" class="modal-overlay" style="display: none;">
-        <div class="modal-card" style="max-width: 900px;" onclick="event.stopPropagation();">
-            <div class="modal-header">
-                <h3>📅 Ordem Retroativa (Cotação Histórica)</h3>
-                <button type="button" class="modal-close" onclick="closeRetroactiveModal()">&times;</button>
-            </div>
-            <div class="info-box">
-                <span class="info-box-icon">💡</span>
-                <div class="info-box-text">
-                    <strong>Ordem Retroativa:</strong> Use para registrar vendas antigas com a cotação do dia do fechamento.
-                    O sistema NÃO buscará a cotação atual, usará a que você informar.
-                </div>
-            </div>
-            
-            <form id="retroactiveForm">
-                <div class="form-grid" style="margin-top: 1.5rem;">
-                    <div class="form-group">
-                        <label>Data da Venda <span>*</span></label>
-                        <input type="date" id="retroDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Cotação USDT no Fechamento (R$) <span>*</span></label>
-                        <input type="number" id="retroQuote" placeholder="Ex: 5.4523" step="0.0001" min="0.0001" required>
-                    </div>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Produto / Serviço <span>*</span></label>
-                        <select id="retroProduct" required onchange="toggleRetroProductFields()">
-                            <option value="">Selecione...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Cliente <span>*</span></label>
-                        <input type="text" id="retroClient" placeholder="Nome do cliente" required>
-                    </div>
-                </div>
-
-                <div id="retroUsdtFields" style="display: none;">
-                    <h4 style="color: #D4AF37; margin: 1.5rem 0 1rem;">💰 Dados USDT</h4>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Quantidade de USDT <span>*</span></label>
-                            <input type="number" id="retroUsdtQty" placeholder="Ex: 1000" step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label>Preço Fechado por USDT (R$) <span>*</span></label>
-                            <input type="number" id="retroUsdtPrice" placeholder="Ex: 5.42" step="any" min="0.00001">
-                        </div>
-                        <div class="form-group">
-                            <label>Wallet <span>*</span></label>
-                            <input type="text" id="retroWallet" placeholder="Endereço da wallet">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="retroRemessaFields" style="display: none;">
-                    <h4 style="color: #D4AF37; margin: 1.5rem 0 1rem;">🌎 Dados da Remessa</h4>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Valor da Remessa (USD) <span>*</span></label>
-                            <input type="number" id="retroRemessaQty" placeholder="Ex: 1845.39" step="any" min="0.00001">
-                        </div>
-                        <div class="form-group">
-                            <label>Cotação Dólar Negociada <span>*</span></label>
-                            <input type="number" id="retroRemessaDolar" placeholder="Ex: 5.42" step="any" min="0.00001">
-                        </div>
-                        <div class="form-group">
-                            <label>Valor da Invoice (USD) <span>*</span></label>
-                            <input type="number" id="retroRemessaInvoice" placeholder="Ex: 80" step="any" min="0.00001">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-top: 2rem;">
-                    <label>Comprovante de Pagamento <span>*</span></label>
-                    <div class="file-upload">
-                        <input type="file" id="retroProof" accept="image/*,application/pdf" onchange="showRetroFileName(this)" required>
-                        <label for="retroProof" class="file-upload-label">
-                            <span>📎</span>
-                            <span>Clique para anexar comprovante</span>
-                        </label>
-                        <div id="retroFileName" class="file-name"></div>
-                    </div>
-                </div>
-
-                <div class="form-actions" style="margin-top: 2rem;">
-                    <button type="submit" class="btn btn-primary">✅ Criar Ordem Retroativa</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeRetroactiveModal()">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
         const apiBase = '';
         let currentSellerId = null; // será definido pelo login/usuário encontrado
@@ -1007,7 +933,6 @@
         let isSubmittingOrder = false;
         let assignedServices = [];
         let lastUsdtQuote = null;
-        let retroServices = [];
 
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -1049,6 +974,7 @@
                 document.querySelectorAll('#remessaFields input').forEach(input => {
                     input.setAttribute('required', 'required');
                 });
+                updateRemessaInvoiceInfo();
             }
         }
 
@@ -1058,6 +984,28 @@
                 fileNameDiv.textContent = `✅ ${input.files[0].name}`;
             } else {
                 fileNameDiv.textContent = '';
+            }
+        }
+
+        function getInvoiceFeeUsd(remessaUsd) {
+            const v = Number(remessaUsd) || 0;
+            if (v <= 0) return 0;
+            if (v <= 5000) return 80;
+            if (v <= 10000) return 40;
+            return 0;
+        }
+
+        function updateRemessaInvoiceInfo() {
+            const qty = Number(document.getElementById('remessaQtd').value || 0);
+            const fee = getInvoiceFeeUsd(qty);
+            const profitUsd = fee > 0 ? fee - 25 : 0;
+            const info = document.getElementById('remessaInvoiceInfo');
+            if (info) {
+                info.innerHTML = `
+                    <div><strong>Valor:</strong> ${fee.toFixed(2)} USD</div>
+                    <div><strong>Lucro da invoice:</strong> ${profitUsd.toFixed(2)} USD</div>
+                    <small style="display:block; margin-top:0.35rem; color:#888;">Regra automática: até 5000 → 80 | até 10000 → 40 | acima de 10000 → 0 (custo fixo 25 USD quando houver)</small>
+                `;
             }
         }
 
@@ -1091,14 +1039,17 @@
             const productType = document.getElementById('productType').value;
             const selectedService = assignedServices.find(s => String(s.id) === String(productType));
             const clientName = document.getElementById('clientName').value;
+            const orderDate = document.getElementById('orderDate').value || new Date().toISOString().slice(0, 10);
+            const historicalQuote = Number(document.getElementById('historicalQuote').value || 0);
             const fileInput = document.getElementById('paymentProof');
             const usdtQuantity = Number(document.getElementById('usdtQuantity').value || 0);
             const usdtPrice = Number(document.getElementById('usdtPrice').value || 0);
             const remessaQtd = Number(document.getElementById('remessaQtd').value || 0);
             const remessaDolar = Number(document.getElementById('remessaDolar').value || 0);
-            const remessaInvoice = Number(document.getElementById('remessaInvoice').value || 0);
             const wallet = document.getElementById('usdtWallet').value || null;
             const isRemessa = (selectedService?.name || '').trim().toLowerCase() === 'remessa';
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const isRetroactive = Boolean((historicalQuote && historicalQuote > 0) || orderDate !== todayStr);
 
             if (!fileInput.files.length) {
                 alert('⚠️ Por favor, anexe o comprovante de pagamento!');
@@ -1112,10 +1063,6 @@
                 priceBRL = remessaQtd * remessaDolar;
             }
 
-            if (isRemessa) {
-                console.log('📊 Remessa - Qtd:', remessaQtd, 'Preço/unit:', remessaDolar, 'Invoice USD:', remessaInvoice);
-            }
-
             const payload = {
                 customer: clientName,
                 sellerId: currentSellerId,
@@ -1123,9 +1070,11 @@
                 quantity: remessaQtd || usdtQuantity || 0,
                 unitPrice: isRemessa ? remessaDolar : usdtPrice,
                 price: priceBRL,
-                invoiceUsd: remessaInvoice,
+                historicalQuote: historicalQuote || null,
+                isRetroactive,
                 cost: 0,
                 status: 'open',
+                date: orderDate,
                 productType: selectedService?.name || 'Serviço',
                 wallet
             };
@@ -1150,6 +1099,10 @@
                 document.getElementById('fileName').textContent = '';
                 document.getElementById('usdtFields').style.display = 'none';
                 document.getElementById('remessaFields').style.display = 'none';
+                const dateInput = document.getElementById('orderDate');
+                if (dateInput) dateInput.valueAsDate = new Date();
+                const histInput = document.getElementById('historicalQuote');
+                if (histInput) histInput.value = '';
                 await loadGerenteData();
             } catch (err) {
                 showError(err);
@@ -1196,6 +1149,10 @@
         window.addEventListener('load', function() {
             atualizarCotacaoGerente();
             setInterval(atualizarCotacaoGerente, 30000);
+            const dateInput = document.getElementById('orderDate');
+            if (dateInput) dateInput.valueAsDate = new Date();
+            const remessaQtyInput = document.getElementById('remessaQtd');
+            if (remessaQtyInput) remessaQtyInput.addEventListener('input', updateRemessaInvoiceInfo);
             loadGerenteData();
             setupUserMenu();
             restoreProfileImage();
@@ -1249,8 +1206,10 @@
                 const unitPriceDisplay = Number(order.unitPrice) || (order.price && order.quantity ? Number(order.price) / Number(order.quantity) : null);
                 const quantityDisplay = order.quantity != null ? order.quantity : '-';
                 const walletDisplay = order.wallet ? `<span title=\"${order.wallet}\">${order.wallet}</span>` : '-';
+                const retroBadge = order.isRetroactive ? '<span class=\"badge\" style=\"background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;\">📅 RETRO</span>' : '';
+                const dateTitle = order.historicalQuote ? ` title=\"Cotação histórica: R$ ${Number(order.historicalQuote).toFixed(4)}\"` : ' title=\"Cotação automática\"';
                 const baseRow = `
-                    <td>#${order.id}</td>
+                    <td>#${order.id}${retroBadge ? ' ' + retroBadge : ''}</td>
                     <td>${order.customer || '-'}</td>
                     <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                     <td>${quantityDisplay}</td>
@@ -1260,7 +1219,7 @@
                     <td>${formatBRL(order.cost)}</td>
                     <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
-                    <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                    <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                     <td>${statusLabel}</td>
                     <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
                     <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
@@ -1273,7 +1232,7 @@
                 if (order.status === 'open') {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>#${order.id}</td>
+                        <td>#${order.id}${retroBadge ? ' ' + retroBadge : ''}</td>
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                         <td>${quantityDisplay}</td>
@@ -1283,7 +1242,7 @@
                         <td>${formatBRL(order.cost)}</td>
                         <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                         <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
-                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                         <td><span class=\"badge badge-pending\">Em Análise</span></td>
                         <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
                         <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
@@ -1294,7 +1253,7 @@
                 if (order.status === 'concluded') {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>#${order.id}</td>
+                        <td>#${order.id}${retroBadge ? ' ' + retroBadge : ''}</td>
                         <td>${order.customer || '-'}</td>
                         <td><span class=\"badge badge-gold\">${order.productType || 'Serviço'}</span></td>
                         <td>${quantityDisplay}</td>
@@ -1304,7 +1263,7 @@
                         <td>${formatBRL(order.cost)}</td>
                         <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                         <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
-                        <td>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                         <td><span class=\"badge badge-success\">Aprovada</span></td>
                         <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
                         <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
@@ -1345,136 +1304,6 @@
                 showError(err);
             }
         }
-
-        // Retroativa
-        function openRetroactiveModal() {
-            retroServices = [...assignedServices];
-            populateRetroProducts();
-            document.getElementById('retroDate').valueAsDate = new Date();
-            document.getElementById('retroactiveModal').style.display = 'flex';
-        }
-
-        function closeRetroactiveModal() {
-            document.getElementById('retroactiveForm').reset();
-            document.getElementById('retroFileName').textContent = '';
-            document.getElementById('retroUsdtFields').style.display = 'none';
-            document.getElementById('retroRemessaFields').style.display = 'none';
-            document.getElementById('retroactiveModal').style.display = 'none';
-        }
-
-        function populateRetroProducts() {
-            const select = document.getElementById('retroProduct');
-            select.innerHTML = '<option value=\"\">Selecione...</option>';
-            retroServices.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = s.name;
-                select.appendChild(opt);
-            });
-        }
-
-        function toggleRetroProductFields() {
-            const productId = document.getElementById('retroProduct').value;
-            const usdtFields = document.getElementById('retroUsdtFields');
-            const remessaFields = document.getElementById('retroRemessaFields');
-
-            usdtFields.style.display = 'none';
-            remessaFields.style.display = 'none';
-
-            document.querySelectorAll('#retroUsdtFields input, #retroRemessaFields input').forEach(input => {
-                input.removeAttribute('required');
-            });
-
-            const service = retroServices.find(s => String(s.id) === String(productId));
-            const name = service?.name?.toLowerCase() || '';
-
-            if (name.includes('usdt')) {
-                usdtFields.style.display = 'block';
-                document.querySelectorAll('#retroUsdtFields input').forEach(input => input.setAttribute('required', 'required'));
-            } else if (name.includes('remessa')) {
-                remessaFields.style.display = 'block';
-                document.querySelectorAll('#retroRemessaFields input').forEach(input => input.setAttribute('required', 'required'));
-            }
-        }
-
-        function showRetroFileName(input) {
-            const fileNameDiv = document.getElementById('retroFileName');
-            fileNameDiv.textContent = input.files.length ? `✅ ${input.files[0].name}` : '';
-        }
-
-        document.getElementById('retroactiveForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const productId = document.getElementById('retroProduct').value;
-            const selectedService = retroServices.find(s => String(s.id) === String(productId));
-            const clientName = document.getElementById('retroClient').value;
-            const retroDate = document.getElementById('retroDate').value;
-            const historicalQuote = Number(document.getElementById('retroQuote').value);
-            const fileInput = document.getElementById('retroProof');
-
-            const usdtQty = Number(document.getElementById('retroUsdtQty').value || 0);
-            const usdtPrice = Number(document.getElementById('retroUsdtPrice').value || 0);
-            const remessaQty = Number(document.getElementById('retroRemessaQty').value || 0);
-            const remessaDolar = Number(document.getElementById('retroRemessaDolar').value || 0);
-            const remessaInvoice = Number(document.getElementById('retroRemessaInvoice').value || 0);
-            const wallet = document.getElementById('retroWallet').value || null;
-
-            const isRemessa = (selectedService?.name || '').trim().toLowerCase() === 'remessa';
-
-            if (!fileInput.files.length) {
-                alert('⚠️ Por favor, anexe o comprovante de pagamento!');
-                return;
-            }
-
-            let priceBRL = 0;
-            if (selectedService?.name?.toLowerCase().includes('usdt')) {
-                priceBRL = usdtQty * usdtPrice;
-            } else if (isRemessa) {
-                priceBRL = remessaQty * remessaDolar;
-            }
-
-            const payload = {
-                customer: clientName,
-                sellerId: currentSellerId,
-                serviceId: selectedService?.id || null,
-                quantity: remessaQty || usdtQty || 0,
-                unitPrice: isRemessa ? remessaDolar : usdtPrice,
-                price: priceBRL,
-                invoiceUsd: remessaInvoice,
-                historicalQuote: historicalQuote,
-                isRetroactive: true,
-                cost: 0,
-                status: 'open',
-                date: retroDate,
-                productType: selectedService?.name || 'Serviço',
-                wallet
-            };
-
-            console.log('📅 Ordem Retroativa - Payload:', payload);
-
-            try {
-                const payoutProof = await readFileAsDataUrl(fileInput.files[0]);
-                payload.payoutProof = payoutProof;
-
-                await fetchJson('/api/orders', {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-
-                alert(`✅ Ordem retroativa criada com sucesso!`);
-
-                closeRetroactiveModal();
-                await loadGerenteData();
-            } catch (err) {
-                showError(err);
-            }
-        });
-
-        document.getElementById('retroactiveModal').addEventListener('click', function(e) {
-            if (e.target.id === 'retroactiveModal') {
-                closeRetroactiveModal();
-            }
-        });
 
         function populateProductTypes() {
             const select = document.getElementById('productType');

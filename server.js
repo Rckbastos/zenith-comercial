@@ -209,14 +209,25 @@ function calcCost(price, service, opts = {}) {
   return 0;
 }
 
+function getInvoiceFeeUsd(remessaUsd) {
+  const v = Number(remessaUsd) || 0;
+  if (v <= 0) return 0;
+  if (v <= 5000) return 80;
+  if (v <= 10000) return 40;
+  return 0;
+}
+
 async function computeFinancials(order, seller, service) {
   const rawQty = Number(order.quantity);
   const quantity = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 0;
 
   const priceFromPayload = Number(order.price) || 0; // pode ser total informado
   const servicePrice = service ? Number(service.price ?? 0) : 0;
-  const invoiceUsd = Number(order.invoiceUsd ?? order.invoiceusd ?? 0);
+  const invoiceUsdOriginal = Number(order.invoiceUsd ?? order.invoiceusd ?? 0);
   const historicalQuote = Number(order.historicalQuote ?? order.historicalquote ?? 0) || null;
+  const invoiceFeeUsd = getInvoiceFeeUsd(quantity);
+  const invoiceCostUsd = invoiceFeeUsd > 0 ? 25 : 0;
+  const invoiceProfitUsd = invoiceFeeUsd > 0 ? (invoiceFeeUsd - invoiceCostUsd) : 0;
 
   // Preço unitário informado (preço fechado por USDT)
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit ?? order.unitprice);
@@ -235,7 +246,11 @@ async function computeFinancials(order, seller, service) {
     console.log('🔍 ===== COMPUTANDO REMESSA =====');
     console.log('🔹 isRetroactive:', order.isRetroactive ?? false);
     console.log('🔹 remessaUSD:', quantity);
-    console.log('🔹 invoiceFeeUsd (fee cobrada):', invoiceUsd);
+    console.log('🔹 invoiceFeeUsd (fee cobrada auto):', invoiceFeeUsd);
+    console.log('🔹 invoiceUsd recebido:', invoiceUsdOriginal);
+    if (invoiceUsdOriginal !== invoiceFeeUsd) {
+      console.warn(`Invoice corrigida automaticamente: remessa=${quantity} | recebido=${invoiceUsdOriginal} | aplicado=${invoiceFeeUsd}`);
+    }
     console.log('🔹 unitPrice (cotação negociada/repasse):', order.unitPrice ?? unitPrice);
     console.log('🔹 historicalQuote (cotação fechamento):', historicalQuote);
 
@@ -257,14 +272,12 @@ async function computeFinancials(order, seller, service) {
     const spreadPercent = Number(service?.costPercentual ?? service?.costpercentual ?? 1.2);
     const costRate = cotacaoFechamento * (1 + spreadPercent / 100); // cotação com spread (custo real)
 
-    const invoiceCostUsd = invoiceUsd > 0 ? 25 : 0; // custo fixo real do envio da invoice (25 USD) apenas se houver fee
-
     // Custo: remessa + (25 USD se tiver invoice) multiplicados pela cotação de custo
     const costBaseUsd = quantity + invoiceCostUsd;
     const cost = costBaseUsd * costRate;
 
     // Venda: remessa + fee cobrada (80/40/0) multiplicados pela cotação negociada
-    const saleBaseUsd = invoiceUsd > 0 ? (quantity + invoiceUsd) : quantity;
+    const saleBaseUsd = invoiceFeeUsd > 0 ? (quantity + invoiceFeeUsd) : quantity;
     const price = saleBaseUsd * cotacaoNegociada;
 
     const profit = price - cost;
@@ -276,8 +289,9 @@ async function computeFinancials(order, seller, service) {
     console.log('├─────────────────────────────────┤');
     console.log('│ ENTRADAS:                       │');
     console.log(`│   Remessa USD.....: ${quantity.toFixed(2)}`);
-    console.log(`│   Invoice fee USD.: ${invoiceUsd.toFixed(2)}`);
+    console.log(`│   Invoice fee USD.: ${invoiceFeeUsd.toFixed(2)}`);
     console.log(`│   Invoice cost USD: ${invoiceCostUsd.toFixed(2)}`);
+    console.log(`│   Invoice profit USD: ${invoiceProfitUsd.toFixed(2)}`);
     console.log('├─────────────────────────────────┤');
     console.log('│ COTAÇÕES:                       │');
     console.log(`│   Cot. base (Binance/Hist)..: R$ ${cotacaoFechamento.toFixed(4)}`);
@@ -297,6 +311,8 @@ async function computeFinancials(order, seller, service) {
       cost,
       profit,
       commissionValue,
+      invoiceUsd: invoiceFeeUsd,
+      invoiceFeeUsd,
       quoteUsed: cotacaoFechamento,
       unitPriceUsed: cotacaoNegociada || cotacaoFechamento
     };
@@ -696,7 +712,7 @@ app.post('/api/orders', async (req, res) => {
     const [seller] = body.sellerId ? await query('SELECT * FROM users WHERE id=$1', [body.sellerId]) : [null];
     const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
-    const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(body, seller, service);
+    const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(body, seller, service);
 
     const rows = await query(
       `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd, historicalQuote, isRetroactive)
@@ -718,7 +734,7 @@ app.post('/api/orders', async (req, res) => {
         body.productType || 'Serviço',
         body.payoutProof || null,
         body.wallet || null,
-        body.invoiceUsd || body.invoiceusd || 0,
+        invoiceFeeUsd ?? body.invoiceUsd ?? body.invoiceusd ?? 0,
         body.historicalQuote || body.historicalquote || null,
         body.isRetroactive || body.isretroactive || false
       ]
@@ -766,7 +782,7 @@ app.patch('/api/orders/:id', async (req, res) => {
     const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
     const merged = { ...existing, ...body, id };
-    const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(merged, seller || existing, service || existing);
+    const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(merged, seller || existing, service || existing);
 
     const rows = await query(
       `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16, invoiceUsd=$17, historicalQuote=$18, isRetroactive=$19
@@ -788,7 +804,7 @@ app.patch('/api/orders/:id', async (req, res) => {
         merged.producttype || merged.productType || 'Serviço',
         merged.payoutProof || merged.payoutproof || existing.payoutproof || existing.payoutProof || null,
         merged.wallet || existing.wallet || null,
-        merged.invoiceUsd ?? merged.invoiceusd ?? existing.invoiceusd ?? existing.invoiceUsd ?? 0,
+        invoiceFeeUsd ?? merged.invoiceUsd ?? merged.invoiceusd ?? existing.invoiceusd ?? existing.invoiceUsd ?? 0,
         merged.historicalQuote ?? merged.historicalquote ?? existing.historicalquote ?? null,
         merged.isRetroactive ?? merged.isretroactive ?? existing.isretroactive ?? false,
         id
