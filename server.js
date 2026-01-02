@@ -33,7 +33,9 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS wallet TEXT,
       ADD COLUMN IF NOT EXISTS quote NUMERIC(14,6),
       ADD COLUMN IF NOT EXISTS unitPrice NUMERIC(14,6),
-      ADD COLUMN IF NOT EXISTS invoiceUsd NUMERIC(14,4) DEFAULT 0;
+      ADD COLUMN IF NOT EXISTS invoiceUsd NUMERIC(14,4) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS historicalQuote NUMERIC(14,6),
+      ADD COLUMN IF NOT EXISTS isRetroactive BOOLEAN DEFAULT false;
   `);
 
   await query(`
@@ -214,6 +216,7 @@ async function computeFinancials(order, seller, service) {
   const priceFromPayload = Number(order.price) || 0; // pode ser total informado
   const servicePrice = service ? Number(service.price ?? 0) : 0;
   const invoiceUsd = Number(order.invoiceUsd ?? order.invoiceusd ?? 0);
+  const historicalQuote = Number(order.historicalQuote ?? order.historicalquote ?? 0) || null;
 
   // Preço unitário informado (preço fechado por USDT)
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit ?? order.unitprice);
@@ -236,11 +239,17 @@ async function computeFinancials(order, seller, service) {
     console.log('order.invoiceUsd:', invoiceUsd);
 
     let quote;
-    try {
-      quote = await fetchUsdtQuote();
-    } catch (err) {
-      console.error('⚠️ Impossível criar ordem sem cotação USDT:', err.message);
-      throw new Error('Cotação USDT indisponível. Aguarde e tente novamente.');
+    if (historicalQuote != null && historicalQuote > 0) {
+      quote = historicalQuote;
+      console.log('📅 Remessa retroativa - Cotação histórica:', quote.toFixed(4));
+    } else {
+      try {
+        quote = await fetchUsdtQuote();
+        console.log('🔄 Remessa atual - Cotação Binance:', quote.toFixed(4));
+      } catch (err) {
+        console.error('⚠️ Impossível criar ordem sem cotação USDT:', err.message);
+        throw new Error('Cotação USDT indisponível. Aguarde e tente novamente.');
+      }
     }
 
     const spreadPercent = Number(service?.costPercentual ?? 1.2);
@@ -278,8 +287,12 @@ async function computeFinancials(order, seller, service) {
 
   const serviceCostType = service?.costType ?? service?.costtype;
   let quote = null;
-  if (serviceCostType === 'cotacao_percentual') {
+  if (historicalQuote != null && historicalQuote > 0) {
+    quote = historicalQuote;
+    console.log('📅 Usando cotação histórica (retroativa):', quote.toFixed(4));
+  } else if (serviceCostType === 'cotacao_percentual') {
     quote = await fetchUsdtQuote();
+    console.log('🔄 Usando cotação atual (Binance):', quote.toFixed(4));
   }
   const fallbackQuote = unitPrice;
   if (!Number.isFinite(quote) || quote <= 0) quote = fallbackQuote;
@@ -366,6 +379,8 @@ function normalizeOrder(row = {}) {
     unitPrice: row.unitprice != null ? Number(row.unitprice) : (row.unitPrice != null ? Number(row.unitPrice) : undefined),
     quote: row.quote != null ? Number(row.quote) : undefined,
     invoiceUsd: row.invoiceusd != null ? Number(row.invoiceusd) : (row.invoiceUsd != null ? Number(row.invoiceUsd) : 0),
+    historicalQuote: row.historicalquote != null ? Number(row.historicalquote) : null,
+    isRetroactive: row.isretroactive ?? row.isRetroactive ?? false,
     price: Number(row.price ?? 0),
     cost: Number(row.cost ?? 0),
     profit: Number(row.profit ?? 0),
@@ -423,6 +438,8 @@ async function initDb() {
       customer TEXT,
       sellerId INT REFERENCES users(id),
       serviceId INT REFERENCES services(id),
+      historicalQuote NUMERIC(14,6),
+      isRetroactive BOOLEAN DEFAULT false,
       invoiceUsd NUMERIC(14,4) DEFAULT 0,
       price NUMERIC(14,2) DEFAULT 0,
       cost NUMERIC(14,2) DEFAULT 0,
@@ -665,8 +682,8 @@ app.post('/api/orders', async (req, res) => {
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(body, seller, service);
 
     const rows = await query(
-      `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
+      `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd, historicalQuote, isRetroactive)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
       [
         body.customer,
         body.sellerId || null,
@@ -684,7 +701,9 @@ app.post('/api/orders', async (req, res) => {
         body.productType || 'Serviço',
         body.payoutProof || null,
         body.wallet || null,
-        body.invoiceUsd || body.invoiceusd || 0
+        body.invoiceUsd || body.invoiceusd || 0,
+        body.historicalQuote || body.historicalquote || null,
+        body.isRetroactive || body.isretroactive || false
       ]
     );
     res.status(201).json(normalizeOrder(rows[0]));
@@ -733,8 +752,8 @@ app.patch('/api/orders/:id', async (req, res) => {
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed } = await computeFinancials(merged, seller || existing, service || existing);
 
     const rows = await query(
-      `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16, invoiceUsd=$17
-       WHERE id=$18 RETURNING *`,
+      `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16, invoiceUsd=$17, historicalQuote=$18, isRetroactive=$19
+       WHERE id=$20 RETURNING *`,
       [
         merged.customer,
         merged.sellerid || merged.sellerId || null,
@@ -753,6 +772,8 @@ app.patch('/api/orders/:id', async (req, res) => {
         merged.payoutProof || merged.payoutproof || existing.payoutproof || existing.payoutProof || null,
         merged.wallet || existing.wallet || null,
         merged.invoiceUsd ?? merged.invoiceusd ?? existing.invoiceusd ?? existing.invoiceUsd ?? 0,
+        merged.historicalQuote ?? merged.historicalquote ?? existing.historicalquote ?? null,
+        merged.isRetroactive ?? merged.isretroactive ?? existing.isretroactive ?? false,
         id
       ]
     );

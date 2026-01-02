@@ -57,6 +57,7 @@ async function computeFinancials(order, seller, service) {
   const priceFromPayload = Number(order.price) || 0;
   const servicePrice = service ? Number(service.price ?? 0) : 0;
   const invoiceUsd = Number(order.invoiceUsd ?? order.invoiceusd ?? 0);
+  const historicalQuote = Number(order.historicalQuote ?? order.historicalquote ?? 0) || null;
 
   const unitPriceRaw = Number(order.unitPrice ?? order.pricePerUnit ?? order.unitprice);
   let unitPrice = Number.isFinite(unitPriceRaw) && unitPriceRaw > 0
@@ -70,9 +71,14 @@ async function computeFinancials(order, seller, service) {
   const serviceName = (service?.name || order.productType || '').toString().trim().toLowerCase();
   const isRemessa = serviceName === 'remessa';
   if (isRemessa) {
-    let quote = await fetchUsdtQuote();
-    if (!Number.isFinite(quote) || quote <= 0) {
-      quote = Number(unitPrice) || (priceFromPayload / (quantity || 1)) || 5.5;
+    let quote;
+    if (historicalQuote != null && historicalQuote > 0) {
+      quote = historicalQuote;
+    } else {
+      quote = await fetchUsdtQuote();
+      if (!Number.isFinite(quote) || quote <= 0) {
+        quote = Number(unitPrice) || (priceFromPayload / (quantity || 1)) || 5.5;
+      }
     }
     const spreadPercent = Number(service?.costPercentual ?? 0.80);
     const quoteWithSpread = quote + (quote * spreadPercent / 100);
@@ -99,7 +105,9 @@ async function computeFinancials(order, seller, service) {
 
   const serviceCostType = service?.costType ?? service?.costtype;
   let quote = null;
-  if (serviceCostType === 'cotacao_percentual') {
+  if (historicalQuote != null && historicalQuote > 0) {
+    quote = historicalQuote;
+  } else if (serviceCostType === 'cotacao_percentual') {
     quote = await fetchUsdtQuote();
   }
   const fallbackQuote = unitPrice;

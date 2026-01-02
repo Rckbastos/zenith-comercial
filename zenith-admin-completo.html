@@ -2034,7 +2034,7 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>#${order.id}</td>
+                    <td>#${order.id}${order.isRetroactive ? ' <span class="badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;">📅 RETRO</span>' : ''}</td>
                     <td>${order.customer || '-'}</td>
                     <td>${sellerName}</td>
                     <td><span class=\"badge badge-gold\">${serviceName}</span></td>
@@ -2045,7 +2045,7 @@
                     <td>${formatBRL(order.cost)}</td>
                     <td class=\"profit-color\">${formatBRL(order.profit)}</td>
                     <td class=\"profit-color\">${formatBRL(commissionValue)}</td>
-                    <td>${formatDate(order.date)}</td>
+                    <td title="${order.historicalQuote ? 'Cotação histórica: R$ ' + Number(order.historicalQuote).toFixed(4) : 'Cotação automática'}">${formatDate(order.date)}</td>
                     <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovante(${order.id})\">📎 Ver</button>` : '-'}</td>
                     <td>${status === 'open' ? `<button class=\"btn btn-primary\" style=\"padding: 0.5rem 1rem; font-size: 0.875rem;\" onclick=\"concluirOrdem(${order.id})\">✅ Concluir</button>` : '<span class=\"badge badge-success\">Concluída</span>'}</td>
                 `;
