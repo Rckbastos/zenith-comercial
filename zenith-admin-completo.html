@@ -322,13 +322,9 @@
             border-radius: 12px;
             padding: 2rem;
             margin-bottom: 2rem;
+            overflow-x: auto;
         }
 
-        .form-card.narrow {
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-         }
 
         .form-card h3 {
             font-size: 1.25rem;
@@ -441,6 +437,7 @@
         /* Table Styles */
         .data-table {
             width: 100%;
+            min-width: 980px;
             border-collapse: collapse;
             margin-top: 1rem;
             table-layout: auto;
@@ -649,6 +646,12 @@
             color: #D4AF37;
         }
 
+        @media (max-width: 1200px) {
+            .data-table {
+                min-width: 880px;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -686,10 +689,28 @@
             .data-table {
                 display: block;
                 overflow-x: auto;
+                min-width: 760px;
             }
 
             .nav-tabs {
                 overflow-x: scroll;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.85rem 0.9rem;
+                font-size: 0.95rem;
+            }
+
+            .btn,
+            .btn-primary,
+            .btn-secondary {
+                padding: 0.65rem 1rem;
+                font-size: 0.95rem;
+            }
+
+            .form-card {
+                padding: 1.25rem;
             }
         }
 
@@ -1124,7 +1145,7 @@
     </div>
         <!-- Comissões Pendentes Section -->
         <div id="comissoes-pendentes" class="content-section">
-            <div class="form-card narrow">
+            <div class="form-card">
                 <h3><span>💵</span> Comissões Pendentes de Pagamento</h3>
                 <table class="data-table">
                     <thead>
@@ -1147,7 +1168,7 @@
 
         <!-- Comissões Pagas Section -->
         <div id="comissoes-pagas" class="content-section">
-            <div class="form-card narrow">
+            <div class="form-card">
                 <h3><span>✅</span> Comissões Pagas</h3>
                 <table class="data-table">
                     <thead>
@@ -2145,7 +2166,7 @@
 
         window.addEventListener('load', function() {
             atualizarCotacao();
-            setFilter('month');
+            setFilter('today');
             loadAdminData();
         });
 
@@ -2160,7 +2181,25 @@
 
         function applyFilterAndRender() {
             const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter);
+            updateKpis(filteredOrders);
             renderOrders(filteredOrders, cachedUsers, cachedServices);
+        }
+
+        function updateKpis(orders = []) {
+            const totalCost = orders.reduce((acc, o) => acc + (Number(o.cost) || 0), 0);
+            const totalProfit = orders.reduce((acc, o) => acc + (Number(o.profit) || 0), 0);
+            const openCount = orders.filter(o => (o.status || 'open') === 'open').length;
+            const closedCount = orders.filter(o => (o.status || 'open') === 'concluded').length;
+
+            const costEl = document.getElementById('kpiCost');
+            const profitEl = document.getElementById('kpiProfit');
+            const openEl = document.getElementById('kpiOpen');
+            const closedEl = document.getElementById('kpiClosed');
+
+            if (costEl) costEl.textContent = formatBRL(totalCost);
+            if (profitEl) profitEl.textContent = formatBRL(totalProfit);
+            if (openEl) openEl.textContent = openCount.toString();
+            if (closedEl) closedEl.textContent = closedCount.toString();
         }
     </script>
 </body>

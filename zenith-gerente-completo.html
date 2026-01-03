@@ -277,6 +277,7 @@
             border-radius: 12px;
             padding: 2rem;
             margin-bottom: 2rem;
+            overflow-x: auto;
         }
 
         .form-card h3 {
@@ -431,6 +432,7 @@
         /* Table Styles */
         .data-table {
             width: 100%;
+            min-width: 980px;
             border-collapse: collapse;
             margin-top: 1rem;
         }
@@ -548,6 +550,13 @@
             color: #0a0a0a;
         }
 
+        /* Responsive tweaks */
+        @media (max-width: 1200px) {
+            .data-table {
+                min-width: 880px;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -581,10 +590,28 @@
             .data-table {
                 display: block;
                 overflow-x: auto;
+                min-width: 760px;
             }
 
             .nav-tabs {
                 overflow-x: scroll;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.85rem 0.9rem;
+                font-size: 0.95rem;
+            }
+
+            .btn,
+            .btn-primary,
+            .btn-secondary {
+                padding: 0.65rem 1rem;
+                font-size: 0.95rem;
+            }
+
+            .form-card {
+                padding: 1.25rem;
             }
         }
     </style>
@@ -779,14 +806,6 @@
                             <label>Cotação Dólar Negociada <span>*</span></label>
                             <input type="number" id="remessaDolar" placeholder="Ex: 5.42" step="any" min="0.00001">
                         </div>
-                        <div class="form-group">
-                            <label>Invoice aplicada (USD)</label>
-                            <div id="remessaInvoiceInfo" class="info-box" style="padding: 0.75rem 1rem; margin:0; background: rgba(212,175,55,0.06); border: 1px dashed #D4AF37;">
-                                <div><strong>Valor:</strong> --</div>
-                                <div><strong>Lucro da invoice:</strong> --</div>
-                                <small style="display:block; margin-top:0.35rem; color:#888;">Regra automática: até 5000 → 80 | até 10000 → 40 | acima de 10000 → 0 (custo fixo 25 USD quando houver)</small>
-                            </div>
-                        </div>
                         </div>
                         <div class="info-box">
                             <span class="info-box-icon">💡</span>
@@ -974,7 +993,6 @@
                 document.querySelectorAll('#remessaFields input').forEach(input => {
                     input.setAttribute('required', 'required');
                 });
-                updateRemessaInvoiceInfo();
             }
         }
 
@@ -984,28 +1002,6 @@
                 fileNameDiv.textContent = `✅ ${input.files[0].name}`;
             } else {
                 fileNameDiv.textContent = '';
-            }
-        }
-
-        function getInvoiceFeeUsd(remessaUsd) {
-            const v = Number(remessaUsd) || 0;
-            if (v <= 0) return 0;
-            if (v <= 5000) return 80;
-            if (v <= 10000) return 40;
-            return 0;
-        }
-
-        function updateRemessaInvoiceInfo() {
-            const qty = Number(document.getElementById('remessaQtd').value || 0);
-            const fee = getInvoiceFeeUsd(qty);
-            const profitUsd = fee > 0 ? fee - 25 : 0;
-            const info = document.getElementById('remessaInvoiceInfo');
-            if (info) {
-                info.innerHTML = `
-                    <div><strong>Valor:</strong> ${fee.toFixed(2)} USD</div>
-                    <div><strong>Lucro da invoice:</strong> ${profitUsd.toFixed(2)} USD</div>
-                    <small style="display:block; margin-top:0.35rem; color:#888;">Regra automática: até 5000 → 80 | até 10000 → 40 | acima de 10000 → 0 (custo fixo 25 USD quando houver)</small>
-                `;
             }
         }
 
@@ -1151,8 +1147,6 @@
             setInterval(atualizarCotacaoGerente, 30000);
             const dateInput = document.getElementById('orderDate');
             if (dateInput) dateInput.valueAsDate = new Date();
-            const remessaQtyInput = document.getElementById('remessaQtd');
-            if (remessaQtyInput) remessaQtyInput.addEventListener('input', updateRemessaInvoiceInfo);
             loadGerenteData();
             setupUserMenu();
             restoreProfileImage();
