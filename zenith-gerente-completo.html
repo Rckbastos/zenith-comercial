@@ -122,34 +122,40 @@
         /* Navigation Tabs */
         .nav-tabs {
             display: flex;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-            overflow-x: auto;
-            padding-bottom: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem 1.25rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            background: #0a0a0a;
+            border-bottom: 1px solid #2a2a2a;
+            position: static;
+            width: 100%;
+            box-shadow: none;
         }
 
         .nav-tab {
-            padding: 0.75rem 1.5rem;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #888;
-            font-size: 0.875rem;
+            padding: 0.35rem 0.65rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: #c8c8c8;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
             white-space: nowrap;
         }
 
         .nav-tab:hover {
-            border-color: #D4AF37;
             color: #D4AF37;
+            background: rgba(212, 175, 55, 0.08);
         }
 
         .nav-tab.active {
-            background: #D4AF37;
-            color: #0a0a0a;
-            border-color: #D4AF37;
+            color: #D4AF37;
+            background: rgba(212, 175, 55, 0.12);
+            border-bottom: 2px solid #D4AF37;
         }
 
         /* Content Sections */
@@ -277,10 +283,8 @@
             border-radius: 12px;
             padding: 2rem;
             margin-bottom: 2rem;
-            overflow-x: auto;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
+            width: 100%;
+            max-width: none;
         }
 
         .form-card h3 {
@@ -434,10 +438,12 @@
 
         /* Table Styles */
         .data-table {
-            width: 100%;
+            width: 1474.67px;
+            max-width: 100%;
             min-width: 1000px;
             border-collapse: collapse;
             margin-top: 1rem;
+            table-layout: auto;
         }
 
         .data-table thead {
