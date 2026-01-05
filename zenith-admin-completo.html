@@ -440,11 +440,16 @@
         /* Table Styles */
         .data-table {
             width: 100%;
-            max-width: 1474.67px;
+            max-width: 100%;
             min-width: 1000px;
             border-collapse: collapse;
             margin-top: 1rem;
             table-layout: auto;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
         }
 
         .data-table thead {
@@ -1096,27 +1101,29 @@
         <div id="ordens-abertas" class="content-section">
             <div class="form-card">
                 <h3><span>📋</span> Ordens de Pagamento em Aberto</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Cliente</th>
-                            <th>Vendedor</th>
-                            <th>Serviço</th>
-                            <th>Qtd</th>
-                            <th>Preço (un.)</th>
-                            <th>Wallet</th>
-                            <th>Venda</th>
-                            <th>Custo</th>
-                            <th>Lucro</th>
-                            <th>Comissão</th>
-                            <th>Data</th>
-                            <th>Comprovante</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="openOrdersTbody"></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Vendedor</th>
+                                <th>Serviço</th>
+                                <th>Qtd</th>
+                                <th>Preço (un.)</th>
+                                <th>Wallet</th>
+                                <th>Venda</th>
+                                <th>Custo</th>
+                                <th>Lucro</th>
+                                <th>Comissão</th>
+                                <th>Data</th>
+                                <th>Comprovante</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="openOrdersTbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1124,50 +1131,54 @@
         <div id="ordens-concluidas" class="content-section">
             <div class="form-card">
                 <h3><span>✅</span> Ordens de Pagamento Concluídas</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Cliente</th>
-                            <th>Vendedor</th>
-                            <th>Serviço</th>
-                            <th>Qtd</th>
-                            <th>Preço (un.)</th>
-                            <th>Wallet</th>
-                            <th>Venda</th>
-                            <th>Custo</th>
-                            <th>Lucro</th>
-                            <th>Comissão</th>
-                            <th>Data</th>
-                            <th>Comprovante</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="concludedOrdersTbody"></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Vendedor</th>
+                                <th>Serviço</th>
+                                <th>Qtd</th>
+                                <th>Preço (un.)</th>
+                                <th>Wallet</th>
+                                <th>Venda</th>
+                                <th>Custo</th>
+                                <th>Lucro</th>
+                                <th>Comissão</th>
+                                <th>Data</th>
+                                <th>Comprovante</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="concludedOrdersTbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <!-- Comissões Pendentes Section -->
         <div id="comissoes-pendentes" class="content-section">
             <div class="form-card">
                 <h3><span>💵</span> Comissões Pendentes de Pagamento</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Vendedor</th>
-                            <th>Cargo</th>
-                            <th>Total de Vendas</th>
-                            <th>Lucro Gerado</th>
-                            <th>Taxa</th>
-                            <th>Comissão a Pagar</th>
-                            <th>Data</th>
-                            <th>Período</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pendingCommissionsTbody"></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Vendedor</th>
+                                <th>Cargo</th>
+                                <th>Total de Vendas</th>
+                                <th>Lucro Gerado</th>
+                                <th>Taxa</th>
+                                <th>Comissão a Pagar</th>
+                                <th>Data</th>
+                                <th>Período</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingCommissionsTbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1175,23 +1186,25 @@
         <div id="comissoes-pagas" class="content-section">
             <div class="form-card">
                 <h3><span>✅</span> Comissões Pagas</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Vendedor</th>
-                            <th>Cargo</th>
-                            <th>Total de Vendas</th>
-                            <th>Lucro Gerado</th>
-                            <th>Taxa</th>
-                            <th>Comissão Paga</th>
-                            <th>Período</th>
-                            <th>Data Pagamento</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="paidCommissionsTbody"></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Vendedor</th>
+                                <th>Cargo</th>
+                                <th>Total de Vendas</th>
+                                <th>Lucro Gerado</th>
+                                <th>Taxa</th>
+                                <th>Comissão Paga</th>
+                                <th>Período</th>
+                                <th>Data Pagamento</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paidCommissionsTbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
