@@ -1056,7 +1056,7 @@
             const wallet = document.getElementById('usdtWallet').value || null;
             const isRemessa = (selectedService?.name || '').trim().toLowerCase() === 'remessa';
             const todayStr = new Date().toISOString().slice(0, 10);
-            const isRetroactive = Boolean((historicalQuote && historicalQuote > 0) || orderDate !== todayStr);
+            const isRetroactive = orderDate !== todayStr;
 
             if (!fileInput.files.length) {
                 alert('⚠️ Por favor, anexe o comprovante de pagamento!');
