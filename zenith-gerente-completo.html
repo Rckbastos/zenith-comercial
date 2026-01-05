@@ -1339,8 +1339,12 @@
 
                 resolveSellerId(users);
                 assignedServices = assignments
-                    .filter(a => Number(a.userId) === Number(currentSellerId))
-                    .map(a => ({ id: a.serviceId, name: a.serviceName || a.servicename }));
+                    .filter(a => Number(a.userId ?? a.userid) === Number(currentSellerId))
+                    .map(a => ({
+                        id: a.serviceId ?? a.serviceid,
+                        name: a.serviceName || a.servicename
+                    }))
+                    .filter(svc => svc.id);
                 populateProductTypes();
                 renderOrdersForSeller(orders, users);
             } catch (err) {
