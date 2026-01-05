@@ -699,8 +699,18 @@ app.get('/api/orders', async (_req, res) => {
     }
     const seller = usersMap[order.sellerId];
     // Recalcula sempre para garantir consistência com a lógica atual
-    const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
-    return { ...order, ...calc, quote: calc.quoteUsed, unitPrice: calc.unitPriceUsed };
+    try {
+      const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
+      return { ...order, ...calc, quote: calc.quoteUsed, unitPrice: calc.unitPriceUsed };
+    } catch (err) {
+      console.warn(`⚠️ Falha ao recalcular ordem #${order.id}:`, err.message);
+      // mantém dados persistidos para não quebrar a listagem
+      return {
+        ...order,
+        quote: order.quote ?? order.historicalQuote ?? null,
+        unitPrice: order.unitPrice ?? order.unitprice ?? null
+      };
+    }
   }));
 
   res.json(enriched);

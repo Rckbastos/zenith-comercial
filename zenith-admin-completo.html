@@ -777,9 +777,10 @@
             </div>
 
             <div class="filter-buttons">
-                <button class="filter-btn active" onclick="setFilter('today')">Hoje</button>
-                <button class="filter-btn" onclick="setFilter('week')">Semanal</button>
-                <button class="filter-btn" onclick="setFilter('month')">Mensal</button>
+                <button class="filter-btn active" data-period="all" onclick="setFilter('all')">Todas</button>
+                <button class="filter-btn" data-period="today" onclick="setFilter('today')">Hoje</button>
+                <button class="filter-btn" data-period="week" onclick="setFilter('week')">Semanal</button>
+                <button class="filter-btn" data-period="month" onclick="setFilter('month')">Mensal</button>
             </div>
 
             <div class="kpi-grid">
@@ -1359,7 +1360,7 @@
         let cachedServices = [];
         let cachedOrders = [];
         let cachedAssignments = [];
-        let currentFilter = 'month';
+        let currentFilter = 'all';
         let editingUserId = null;
         let editingServiceId = null;
         let editingAssignmentsUserId = null;
@@ -2027,15 +2028,17 @@
 
         function filterOrdersByPeriod(orders, period) {
             if (!orders || !orders.length) return [];
+            const normalized = (period || 'all').toLowerCase();
+            if (normalized === 'all') return [...orders];
             const now = new Date();
             const start = new Date();
-            if (period === 'today') start.setHours(0, 0, 0, 0);
-            if (period === 'week') start.setDate(now.getDate() - 7);
-            if (period === 'month') start.setDate(now.getDate() - 30);
+            if (normalized === 'today') start.setHours(0, 0, 0, 0);
+            if (normalized === 'week') start.setDate(now.getDate() - 7);
+            if (normalized === 'month') start.setDate(now.getDate() - 30);
             return orders.filter(o => {
                 const d = new Date(o.date || o.created_at || now);
                 if (Number.isNaN(d.getTime())) return true;
-                if (period === 'today') return d.toDateString() === now.toDateString();
+                if (normalized === 'today') return d.toDateString() === now.toDateString();
                 return d >= start;
             });
         }
@@ -2170,16 +2173,17 @@
 
         window.addEventListener('load', function() {
             atualizarCotacao();
-            setFilter('today');
+            setFilter('all');
             loadAdminData();
         });
 
         function setFilter(period) {
-            currentFilter = period;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            const index = period === 'today' ? 0 : period === 'week' ? 1 : 2;
-            const btn = document.querySelectorAll('.filter-btn')[index];
-            if (btn) btn.classList.add('active');
+            const normalized = (period || 'all').toLowerCase();
+            currentFilter = normalized;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const btnPeriod = (btn.dataset.period || '').toLowerCase();
+                btn.classList.toggle('active', btnPeriod === normalized);
+            });
             applyFilterAndRender();
         }
 
