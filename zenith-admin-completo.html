@@ -2227,10 +2227,11 @@
         function updateKpis(filteredOrders = [], allOrders = [], currentPeriod = 'all') {
             const hasAll = Array.isArray(allOrders) && allOrders.length;
             const sourceOrders = currentPeriod === 'all' && hasAll ? allOrders : filteredOrders;
+            const closedOrders = sourceOrders.filter(o => (o.status || 'open') === 'concluded');
 
             // KPIs financeiros consideram todas as ordens
-            const totalCost = sourceOrders.reduce((acc, o) => acc + (Number(o.cost) || 0), 0);
-            const totalNetProfit = sourceOrders.reduce((acc, o) => {
+            const totalCost = closedOrders.reduce((acc, o) => acc + (Number(o.cost) || 0), 0);
+            const totalNetProfit = closedOrders.reduce((acc, o) => {
                 const profit = Number(o.profit) || 0;
                 const commission = Number(o.commissionValue ?? o.commissionvalue ?? 0) || 0;
                 return acc + (profit - commission);
