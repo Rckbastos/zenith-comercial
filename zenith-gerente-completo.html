@@ -761,7 +761,6 @@
                                 type="text"
                                 id="orderDate"
                                 inputmode="numeric"
-                                pattern="\\d{2}/\\d{2}/\\d{4}"
                                 placeholder="dd/mm/aaaa"
                                 required
                             >
@@ -1002,6 +1001,17 @@
             dateInput.value = formatIsoToBr(iso);
         }
 
+        function normalizeOrderDateInput() {
+            const dateInput = document.getElementById('orderDate');
+            if (!dateInput) return { iso: '', br: '' };
+            const raw = (dateInput.value || '').trim();
+            const iso = parseBrDateToIso(raw) || (/^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '');
+            if (iso) {
+                dateInput.value = formatIsoToBr(iso);
+            }
+            return { iso, br: dateInput.value };
+        }
+
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
@@ -1085,8 +1095,7 @@
             const selectedService = assignedServices.find(s => String(s.id) === String(productType));
             const clientName = document.getElementById('clientName').value;
             const todayStr = getTodayIsoLocal();
-            const rawOrderDate = document.getElementById('orderDate').value;
-            const parsedIso = parseBrDateToIso(rawOrderDate) || (/^\d{4}-\d{2}-\d{2}$/.test(rawOrderDate) ? rawOrderDate : '');
+            const { iso: parsedIso } = normalizeOrderDateInput();
             const orderDate = parsedIso || todayStr;
             const historicalQuote = Number(document.getElementById('historicalQuote').value || 0);
             const fileInput = document.getElementById('paymentProof');
@@ -1196,6 +1205,7 @@
             atualizarCotacaoGerente();
             setInterval(atualizarCotacaoGerente, 30000);
             setOrderDateToday();
+            normalizeOrderDateInput();
             loadGerenteData();
             setupUserMenu();
             restoreProfileImage();
