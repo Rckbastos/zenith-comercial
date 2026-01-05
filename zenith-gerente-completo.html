@@ -757,7 +757,14 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Data da Venda <span>*</span></label>
-                            <input type="date" id="orderDate" required>
+                            <input
+                                type="text"
+                                id="orderDate"
+                                inputmode="numeric"
+                                pattern="\\d{2}/\\d{2}/\\d{4}"
+                                placeholder="dd/mm/aaaa"
+                                required
+                            >
                         </div>
                         <div class="form-group">
                             <label>Cotação USDT no Fechamento (R$) <span style="color:#888;">(opcional)</span></label>
@@ -964,6 +971,37 @@
         let assignedServices = [];
         let lastUsdtQuote = null;
 
+        function getTodayIsoLocal() {
+            const now = new Date();
+            // corrige fuso para manter a data local no formato YYYY-MM-DD
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            return now.toISOString().slice(0, 10);
+        }
+
+        function formatIsoToBr(isoStr) {
+            if (!isoStr || typeof isoStr !== 'string') return '';
+            const [y, m, d] = isoStr.split('-');
+            if (y?.length === 4 && m?.length === 2 && d?.length === 2) {
+                return `${d}/${m}/${y}`;
+            }
+            return '';
+        }
+
+        function parseBrDateToIso(brStr) {
+            if (!brStr || typeof brStr !== 'string') return '';
+            const match = brStr.match(/^\s*(\d{2})[\/](\d{2})[\/](\d{4})\s*$/);
+            if (!match) return '';
+            const [, d, m, y] = match;
+            return `${y}-${m}-${d}`;
+        }
+
+        function setOrderDateToday() {
+            const dateInput = document.getElementById('orderDate');
+            if (!dateInput) return;
+            const iso = getTodayIsoLocal();
+            dateInput.value = formatIsoToBr(iso);
+        }
+
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
@@ -1046,7 +1084,10 @@
             const productType = document.getElementById('productType').value;
             const selectedService = assignedServices.find(s => String(s.id) === String(productType));
             const clientName = document.getElementById('clientName').value;
-            const orderDate = document.getElementById('orderDate').value || new Date().toISOString().slice(0, 10);
+            const todayStr = getTodayIsoLocal();
+            const rawOrderDate = document.getElementById('orderDate').value;
+            const parsedIso = parseBrDateToIso(rawOrderDate) || (/^\d{4}-\d{2}-\d{2}$/.test(rawOrderDate) ? rawOrderDate : '');
+            const orderDate = parsedIso || todayStr;
             const historicalQuote = Number(document.getElementById('historicalQuote').value || 0);
             const fileInput = document.getElementById('paymentProof');
             const usdtQuantity = Number(document.getElementById('usdtQuantity').value || 0);
@@ -1055,7 +1096,6 @@
             const remessaDolar = Number(document.getElementById('remessaDolar').value || 0);
             const wallet = document.getElementById('usdtWallet').value || null;
             const isRemessa = (selectedService?.name || '').trim().toLowerCase() === 'remessa';
-            const todayStr = new Date().toISOString().slice(0, 10);
             const isRetroactive = orderDate !== todayStr;
 
             if (!fileInput.files.length) {
@@ -1106,8 +1146,7 @@
                 document.getElementById('fileName').textContent = '';
                 document.getElementById('usdtFields').style.display = 'none';
                 document.getElementById('remessaFields').style.display = 'none';
-                const dateInput = document.getElementById('orderDate');
-                if (dateInput) dateInput.valueAsDate = new Date();
+                setOrderDateToday();
                 const histInput = document.getElementById('historicalQuote');
                 if (histInput) histInput.value = '';
                 await loadGerenteData();
@@ -1156,8 +1195,7 @@
         window.addEventListener('load', function() {
             atualizarCotacaoGerente();
             setInterval(atualizarCotacaoGerente, 30000);
-            const dateInput = document.getElementById('orderDate');
-            if (dateInput) dateInput.valueAsDate = new Date();
+            setOrderDateToday();
             loadGerenteData();
             setupUserMenu();
             restoreProfileImage();

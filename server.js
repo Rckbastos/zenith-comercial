@@ -241,6 +241,7 @@ async function computeFinancials(order, seller, service) {
 
   // Regra específica apenas para o serviço "Remessa": custo = (cotação + 0,30%) * qtd + 25 USD
   const serviceName = (service?.name || order.productType || '').toString().trim().toLowerCase();
+  const isUsdtService = serviceName.includes('usdt');
   const isRemessa = serviceName === 'remessa';
   if (isRemessa) {
     console.log('🔍 ===== COMPUTANDO REMESSA =====');
@@ -315,6 +316,59 @@ async function computeFinancials(order, seller, service) {
       invoiceFeeUsd,
       quoteUsed: cotacaoFechamento,
       unitPriceUsed: cotacaoNegociada || cotacaoFechamento
+    };
+  }
+
+  if (isUsdtService) {
+    console.log('🔍 ===== COMPUTANDO USDT =====');
+    let cotacaoFechamento;
+    if (historicalQuote != null && historicalQuote > 0) {
+      cotacaoFechamento = Number(historicalQuote);
+      console.log('📅 USDT - Cotação histórica (fechamento):', cotacaoFechamento.toFixed(4));
+    } else {
+      try {
+        cotacaoFechamento = await fetchUsdtQuote();
+        console.log('🔄 USDT - Cotação atual (Binance):', cotacaoFechamento.toFixed(4));
+      } catch (err) {
+        const fallbackQuote = Number(order.quote ?? unitPrice ?? (priceFromPayload > 0 && quantity > 0 ? priceFromPayload / quantity : 0));
+        if (Number.isFinite(fallbackQuote) && fallbackQuote > 0) {
+          cotacaoFechamento = fallbackQuote;
+          console.warn('⚠️ USDT - usando cotação de fallback:', fallbackQuote.toFixed(4));
+        } else {
+          console.error('⚠️ Impossível calcular ordem USDT sem cotação:', err.message);
+          throw new Error('Cotação USDT indisponível. Aguarde e tente novamente.');
+        }
+      }
+    }
+
+    const spreadPercent = Number(service?.costPercentual ?? service?.costpercentual ?? 0.3);
+    const costRate = cotacaoFechamento * (1 + spreadPercent / 100);
+
+    const price = quantity > 0 && unitPrice > 0
+      ? unitPrice * quantity
+      : priceFromPayload;
+    const cost = quantity > 0 ? costRate * quantity : 0;
+    const profit = price - cost;
+    const commissionRate = seller ? Number(seller.commission || 0) : 0;
+    const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
+
+    console.log('=== USDT ORDEM ===');
+    console.log('quantity:', quantity);
+    console.log('cotacao:', cotacaoFechamento);
+    console.log('spread:', spreadPercent);
+    console.log('costRate:', costRate);
+    console.log('unitPrice:', unitPrice);
+    console.log('price:', price);
+    console.log('cost:', cost);
+    console.log('profit:', profit);
+
+    return {
+      price,
+      cost,
+      profit,
+      commissionValue,
+      quoteUsed: cotacaoFechamento,
+      unitPriceUsed: unitPrice || cotacaoFechamento
     };
   }
 

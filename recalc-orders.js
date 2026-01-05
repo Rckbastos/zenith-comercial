@@ -69,6 +69,7 @@ async function computeFinancials(order, seller, service) {
   }
 
   const serviceName = (service?.name || order.productType || '').toString().trim().toLowerCase();
+  const isUsdtService = serviceName.includes('usdt');
   const isRemessa = serviceName === 'remessa';
   if (isRemessa) {
     let quote;
@@ -100,6 +101,39 @@ async function computeFinancials(order, seller, service) {
       commissionValue,
       quoteUsed: quote,
       unitPriceUsed: unitPrice || quote
+    };
+  }
+
+  if (isUsdtService) {
+    let quote = null;
+    if (historicalQuote != null && historicalQuote > 0) {
+      quote = historicalQuote;
+    } else {
+      quote = await fetchUsdtQuote();
+    }
+    if (!Number.isFinite(quote) || quote <= 0) {
+      const fallback = Number(order.quote ?? unitPrice ?? (priceFromPayload > 0 && quantity > 0 ? priceFromPayload / quantity : 0));
+      quote = Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
+    }
+
+    const spreadPercent = Number(service?.costPercentual ?? service?.costpercentual ?? 0.3);
+    const costRate = quote > 0 ? quote * (1 + spreadPercent / 100) : 0;
+
+    const price = quantity > 0 && unitPrice > 0
+      ? unitPrice * quantity
+      : priceFromPayload;
+    const cost = quantity > 0 ? costRate * quantity : 0;
+    const profit = price - cost;
+    const commissionRate = seller ? Number(seller.commission || 0) : 0;
+    const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
+
+    return {
+      price,
+      cost,
+      profit,
+      commissionValue,
+      quoteUsed: quote || null,
+      unitPriceUsed: unitPrice || quote || null
     };
   }
 

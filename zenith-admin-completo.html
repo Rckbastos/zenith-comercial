@@ -2088,23 +2088,43 @@
                 if (status === 'concluded' && concludedTbody) concludedTbody.appendChild(tr.cloneNode(true));
 
                 if (status === 'concluded') {
+                    const totalSale = Number(order.price) || 0;
+                    const profitValue = Number(order.profit) || 0;
+                    const commissionRate = seller?.commission ?? 0;
+                    const periodLabel = new Date(order.date || Date.now()).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                    const paymentDateLabel = formatDate(order.date);
+
                     const commTr = document.createElement('tr');
                     commTr.innerHTML = `
                         <td>#${order.id}</td>
                         <td>${sellerName}</td>
                         <td>${seller?.role || '-'}</td>
-                        <td>${order.quantity != null ? order.quantity : '-'}</td>
-                        <td>${order.salesCount || '-'}</td>
-                        <td class=\"profit-color\">${formatBRL(order.profit)}</td>
-                        <td>${(seller?.commission ?? 0)}%</td>
+                        <td>${formatBRL(totalSale)}</td>
+                        <td class=\"profit-color\">${formatBRL(profitValue)}</td>
+                        <td>${commissionRate}%</td>
                         <td class=\"profit-color\" style=\"font-weight: 700; font-size: 1.1rem;\">${formatBRL(commissionValue)}</td>
-                        <td>${new Date(order.date || Date.now()).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}</td>
+                        <td>${periodLabel}</td>
                         <td>
                             ${order.commissionPaid ? '<span class=\"badge badge-success\">Pago</span>' : `<button class=\"btn btn-success\" onclick=\"darBaixaComissao(${order.id}, '${sellerName}', ${commissionValue})\" style=\"padding: 0.5rem 1rem;\">✅ Dar Baixa</button>`}
                         </td>
                     `;
+
+                    const commPaidTr = document.createElement('tr');
+                    commPaidTr.innerHTML = `
+                        <td>#${order.id}</td>
+                        <td>${sellerName}</td>
+                        <td>${seller?.role || '-'}</td>
+                        <td>${formatBRL(totalSale)}</td>
+                        <td class=\"profit-color\">${formatBRL(profitValue)}</td>
+                        <td>${commissionRate}%</td>
+                        <td class=\"profit-color\" style=\"font-weight: 700; font-size: 1.1rem;\">${formatBRL(commissionValue)}</td>
+                        <td>${periodLabel}</td>
+                        <td>${paymentDateLabel}</td>
+                        <td><span class=\"badge badge-success\">Pago</span></td>
+                    `;
+
                     if (!order.commissionPaid && pendingCommissionsTbody) pendingCommissionsTbody.appendChild(commTr);
-                    if (order.commissionPaid && paidCommissionsTbody) paidCommissionsTbody.appendChild(commTr.cloneNode(true));
+                    if (order.commissionPaid && paidCommissionsTbody) paidCommissionsTbody.appendChild(commPaidTr);
                 }
             });
         }
