@@ -329,6 +329,13 @@
             overflow: hidden;
         }
 
+        .form-card.wide-card {
+            width: 108%;
+            max-width: 108%;
+            margin-left: -4%;
+            margin-right: -4%;
+        }
+
 
         .form-card h3 {
             font-size: 1.25rem;
@@ -1095,7 +1102,7 @@
 
         <!-- Ordens Abertas Section -->
         <div id="ordens-abertas" class="content-section">
-            <div class="form-card">
+            <div class="form-card wide-card">
                 <h3><span>📋</span> Ordens de Pagamento em Aberto</h3>
                 <table class="data-table">
                     <thead>
@@ -1123,7 +1130,7 @@
 
         <!-- Ordens Concluídas Section -->
         <div id="ordens-concluidas" class="content-section">
-            <div class="form-card">
+            <div class="form-card wide-card">
                 <h3><span>✅</span> Ordens de Pagamento Concluídas</h3>
                 <table class="data-table">
                     <thead>
@@ -2213,15 +2220,25 @@
 
         function applyFilterAndRender() {
             const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter);
-            updateKpis(filteredOrders);
+            updateKpis(filteredOrders, cachedOrders, currentFilter);
             renderOrders(filteredOrders, cachedUsers, cachedServices);
         }
 
-        function updateKpis(orders = []) {
-            const totalCost = orders.reduce((acc, o) => acc + (Number(o.cost) || 0), 0);
-            const totalProfit = orders.reduce((acc, o) => acc + (Number(o.profit) || 0), 0);
-            const openCount = orders.filter(o => (o.status || 'open') === 'open').length;
-            const closedCount = orders.filter(o => (o.status || 'open') === 'concluded').length;
+        function updateKpis(filteredOrders = [], allOrders = [], currentPeriod = 'all') {
+            const hasAll = Array.isArray(allOrders) && allOrders.length;
+            const sourceOrders = currentPeriod === 'all' && hasAll ? allOrders : filteredOrders;
+
+            // KPIs financeiros consideram todas as ordens
+            const totalCost = sourceOrders.reduce((acc, o) => acc + (Number(o.cost) || 0), 0);
+            const totalNetProfit = sourceOrders.reduce((acc, o) => {
+                const profit = Number(o.profit) || 0;
+                const commission = Number(o.commissionValue ?? o.commissionvalue ?? 0) || 0;
+                return acc + (profit - commission);
+            }, 0);
+
+            // Contadores seguem o conjunto filtrado (período selecionado)
+            const openCount = filteredOrders.filter(o => (o.status || 'open') === 'open').length;
+            const closedCount = filteredOrders.filter(o => (o.status || 'open') === 'concluded').length;
 
             const costEl = document.getElementById('kpiCost');
             const profitEl = document.getElementById('kpiProfit');
@@ -2229,7 +2246,7 @@
             const closedEl = document.getElementById('kpiClosed');
 
             if (costEl) costEl.textContent = formatBRL(totalCost);
-            if (profitEl) profitEl.textContent = formatBRL(totalProfit);
+            if (profitEl) profitEl.textContent = formatBRL(totalNetProfit);
             if (openEl) openEl.textContent = openCount.toString();
             if (closedEl) closedEl.textContent = closedCount.toString();
         }
