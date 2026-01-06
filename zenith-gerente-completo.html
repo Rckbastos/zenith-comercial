@@ -281,12 +281,22 @@
             background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
             border: 1px solid #333;
             border-radius: 12px;
-            padding: 2rem;
+            padding: 1.5rem;
             margin-bottom: 2rem;
             width: 100%;
-            max-width: 1474.67px;
+            max-width: 100%;
             margin-left: auto;
             margin-right: auto;
+            overflow: hidden;
+        }
+
+        .form-card.wide-card {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            overflow: visible;
         }
 
         .form-card h3 {
@@ -441,11 +451,10 @@
         /* Table Styles */
         .data-table {
             width: 100%;
-            max-width: 100%;
-            min-width: 0;
+            table-layout: auto;
             border-collapse: collapse;
             margin-top: 1rem;
-            table-layout: auto;
+            font-size: 0.85rem;
         }
 
         .data-table thead {
@@ -453,18 +462,24 @@
         }
 
         .data-table th {
-            padding: 1.2rem 1.25rem;
+            padding: 0.5rem 0.4rem;
             text-align: left;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: #D4AF37;
             border-bottom: 2px solid #D4AF37;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .data-table td {
-            padding: 1.2rem 1.25rem;
+            padding: 0.5rem 0.4rem;
             border-bottom: 1px solid #333;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .data-table tbody tr {
@@ -506,6 +521,114 @@
             color: #D4AF37;
             border: 1px solid rgba(212, 175, 55, 0.3);
         }
+
+        .data-table td span[title] {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        /* Larguras por tabela - Gerente (ordens) */
+        #em-analise .data-table th:nth-child(1),
+        #concluidas .data-table th:nth-child(1),
+        #minhas-vendas .data-table th:nth-child(1),
+        #em-analise .data-table td:nth-child(1),
+        #concluidas .data-table td:nth-child(1),
+        #minhas-vendas .data-table td:nth-child(1) { width: 5%; min-width: 60px; }
+
+        #em-analise .data-table th:nth-child(2),
+        #concluidas .data-table th:nth-child(2),
+        #minhas-vendas .data-table th:nth-child(2),
+        #em-analise .data-table td:nth-child(2),
+        #concluidas .data-table td:nth-child(2),
+        #minhas-vendas .data-table td:nth-child(2) { width: 9%; min-width: 90px; }
+
+        #em-analise .data-table th:nth-child(3),
+        #concluidas .data-table th:nth-child(3),
+        #minhas-vendas .data-table th:nth-child(3),
+        #em-analise .data-table td:nth-child(3),
+        #concluidas .data-table td:nth-child(3),
+        #minhas-vendas .data-table td:nth-child(3) { width: 7%; min-width: 80px; }
+
+        #em-analise .data-table th:nth-child(4),
+        #concluidas .data-table th:nth-child(4),
+        #minhas-vendas .data-table th:nth-child(4),
+        #em-analise .data-table td:nth-child(4),
+        #concluidas .data-table td:nth-child(4),
+        #minhas-vendas .data-table td:nth-child(4) { width: 6%; min-width: 70px; text-align: right; }
+
+        #em-analise .data-table th:nth-child(5),
+        #concluidas .data-table th:nth-child(5),
+        #minhas-vendas .data-table th:nth-child(5),
+        #em-analise .data-table td:nth-child(5),
+        #concluidas .data-table td:nth-child(5),
+        #minhas-vendas .data-table td:nth-child(5) { width: 7%; min-width: 90px; text-align: right; }
+
+        #em-analise .data-table th:nth-child(6),
+        #concluidas .data-table th:nth-child(6),
+        #minhas-vendas .data-table th:nth-child(6),
+        #em-analise .data-table td:nth-child(6),
+        #concluidas .data-table td:nth-child(6),
+        #minhas-vendas .data-table td:nth-child(6) { width: 14%; min-width: 140px; max-width: 180px; }
+
+        #em-analise .data-table th:nth-child(7),
+        #concluidas .data-table th:nth-child(7),
+        #minhas-vendas .data-table th:nth-child(7),
+        #em-analise .data-table td:nth-child(7),
+        #concluidas .data-table td:nth-child(7),
+        #minhas-vendas .data-table td:nth-child(7) { width: 8%; min-width: 90px; text-align: right; }
+
+        #em-analise .data-table th:nth-child(8),
+        #concluidas .data-table th:nth-child(8),
+        #minhas-vendas .data-table th:nth-child(8),
+        #em-analise .data-table td:nth-child(8),
+        #concluidas .data-table td:nth-child(8),
+        #minhas-vendas .data-table td:nth-child(8) { width: 8%; min-width: 90px; text-align: right; }
+
+        #em-analise .data-table th:nth-child(9),
+        #concluidas .data-table th:nth-child(9),
+        #minhas-vendas .data-table th:nth-child(9),
+        #em-analise .data-table td:nth-child(9),
+        #concluidas .data-table td:nth-child(9),
+        #minhas-vendas .data-table td:nth-child(9) { width: 8%; min-width: 90px; text-align: right; }
+
+        #em-analise .data-table th:nth-child(10),
+        #concluidas .data-table th:nth-child(10),
+        #minhas-vendas .data-table th:nth-child(10),
+        #em-analise .data-table td:nth-child(10),
+        #concluidas .data-table td:nth-child(10),
+        #minhas-vendas .data-table td:nth-child(10) { width: 8%; min-width: 90px; text-align: right; }
+
+        #em-analise .data-table th:nth-child(11),
+        #concluidas .data-table th:nth-child(11),
+        #minhas-vendas .data-table th:nth-child(11),
+        #em-analise .data-table td:nth-child(11),
+        #concluidas .data-table td:nth-child(11),
+        #minhas-vendas .data-table td:nth-child(11) { width: 7%; min-width: 85px; }
+
+        #em-analise .data-table th:nth-child(12),
+        #concluidas .data-table th:nth-child(12),
+        #minhas-vendas .data-table th:nth-child(12),
+        #em-analise .data-table td:nth-child(12),
+        #concluidas .data-table td:nth-child(12),
+        #minhas-vendas .data-table td:nth-child(12) { width: 6%; min-width: 80px; text-align: center; }
+
+        #em-analise .data-table th:nth-child(13),
+        #concluidas .data-table th:nth-child(13),
+        #minhas-vendas .data-table th:nth-child(13),
+        #em-analise .data-table td:nth-child(13),
+        #concluidas .data-table td:nth-child(13),
+        #minhas-vendas .data-table td:nth-child(13) { width: 6%; min-width: 80px; text-align: center; }
+
+        #em-analise .data-table th:nth-child(14),
+        #concluidas .data-table th:nth-child(14),
+        #minhas-vendas .data-table th:nth-child(14),
+        #em-analise .data-table td:nth-child(14),
+        #concluidas .data-table td:nth-child(14),
+        #minhas-vendas .data-table td:nth-child(14) { width: 7%; min-width: 80px; text-align: center; }
 
         .profit-value {
             color: #10b981;
@@ -562,9 +685,13 @@
         }
 
         /* Responsive tweaks */
-        @media (max-width: 1200px) {
+        @media screen and (max-width: 1400px) {
+            .form-card,
+            .form-card.wide-card {
+                overflow-x: auto;
+            }
             .data-table {
-                min-width: 0;
+                min-width: 1200px;
             }
         }
 
@@ -601,7 +728,6 @@
             .data-table {
                 display: block;
                 overflow-x: auto;
-                min-width: 0;
             }
 
             .nav-tabs {
@@ -610,8 +736,8 @@
 
             .data-table th,
             .data-table td {
-                padding: 0.85rem 0.9rem;
-                font-size: 0.95rem;
+                padding: 0.65rem 0.7rem;
+                font-size: 0.9rem;
             }
 
             .btn,
