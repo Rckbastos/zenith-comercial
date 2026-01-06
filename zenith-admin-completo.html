@@ -2642,7 +2642,8 @@
         function applyFilterAndRender() {
             const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter);
             updateKpis(filteredOrders, cachedOrders, currentFilter);
-            renderOrders(filteredOrders, cachedUsers, cachedServices);
+            // Tabelas sempre exibem todas as ordens; filtro afeta apenas os KPIs
+            renderOrders(cachedOrders, cachedUsers, cachedServices);
         }
 
         function updateKpis(filteredOrders = [], allOrders = [], currentPeriod = 'all') {
