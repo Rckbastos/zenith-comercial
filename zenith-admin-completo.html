@@ -139,23 +139,26 @@
 
         /* Container */
         .container {
-            max-width: 1760px;
+            width: 65%;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 2.75rem 2.25rem;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
         }
 
         /* Navigation Tabs */
         .nav-tabs {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto 2rem auto;
             display: flex;
+            gap: 0.5rem;
             flex-wrap: wrap;
-            align-items: center;
-            gap: 0.75rem 1.25rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.25rem;
+            padding: 0 1rem;
+            box-sizing: border-box;
             background: #0a0a0a;
             border-bottom: 1px solid #2a2a2a;
             position: static;
-            width: 100%;
             box-shadow: none;
         }
 
@@ -186,6 +189,9 @@
         /* Content Sections */
         .content-section {
             display: none;
+            width: 100%;
+            padding: 0;
+            margin: 0 auto;
         }
 
         .content-section.active {
@@ -210,26 +216,26 @@
         .filter-buttons {
             display: flex;
             gap: 0.75rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             flex-wrap: wrap;
         }
 
         .filter-btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            border: 1px solid #D4AF37;
+            border-radius: 6px;
             font-size: 0.875rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: #1a1a1a;
-            color: #888;
-            border: 1px solid #333;
+            background: transparent;
+            color: #D4AF37;
         }
 
         .filter-btn:hover {
             border-color: #D4AF37;
-            color: #D4AF37;
+            color: #0a0a0a;
+            background: #D4AF37;
         }
 
         .filter-btn.active {
@@ -242,7 +248,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 2rem;
+            width: 100%;
+            margin: 2rem 0;
         }
 
         .kpi-card {
@@ -320,21 +327,17 @@
             background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
             border: 1px solid #333;
             border-radius: 12px;
-            padding: 1.25rem 1.25rem 1.5rem;
-            margin-bottom: 2rem;
+            padding: 1.5rem;
+            margin: 0 auto 2rem auto;
             width: 100%;
             max-width: 100%;
-            margin-left: auto;
-            margin-right: auto;
-            overflow: hidden;
+            box-sizing: border-box;
+            overflow: visible;
         }
 
         .form-card.wide-card {
-            width: 75%;
-            max-width: 75%;
-            margin: 0 auto;
-            padding: 1.5rem;
-            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
             overflow: visible;
         }
 
@@ -450,35 +453,42 @@
         /* Table Styles */
         .data-table {
             width: 100%;
-            table-layout: auto;
+            table-layout: fixed;
             border-collapse: collapse;
             margin-top: 1rem;
             font-size: 0.85rem;
+            overflow: visible;
         }
 
         .data-table thead {
             background: rgba(212, 175, 55, 0.1);
         }
 
-        .data-table th {
-            padding: 0.5rem 0.4rem;
+        .data-table th,
+        .data-table td {
+            padding: 0.6rem 0.4rem;
             text-align: left;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #D4AF37;
-            border-bottom: 2px solid #D4AF37;
+            border-bottom: 1px solid #333;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            box-sizing: border-box;
+        }
+
+        .data-table th {
+            color: #D4AF37;
+            border-top: none;
+            border-bottom: 2px solid #D4AF37;
         }
 
         .data-table td {
-            padding: 0.5rem 0.4rem;
-            border-bottom: 1px solid #333;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            color: #ffffff;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
         }
 
         .data-table tbody tr {
@@ -491,19 +501,15 @@
 
         .orders-table th.actions-col,
         .orders-table td.actions-col {
-            min-width: 190px;
+            min-width: 80px;
             text-align: center;
             white-space: nowrap;
         }
 
         .orders-table th.proof-col,
         .orders-table td.proof-col {
-            min-width: 140px;
+            min-width: 70px;
             text-align: center;
-        }
-
-        .orders-table {
-            min-width: 1280px;
         }
 
         /* Texto longo em células */
@@ -518,106 +524,148 @@
 
         /* Larguras por tabela - Admin */
         #usuarios .data-table th:nth-child(1),
-        #usuarios .data-table td:nth-child(1) { width: 20%; min-width: 120px; }
+        #usuarios .data-table td:nth-child(1),
+        #usersTableBody tr td:nth-child(1) { width: 20%; }
         #usuarios .data-table th:nth-child(2),
-        #usuarios .data-table td:nth-child(2) { width: 24%; min-width: 150px; }
+        #usuarios .data-table td:nth-child(2),
+        #usersTableBody tr td:nth-child(2) { width: 25%; }
         #usuarios .data-table th:nth-child(3),
-        #usuarios .data-table td:nth-child(3) { width: 14%; min-width: 100px; }
+        #usuarios .data-table td:nth-child(3),
+        #usersTableBody tr td:nth-child(3) { width: 20%; }
         #usuarios .data-table th:nth-child(4),
-        #usuarios .data-table td:nth-child(4) { width: 12%; min-width: 90px; }
+        #usuarios .data-table td:nth-child(4),
+        #usersTableBody tr td:nth-child(4) { width: 12%; }
         #usuarios .data-table th:nth-child(5),
-        #usuarios .data-table td:nth-child(5) { width: 12%; min-width: 90px; }
+        #usuarios .data-table td:nth-child(5),
+        #usersTableBody tr td:nth-child(5) { width: 10%; }
         #usuarios .data-table th:nth-child(6),
-        #usuarios .data-table td:nth-child(6) { width: 10%; min-width: 90px; text-align: center; }
+        #usuarios .data-table td:nth-child(6),
+        #usersTableBody tr td:nth-child(6) { width: 13%; }
 
         #servicos .data-table th:nth-child(1),
-        #servicos .data-table td:nth-child(1) { width: 32%; min-width: 150px; }
+        #servicos .data-table td:nth-child(1),
+        #servicesTableBody tr td:nth-child(1) { width: 35%; }
         #servicos .data-table th:nth-child(2),
-        #servicos .data-table td:nth-child(2) { width: 18%; min-width: 100px; }
+        #servicos .data-table td:nth-child(2),
+        #servicesTableBody tr td:nth-child(2) { width: 35%; }
         #servicos .data-table th:nth-child(3),
-        #servicos .data-table td:nth-child(3) { width: 15%; min-width: 90px; }
+        #servicos .data-table td:nth-child(3),
+        #servicesTableBody tr td:nth-child(3) { width: 15%; }
         #servicos .data-table th:nth-child(4),
-        #servicos .data-table td:nth-child(4) { width: 12%; min-width: 90px; text-align: center; }
+        #servicos .data-table td:nth-child(4),
+        #servicesTableBody tr td:nth-child(4) { width: 15%; }
 
         #atribuir .data-table th:nth-child(1),
-        #atribuir .data-table td:nth-child(1) { width: 24%; min-width: 140px; }
+        #atribuir .data-table td:nth-child(1),
+        #assignmentsTableBody tr td:nth-child(1) { width: 25%; }
         #atribuir .data-table th:nth-child(2),
-        #atribuir .data-table td:nth-child(2) { width: 18%; min-width: 110px; }
+        #atribuir .data-table td:nth-child(2),
+        #assignmentsTableBody tr td:nth-child(2) { width: 25%; }
         #atribuir .data-table th:nth-child(3),
-        #atribuir .data-table td:nth-child(3) { width: 36%; min-width: 160px; }
+        #atribuir .data-table td:nth-child(3),
+        #assignmentsTableBody tr td:nth-child(3) { width: 35%; }
         #atribuir .data-table th:nth-child(4),
-        #atribuir .data-table td:nth-child(4) { width: 12%; min-width: 90px; text-align: center; }
+        #atribuir .data-table td:nth-child(4),
+        #assignmentsTableBody tr td:nth-child(4) { width: 15%; }
 
         .orders-table th:nth-child(1),
-        .orders-table td:nth-child(1) { width: 5%; min-width: 60px; }
+        .orders-table td:nth-child(1) { width: 5%; }
         .orders-table th:nth-child(2),
-        .orders-table td:nth-child(2) { width: 9%; min-width: 90px; }
+        .orders-table td:nth-child(2) { width: 8%; }
         .orders-table th:nth-child(3),
-        .orders-table td:nth-child(3) { width: 10%; min-width: 100px; }
+        .orders-table td:nth-child(3) { width: 10%; }
         .orders-table th:nth-child(4),
-        .orders-table td:nth-child(4) { width: 7%; min-width: 80px; }
+        .orders-table td:nth-child(4) { width: 6%; }
         .orders-table th:nth-child(5),
-        .orders-table td:nth-child(5) { width: 6%; min-width: 70px; text-align: right; }
+        .orders-table td:nth-child(5) { width: 6%; }
         .orders-table th:nth-child(6),
-        .orders-table td:nth-child(6) { width: 7%; min-width: 90px; text-align: right; }
+        .orders-table td:nth-child(6) { width: 7%; }
         .orders-table th:nth-child(7),
-        .orders-table td:nth-child(7) { width: 14%; min-width: 140px; max-width: 180px; }
+        .orders-table td:nth-child(7) { width: 10%; max-width: 150px; }
         .orders-table th:nth-child(8),
-        .orders-table td:nth-child(8) { width: 8%; min-width: 90px; text-align: right; }
+        .orders-table td:nth-child(8) { width: 8%; }
         .orders-table th:nth-child(9),
-        .orders-table td:nth-child(9) { width: 8%; min-width: 90px; text-align: right; }
+        .orders-table td:nth-child(9) { width: 8%; }
         .orders-table th:nth-child(10),
-        .orders-table td:nth-child(10) { width: 8%; min-width: 90px; text-align: right; }
+        .orders-table td:nth-child(10) { width: 7%; }
         .orders-table th:nth-child(11),
-        .orders-table td:nth-child(11) { width: 8%; min-width: 90px; text-align: right; }
+        .orders-table td:nth-child(11) { width: 7%; }
         .orders-table th:nth-child(12),
-        .orders-table td:nth-child(12) { width: 7%; min-width: 85px; }
+        .orders-table td:nth-child(12) { width: 7%; }
         .orders-table th:nth-child(13),
-        .orders-table td:nth-child(13) { width: 6%; min-width: 80px; text-align: center; }
+        .orders-table td:nth-child(13) { width: 5%; }
         .orders-table th:nth-child(14),
-        .orders-table td:nth-child(14) { width: 7%; min-width: 80px; text-align: center; }
+        .orders-table td:nth-child(14) { width: 6%; }
+
+        .orders-table td:nth-child(7) span {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         #comissoes-pendentes .data-table th:nth-child(1),
-        #comissoes-pendentes .data-table td:nth-child(1) { width: 7%; min-width: 70px; }
+        #comissoes-pendentes .data-table td:nth-child(1),
+        #pendingCommissionsTbody tr td:nth-child(1) { width: 5%; }
         #comissoes-pendentes .data-table th:nth-child(2),
-        #comissoes-pendentes .data-table td:nth-child(2) { width: 12%; min-width: 110px; }
+        #comissoes-pendentes .data-table td:nth-child(2),
+        #pendingCommissionsTbody tr td:nth-child(2) { width: 12%; }
         #comissoes-pendentes .data-table th:nth-child(3),
-        #comissoes-pendentes .data-table td:nth-child(3) { width: 10%; min-width: 100px; }
+        #comissoes-pendentes .data-table td:nth-child(3),
+        #pendingCommissionsTbody tr td:nth-child(3) { width: 12%; }
         #comissoes-pendentes .data-table th:nth-child(4),
-        #comissoes-pendentes .data-table td:nth-child(4) { width: 10%; min-width: 100px; text-align: right; }
+        #comissoes-pendentes .data-table td:nth-child(4),
+        #pendingCommissionsTbody tr td:nth-child(4) { width: 10%; }
         #comissoes-pendentes .data-table th:nth-child(5),
-        #comissoes-pendentes .data-table td:nth-child(5) { width: 10%; min-width: 100px; text-align: right; }
+        #comissoes-pendentes .data-table td:nth-child(5),
+        #pendingCommissionsTbody tr td:nth-child(5) { width: 9%; }
         #comissoes-pendentes .data-table th:nth-child(6),
-        #comissoes-pendentes .data-table td:nth-child(6) { width: 8%; min-width: 80px; text-align: center; }
+        #comissoes-pendentes .data-table td:nth-child(6),
+        #pendingCommissionsTbody tr td:nth-child(6) { width: 6%; }
         #comissoes-pendentes .data-table th:nth-child(7),
-        #comissoes-pendentes .data-table td:nth-child(7) { width: 10%; min-width: 100px; text-align: right; }
+        #comissoes-pendentes .data-table td:nth-child(7),
+        #pendingCommissionsTbody tr td:nth-child(7) { width: 10%; }
         #comissoes-pendentes .data-table th:nth-child(8),
-        #comissoes-pendentes .data-table td:nth-child(8) { width: 8%; min-width: 85px; }
+        #comissoes-pendentes .data-table td:nth-child(8),
+        #pendingCommissionsTbody tr td:nth-child(8) { width: 8%; }
         #comissoes-pendentes .data-table th:nth-child(9),
-        #comissoes-pendentes .data-table td:nth-child(9) { width: 10%; min-width: 95px; }
+        #comissoes-pendentes .data-table td:nth-child(9),
+        #pendingCommissionsTbody tr td:nth-child(9) { width: 12%; }
         #comissoes-pendentes .data-table th:nth-child(10),
-        #comissoes-pendentes .data-table td:nth-child(10) { width: 8%; min-width: 90px; text-align: center; }
+        #comissoes-pendentes .data-table td:nth-child(10),
+        #pendingCommissionsTbody tr td:nth-child(10) { width: 16%; }
 
         #comissoes-pagas .data-table th:nth-child(1),
-        #comissoes-pagas .data-table td:nth-child(1) { width: 7%; min-width: 70px; }
+        #comissoes-pagas .data-table td:nth-child(1),
+        #paidCommissionsTbody tr td:nth-child(1) { width: 5%; }
         #comissoes-pagas .data-table th:nth-child(2),
-        #comissoes-pagas .data-table td:nth-child(2) { width: 12%; min-width: 110px; }
+        #comissoes-pagas .data-table td:nth-child(2),
+        #paidCommissionsTbody tr td:nth-child(2) { width: 13%; }
         #comissoes-pagas .data-table th:nth-child(3),
-        #comissoes-pagas .data-table td:nth-child(3) { width: 10%; min-width: 100px; }
+        #comissoes-pagas .data-table td:nth-child(3),
+        #paidCommissionsTbody tr td:nth-child(3) { width: 13%; }
         #comissoes-pagas .data-table th:nth-child(4),
-        #comissoes-pagas .data-table td:nth-child(4) { width: 10%; min-width: 100px; text-align: right; }
+        #comissoes-pagas .data-table td:nth-child(4),
+        #paidCommissionsTbody tr td:nth-child(4) { width: 11%; }
         #comissoes-pagas .data-table th:nth-child(5),
-        #comissoes-pagas .data-table td:nth-child(5) { width: 10%; min-width: 100px; text-align: right; }
+        #comissoes-pagas .data-table td:nth-child(5),
+        #paidCommissionsTbody tr td:nth-child(5) { width: 10%; }
         #comissoes-pagas .data-table th:nth-child(6),
-        #comissoes-pagas .data-table td:nth-child(6) { width: 8%; min-width: 80px; text-align: center; }
+        #comissoes-pagas .data-table td:nth-child(6),
+        #paidCommissionsTbody tr td:nth-child(6) { width: 7%; }
         #comissoes-pagas .data-table th:nth-child(7),
-        #comissoes-pagas .data-table td:nth-child(7) { width: 10%; min-width: 100px; text-align: right; }
+        #comissoes-pagas .data-table td:nth-child(7),
+        #paidCommissionsTbody tr td:nth-child(7) { width: 11%; }
         #comissoes-pagas .data-table th:nth-child(8),
-        #comissoes-pagas .data-table td:nth-child(8) { width: 10%; min-width: 95px; }
+        #comissoes-pagas .data-table td:nth-child(8),
+        #paidCommissionsTbody tr td:nth-child(8) { width: 13%; }
         #comissoes-pagas .data-table th:nth-child(9),
-        #comissoes-pagas .data-table td:nth-child(9) { width: 10%; min-width: 95px; }
+        #comissoes-pagas .data-table td:nth-child(9),
+        #paidCommissionsTbody tr td:nth-child(9) { width: 9%; }
         #comissoes-pagas .data-table th:nth-child(10),
-        #comissoes-pagas .data-table td:nth-child(10) { width: 8%; min-width: 90px; text-align: center; }
+        #comissoes-pagas .data-table td:nth-child(10),
+        #paidCommissionsTbody tr td:nth-child(10) { width: 8%; }
 
         .badge {
             display: inline-block;
@@ -803,7 +851,45 @@
             }
         }
 
-        /* Responsive */
+        /* Responsividade */
+        @media screen and (max-width: 1600px) {
+            .container {
+                width: 75%;
+            }
+        }
+
+        @media screen and (max-width: 1400px) {
+            .container {
+                width: 85%;
+            }
+        }
+
+        @media screen and (max-width: 1200px) {
+            .container {
+                width: 95%;
+            }
+            .data-table {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media screen and (max-width: 992px) {
+            .container {
+                width: 100%;
+                padding: 1rem 0.5rem;
+            }
+            .nav-tabs {
+                width: 100%;
+            }
+            .form-card,
+            .form-card.wide-card {
+                overflow-x: auto;
+            }
+            .data-table {
+                min-width: 900px;
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -845,8 +931,6 @@
             .data-table td {
                 padding: 0.65rem 0.7rem;
                 font-size: 0.9rem;
-                white-space: normal;
-                word-break: break-word;
             }
 
             .btn,

@@ -114,23 +114,26 @@
 
         /* Container */
         .container {
+            width: 65%;
             max-width: 1400px;
             margin: 0 auto;
-            padding: 2.75rem 2.25rem 3.75rem 2.25rem;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
         }
 
         /* Navigation Tabs */
         .nav-tabs {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto 2rem auto;
             display: flex;
+            gap: 0.5rem;
             flex-wrap: wrap;
-            align-items: center;
-            gap: 0.75rem 1.25rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.25rem;
+            padding: 0 1rem;
+            box-sizing: border-box;
             background: #0a0a0a;
             border-bottom: 1px solid #2a2a2a;
             position: static;
-            width: 100%;
             box-shadow: none;
         }
 
@@ -161,6 +164,9 @@
         /* Content Sections */
         .content-section {
             display: none;
+            width: 100%;
+            padding: 0;
+            margin: 0 auto;
         }
 
         .content-section.active {
@@ -282,20 +288,16 @@
             border: 1px solid #333;
             border-radius: 12px;
             padding: 1.5rem;
-            margin-bottom: 2rem;
+            margin: 0 auto 2rem auto;
             width: 100%;
             max-width: 100%;
-            margin-left: auto;
-            margin-right: auto;
-            overflow: hidden;
+            box-sizing: border-box;
+            overflow: visible;
         }
 
         .form-card.wide-card {
-            width: 75%;
-            max-width: 75%;
-            margin: 0 auto;
-            padding: 1.5rem;
-            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
             overflow: visible;
         }
 
@@ -451,35 +453,42 @@
         /* Table Styles */
         .data-table {
             width: 100%;
-            table-layout: auto;
+            table-layout: fixed;
             border-collapse: collapse;
             margin-top: 1rem;
             font-size: 0.85rem;
+            overflow: visible;
         }
 
         .data-table thead {
             background: rgba(212, 175, 55, 0.1);
         }
 
-        .data-table th {
-            padding: 0.5rem 0.4rem;
+        .data-table th,
+        .data-table td {
+            padding: 0.6rem 0.4rem;
             text-align: left;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #D4AF37;
-            border-bottom: 2px solid #D4AF37;
+            border-bottom: 1px solid #333;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            box-sizing: border-box;
+        }
+
+        .data-table th {
+            color: #D4AF37;
+            border-top: none;
+            border-bottom: 2px solid #D4AF37;
         }
 
         .data-table td {
-            padding: 0.5rem 0.4rem;
-            border-bottom: 1px solid #333;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            color: #ffffff;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
         }
 
         .data-table tbody tr {
@@ -537,98 +546,108 @@
         #minhas-vendas .data-table th:nth-child(1),
         #em-analise .data-table td:nth-child(1),
         #concluidas .data-table td:nth-child(1),
-        #minhas-vendas .data-table td:nth-child(1) { width: 5%; min-width: 60px; }
+        #minhas-vendas .data-table td:nth-child(1) { width: 5%; }
 
         #em-analise .data-table th:nth-child(2),
         #concluidas .data-table th:nth-child(2),
         #minhas-vendas .data-table th:nth-child(2),
         #em-analise .data-table td:nth-child(2),
         #concluidas .data-table td:nth-child(2),
-        #minhas-vendas .data-table td:nth-child(2) { width: 9%; min-width: 90px; }
+        #minhas-vendas .data-table td:nth-child(2) { width: 8%; }
 
         #em-analise .data-table th:nth-child(3),
         #concluidas .data-table th:nth-child(3),
         #minhas-vendas .data-table th:nth-child(3),
         #em-analise .data-table td:nth-child(3),
         #concluidas .data-table td:nth-child(3),
-        #minhas-vendas .data-table td:nth-child(3) { width: 7%; min-width: 80px; }
+        #minhas-vendas .data-table td:nth-child(3) { width: 10%; }
 
         #em-analise .data-table th:nth-child(4),
         #concluidas .data-table th:nth-child(4),
         #minhas-vendas .data-table th:nth-child(4),
         #em-analise .data-table td:nth-child(4),
         #concluidas .data-table td:nth-child(4),
-        #minhas-vendas .data-table td:nth-child(4) { width: 6%; min-width: 70px; text-align: right; }
+        #minhas-vendas .data-table td:nth-child(4) { width: 6%; }
 
         #em-analise .data-table th:nth-child(5),
         #concluidas .data-table th:nth-child(5),
         #minhas-vendas .data-table th:nth-child(5),
         #em-analise .data-table td:nth-child(5),
         #concluidas .data-table td:nth-child(5),
-        #minhas-vendas .data-table td:nth-child(5) { width: 7%; min-width: 90px; text-align: right; }
+        #minhas-vendas .data-table td:nth-child(5) { width: 6%; }
 
         #em-analise .data-table th:nth-child(6),
         #concluidas .data-table th:nth-child(6),
         #minhas-vendas .data-table th:nth-child(6),
         #em-analise .data-table td:nth-child(6),
         #concluidas .data-table td:nth-child(6),
-        #minhas-vendas .data-table td:nth-child(6) { width: 14%; min-width: 140px; max-width: 180px; }
+        #minhas-vendas .data-table td:nth-child(6) { width: 7%; }
 
         #em-analise .data-table th:nth-child(7),
         #concluidas .data-table th:nth-child(7),
         #minhas-vendas .data-table th:nth-child(7),
         #em-analise .data-table td:nth-child(7),
         #concluidas .data-table td:nth-child(7),
-        #minhas-vendas .data-table td:nth-child(7) { width: 8%; min-width: 90px; text-align: right; }
+        #minhas-vendas .data-table td:nth-child(7) { width: 10%; max-width: 150px; }
 
         #em-analise .data-table th:nth-child(8),
         #concluidas .data-table th:nth-child(8),
         #minhas-vendas .data-table th:nth-child(8),
         #em-analise .data-table td:nth-child(8),
         #concluidas .data-table td:nth-child(8),
-        #minhas-vendas .data-table td:nth-child(8) { width: 8%; min-width: 90px; text-align: right; }
+        #minhas-vendas .data-table td:nth-child(8) { width: 8%; }
 
         #em-analise .data-table th:nth-child(9),
         #concluidas .data-table th:nth-child(9),
         #minhas-vendas .data-table th:nth-child(9),
         #em-analise .data-table td:nth-child(9),
         #concluidas .data-table td:nth-child(9),
-        #minhas-vendas .data-table td:nth-child(9) { width: 8%; min-width: 90px; text-align: right; }
+        #minhas-vendas .data-table td:nth-child(9) { width: 8%; }
 
         #em-analise .data-table th:nth-child(10),
         #concluidas .data-table th:nth-child(10),
         #minhas-vendas .data-table th:nth-child(10),
         #em-analise .data-table td:nth-child(10),
         #concluidas .data-table td:nth-child(10),
-        #minhas-vendas .data-table td:nth-child(10) { width: 8%; min-width: 90px; text-align: right; }
+        #minhas-vendas .data-table td:nth-child(10) { width: 7%; }
 
         #em-analise .data-table th:nth-child(11),
         #concluidas .data-table th:nth-child(11),
         #minhas-vendas .data-table th:nth-child(11),
         #em-analise .data-table td:nth-child(11),
         #concluidas .data-table td:nth-child(11),
-        #minhas-vendas .data-table td:nth-child(11) { width: 7%; min-width: 85px; }
+        #minhas-vendas .data-table td:nth-child(11) { width: 7%; }
 
         #em-analise .data-table th:nth-child(12),
         #concluidas .data-table th:nth-child(12),
         #minhas-vendas .data-table th:nth-child(12),
         #em-analise .data-table td:nth-child(12),
         #concluidas .data-table td:nth-child(12),
-        #minhas-vendas .data-table td:nth-child(12) { width: 6%; min-width: 80px; text-align: center; }
+        #minhas-vendas .data-table td:nth-child(12) { width: 7%; }
 
         #em-analise .data-table th:nth-child(13),
         #concluidas .data-table th:nth-child(13),
         #minhas-vendas .data-table th:nth-child(13),
         #em-analise .data-table td:nth-child(13),
         #concluidas .data-table td:nth-child(13),
-        #minhas-vendas .data-table td:nth-child(13) { width: 6%; min-width: 80px; text-align: center; }
+        #minhas-vendas .data-table td:nth-child(13) { width: 5%; }
 
         #em-analise .data-table th:nth-child(14),
         #concluidas .data-table th:nth-child(14),
         #minhas-vendas .data-table th:nth-child(14),
         #em-analise .data-table td:nth-child(14),
         #concluidas .data-table td:nth-child(14),
-        #minhas-vendas .data-table td:nth-child(14) { width: 7%; min-width: 80px; text-align: center; }
+        #minhas-vendas .data-table td:nth-child(14) { width: 6%; }
+
+        #em-analise .data-table td:nth-child(7) span,
+        #concluidas .data-table td:nth-child(7) span,
+        #minhas-vendas .data-table td:nth-child(7) span {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         .profit-value {
             color: #10b981;
@@ -684,17 +703,45 @@
             color: #0a0a0a;
         }
 
-        /* Responsive tweaks */
-        @media screen and (max-width: 1400px) {
-            .form-card,
-            .form-card.wide-card {
+        /* Responsividade */
+        @media screen and (max-width: 1600px) {
+            .container {
                 width: 75%;
-                max-width: 75%;
-                overflow: visible;
             }
         }
 
-        /* Responsive */
+        @media screen and (max-width: 1400px) {
+            .container {
+                width: 85%;
+            }
+        }
+
+        @media screen and (max-width: 1200px) {
+            .container {
+                width: 95%;
+            }
+            .data-table {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media screen and (max-width: 992px) {
+            .container {
+                width: 100%;
+                padding: 1rem 0.5rem;
+            }
+            .nav-tabs {
+                width: 100%;
+            }
+            .form-card,
+            .form-card.wide-card {
+                overflow-x: auto;
+            }
+            .data-table {
+                min-width: 900px;
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -732,8 +779,6 @@
             .data-table td {
                 padding: 0.65rem 0.7rem;
                 font-size: 0.9rem;
-                white-space: normal;
-                word-break: break-word;
             }
 
             .btn,
