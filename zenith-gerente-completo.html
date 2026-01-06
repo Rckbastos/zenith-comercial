@@ -22,7 +22,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
+    }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -540,6 +540,177 @@
             vertical-align: middle;
         }
 
+        /* Date picker custom */
+        .date-picker-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .date-picker-wrapper input {
+            width: 100%;
+            padding: 0.75rem 3rem 0.75rem 0.75rem;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .date-picker-wrapper input:hover {
+            border-color: #D4AF37;
+        }
+
+        .date-picker-wrapper input:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+
+        .calendar-toggle {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #D4AF37;
+            cursor: pointer;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-toggle:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .calendar-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .calendar-dropdown {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            width: 100%;
+            min-width: 320px;
+            background: #1a1a1a;
+            border: 2px solid #D4AF37;
+            border-radius: 12px;
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.3s ease;
+            display: none;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .calendar-month-year {
+            color: #D4AF37;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .calendar-nav {
+            background: transparent;
+            border: 1px solid #444;
+            color: #D4AF37;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-nav:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: #D4AF37;
+        }
+
+        .calendar-days-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .calendar-days-header span {
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.5rem 0;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.25rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #ddd;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .calendar-day:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: #D4AF37;
+        }
+
+        .calendar-day.other-month { color: #555; }
+        .calendar-day.today {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #D4AF37;
+            font-weight: 600;
+        }
+        .calendar-day.selected {
+            background: #D4AF37;
+            color: #0a0a0a;
+            font-weight: 700;
+        }
+        .calendar-day.disabled {
+            color: #333;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .calendar-day.disabled:hover {
+            background: transparent;
+            border-color: transparent;
+        }
+
         /* Larguras por tabela - Gerente (ordens) */
         #em-analise .data-table th:nth-child(1),
         #concluidas .data-table th:nth-child(1),
@@ -703,6 +874,68 @@
             color: #0a0a0a;
         }
 
+        .modal-comprovante {
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-comprovante .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .comprovante-info {
+            background: #2a2a2a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #444;
+        }
+
+        .comprovante-info p {
+            margin: 0;
+            color: #ddd;
+        }
+
+        .comprovante-info strong {
+            color: #D4AF37;
+        }
+
+        .comprovante-image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            border: 2px solid #333;
+            padding: 1rem;
+        }
+
+        .comprovante-image-container img {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .comprovante-placeholder {
+            color: #888;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .modal-comprovante .modal-actions {
+            display: flex;
+            gap: 1rem;
+            padding: 1.5rem;
+            border-top: 1px solid #333;
+            justify-content: flex-end;
+        }
         /* Responsividade */
         @media screen and (max-width: 1600px) {
             .container {
@@ -924,13 +1157,31 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Data da Venda <span>*</span></label>
-                            <input
-                                type="text"
-                                id="orderDate"
-                                inputmode="numeric"
-                                placeholder="dd/mm/aaaa"
-                                required
-                            >
+                            <div class="date-picker-wrapper">
+                                <input type="text" id="orderDate" placeholder="dd/mm/aaaa" required readonly>
+                                <button type="button" class="calendar-toggle" id="calendarToggle">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM16 2v4M8 2v4M3 10h18"/>
+                                    </svg>
+                                </button>
+                                <div class="calendar-dropdown" id="calendarDropdown" style="display: none;">
+                                    <div class="calendar-header">
+                                        <button type="button" class="calendar-nav" id="prevMonth">&lt;</button>
+                                        <span class="calendar-month-year" id="monthYear"></span>
+                                        <button type="button" class="calendar-nav" id="nextMonth">&gt;</button>
+                                    </div>
+                                    <div class="calendar-days-header">
+                                        <span>Dom</span>
+                                        <span>Seg</span>
+                                        <span>Ter</span>
+                                        <span>Qua</span>
+                                        <span>Qui</span>
+                                        <span>Sex</span>
+                                        <span>Sáb</span>
+                                    </div>
+                                    <div class="calendar-days" id="calendarDays"></div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Cotação USDT no Fechamento (R$) <span style="color:#888;">(opcional)</span></label>
@@ -1105,6 +1356,56 @@
         </div>
     </div>
 
+    <!-- Modal de Comprovante -->
+    <div id="comprovanteModalGerente" class="modal-overlay" style="display: none;" onclick="fecharModalGerente()">
+        <div class="modal-card modal-comprovante" onclick="event.stopPropagation();">
+            <div class="modal-header">
+                <h3>📎 Comprovante de Pagamento</h3>
+                <button type="button" class="modal-close" onclick="fecharModalGerente()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="comprovante-info">
+                    <p><strong>Wallet:</strong> <span id="walletInfoGerente">-</span></p>
+                </div>
+                <div class="comprovante-image-container">
+                    <img id="comprovanteImgGerente" src="" alt="Comprovante" style="display: none;">
+                    <p id="comprovantePlaceholderGerente" class="comprovante-placeholder">📄 Nenhum comprovante enviado</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="fecharModalGerente()">Fechar</button>
+                <button type="button" class="btn btn-primary" id="openProofNewTabGerente" style="display: none;">🔗 Abrir em nova guia</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Upload Comprovante -->
+    <div id="uploadProofModal" class="modal-overlay" style="display: none;" onclick="closeUploadProofModal()">
+        <div class="modal-card" style="max-width: 500px;" onclick="event.stopPropagation();">
+            <div class="modal-header">
+                <h3>📤 Enviar Comprovante</h3>
+                <button type="button" class="modal-close" onclick="closeUploadProofModal()">×</button>
+            </div>
+            <form id="uploadProofForm">
+                <input type="hidden" id="uploadProofOrderId">
+                <div class="form-group">
+                    <label>Selecione o comprovante de pagamento <span>*</span></label>
+                    <input type="file" id="uploadProofFile" accept="image/*,application/pdf" required style="padding: 0.75rem; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: #fff; cursor: pointer;">
+                </div>
+                <div class="info-box" style="margin-top: 1rem;">
+                    <span class="info-box-icon">💡</span>
+                    <div class="info-box-text">
+                        Formatos aceitos: JPG, PNG, PDF. Tamanho máximo: 5MB.
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeUploadProofModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">📤 Enviar Comprovante</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal de Perfil -->
     <div id="profileModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:2000; align-items:center; justify-content:center;">
         <div style="background:#0f0f14; border:1px solid #2a2a2a; border-radius:14px; padding:24px; width:95%; max-width:520px; box-shadow:0 20px 70px rgba(0,0,0,0.45); position:relative;">
@@ -1132,6 +1433,7 @@
     <script>
         const apiBase = '';
         let currentSellerId = null; // será definido pelo login/usuário encontrado
+        let loggedUserId = null;
         let currentUser = null;
         let isSubmittingOrder = false;
         let assignedServices = [];
@@ -1240,18 +1542,94 @@
             });
         }
 
+        function openUploadProofModal(orderId) {
+            const modal = document.getElementById('uploadProofModal');
+            const orderIdInput = document.getElementById('uploadProofOrderId');
+            const fileInput = document.getElementById('uploadProofFile');
+            if (orderIdInput) orderIdInput.value = orderId;
+            if (fileInput) fileInput.value = '';
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeUploadProofModal() {
+            const modal = document.getElementById('uploadProofModal');
+            const form = document.getElementById('uploadProofForm');
+            if (form) form.reset();
+            if (modal) modal.style.display = 'none';
+        }
+
+        document.getElementById('uploadProofForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('uploadProofOrderId')?.value;
+            const fileInput = document.getElementById('uploadProofFile');
+            const file = fileInput?.files?.[0];
+            if (!orderId) return;
+            if (!file) {
+                alert('⚠️ Selecione um arquivo');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('⚠️ Arquivo muito grande. Máx: 5MB');
+                return;
+            }
+            try {
+                const base64 = await readFileAsDataUrl(file);
+                await fetchJson(`/api/orders/${orderId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ payoutProof: base64 })
+                });
+                alert('✅ Comprovante enviado com sucesso!');
+                closeUploadProofModal();
+                await loadGerenteData();
+            } catch (err) {
+                showError(err);
+            }
+        });
+
+        let currentComprovanteUrlGerente = null;
+
         function verComprovanteGerente(id) {
+            const modal = document.getElementById('comprovanteModalGerente');
             const order = cachedOrders.find(o => Number(o.id) === Number(id));
-            if (order?.payoutProof) {
-                const win = window.open();
-                if (win) {
-                    win.document.write(`<img src="${order.payoutProof}" style="max-width:100%;max-height:90vh;" />`);
-                } else {
-                    alert('Não foi possível abrir o comprovante.');
+            if (!modal || !order) {
+                alert('⚠️ Ordem não encontrada');
+                return;
+            }
+            const walletEl = document.getElementById('walletInfoGerente');
+            const imgEl = document.getElementById('comprovanteImgGerente');
+            const placeholderEl = document.getElementById('comprovantePlaceholderGerente');
+            const openNewTabBtn = document.getElementById('openProofNewTabGerente');
+
+            if (walletEl) walletEl.textContent = order.wallet || '-';
+
+            if (order.payoutProof && order.payoutProof.trim() !== '') {
+                currentComprovanteUrlGerente = order.payoutProof;
+                if (imgEl) {
+                    imgEl.style.display = 'block';
+                    imgEl.src = order.payoutProof;
+                }
+                if (placeholderEl) placeholderEl.style.display = 'none';
+                if (openNewTabBtn) {
+                    openNewTabBtn.style.display = 'inline-flex';
+                    openNewTabBtn.onclick = () => window.open(order.payoutProof, '_blank');
                 }
             } else {
-                alert('Nenhum comprovante enviado para esta ordem.');
+                currentComprovanteUrlGerente = null;
+                if (imgEl) {
+                    imgEl.style.display = 'none';
+                    imgEl.src = '';
+                }
+                if (placeholderEl) placeholderEl.style.display = 'block';
+                if (openNewTabBtn) openNewTabBtn.style.display = 'none';
             }
+
+            modal.style.display = 'flex';
+        }
+
+        function fecharModalGerente() {
+            const modal = document.getElementById('comprovanteModalGerente');
+            if (modal) modal.style.display = 'none';
+            currentComprovanteUrlGerente = null;
         }
 
         document.getElementById('orderForm').addEventListener('submit', async function(e) {
@@ -1273,11 +1651,6 @@
             const wallet = document.getElementById('usdtWallet').value || null;
             const isRemessa = (selectedService?.name || '').trim().toLowerCase() === 'remessa';
             const isRetroactive = orderDate !== todayStr;
-
-            if (!fileInput.files.length) {
-                alert('⚠️ Por favor, anexe o comprovante de pagamento!');
-                return;
-            }
 
             let priceBRL = 0;
             if (selectedService?.name?.toLowerCase().includes('usdt')) {
@@ -1310,8 +1683,10 @@
             isSubmittingOrder = true;
 
             try {
-                const payoutProof = await readFileAsDataUrl(fileInput.files[0]);
-                payload.payoutProof = payoutProof;
+                if (fileInput.files.length) {
+                    const payoutProof = await readFileAsDataUrl(fileInput.files[0]);
+                    payload.payoutProof = payoutProof;
+                }
 
                 await fetchJson('/api/orders', {
                     method: 'POST',
@@ -1378,6 +1753,152 @@
             restoreProfileImage();
         });
 
+        // Calendário Dropdown Customizado
+        (function() {
+            let selectedDate = null;
+            let currentMonth = new Date().getMonth();
+            let currentYear = new Date().getFullYear();
+
+            const orderDateInput = document.getElementById('orderDate');
+            const calendarToggle = document.getElementById('calendarToggle');
+            const calendarDropdown = document.getElementById('calendarDropdown');
+            const monthYearDisplay = document.getElementById('monthYear');
+            const calendarDaysContainer = document.getElementById('calendarDays');
+            const prevMonthBtn = document.getElementById('prevMonth');
+            const nextMonthBtn = document.getElementById('nextMonth');
+
+            if (!orderDateInput || !calendarToggle || !calendarDropdown) return;
+
+            const months = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+
+            calendarToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isVisible = calendarDropdown.style.display === 'block';
+                calendarDropdown.style.display = isVisible ? 'none' : 'block';
+                if (!isVisible) renderCalendar();
+            });
+
+            orderDateInput.addEventListener('click', function(e) {
+                e.stopPropagation();
+                calendarDropdown.style.display = 'block';
+                renderCalendar();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!calendarDropdown.contains(e.target) &&
+                    e.target !== calendarToggle &&
+                    e.target !== orderDateInput) {
+                    calendarDropdown.style.display = 'none';
+                }
+            });
+
+            prevMonthBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                renderCalendar();
+            });
+
+            nextMonthBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                renderCalendar();
+            });
+
+            function renderCalendar() {
+                monthYearDisplay.textContent = `${months[currentMonth]} ${currentYear}`;
+                calendarDaysContainer.innerHTML = '';
+
+                const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                for (let i = firstDay - 1; i >= 0; i--) {
+                    const day = daysInPrevMonth - i;
+                    const dayBtn = createDayButton(day, true, currentMonth - 1, currentYear);
+                    calendarDaysContainer.appendChild(dayBtn);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayBtn = createDayButton(day, false, currentMonth, currentYear);
+                    calendarDaysContainer.appendChild(dayBtn);
+                }
+
+                const totalCells = calendarDaysContainer.children.length;
+                const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+                for (let day = 1; day <= remainingCells; day++) {
+                    const dayBtn = createDayButton(day, true, currentMonth + 1, currentYear);
+                    calendarDaysContainer.appendChild(dayBtn);
+                }
+            }
+
+            function createDayButton(day, isOtherMonth, month, year) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'calendar-day';
+                btn.textContent = day;
+
+                const btnDate = new Date(year, month, day);
+                btnDate.setHours(0, 0, 0, 0);
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (isOtherMonth) btn.classList.add('other-month');
+                if (btnDate.getTime() === today.getTime() && !isOtherMonth) btn.classList.add('today');
+
+                if (btnDate > today) {
+                    btn.classList.add('disabled');
+                    btn.disabled = true;
+                }
+
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                oneYearAgo.setHours(0, 0, 0, 0);
+                if (btnDate < oneYearAgo) {
+                    btn.classList.add('disabled');
+                    btn.disabled = true;
+                }
+
+                if (selectedDate && btnDate.getTime() === selectedDate.getTime() && !isOtherMonth) {
+                    btn.classList.add('selected');
+                }
+
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!btn.disabled) selectDate(btnDate);
+                });
+
+                return btn;
+            }
+
+            function selectDate(date) {
+                selectedDate = date;
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                orderDateInput.value = `${day}/${month}/${year}`;
+                calendarDropdown.style.display = 'none';
+                orderDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            selectDate(new Date());
+            renderCalendar();
+        })();
+
         function showError(err) {
             console.error(err);
             alert('⚠️ Erro: ' + (err?.message || 'não foi possível completar a ação'));
@@ -1396,7 +1917,8 @@
         }
 
         function formatBRL(value) {
-            return (value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
+            const num = Number(value) || 0;
+            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function formatBRL4(value) {
@@ -1419,7 +1941,7 @@
             if (allSalesTbody) allSalesTbody.innerHTML = '';
 
             // KPIs
-            updateKpis(sellerOrders, users.find(u => u.id === currentSellerId));
+            updateGerenteDashboard(sellerOrders, currentSellerId);
 
             sellerOrders.forEach(order => {
                 const statusLabel = order.status === 'concluded' ? '<span class=\"badge badge-success\">Aprovada</span>' : '<span class=\"badge badge-pending\">Em Análise</span>';
@@ -1428,6 +1950,9 @@
                 const walletDisplay = order.wallet ? `<span title=\"${order.wallet}\">${order.wallet}</span>` : '-';
                 const retroBadge = order.isRetroactive ? '<span class=\"badge\" style=\"background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;\">📅 RETRO</span>' : '';
                 const dateTitle = order.historicalQuote ? ` title=\"Cotação histórica: R$ ${Number(order.historicalQuote).toFixed(4)}\"` : ' title=\"Cotação automática\"';
+                const proofButton = order.payoutProof
+                    ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>`
+                    : `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"openUploadProofModal(${order.id})\">📤 Enviar</button>`;
                 const baseRow = `
                     <td>#${order.id}${retroBadge ? ' ' + retroBadge : ''}</td>
                     <td>${order.customer || '-'}</td>
@@ -1441,7 +1966,7 @@
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                     <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                     <td>${statusLabel}</td>
-                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                    <td>${proofButton}</td>
                     <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                 `;
 
@@ -1524,6 +2049,7 @@
                     .filter(svc => svc.id);
                 populateProductTypes();
                 renderOrdersForSeller(orders, users);
+                updateGerenteDashboard(orders, currentSellerId);
             } catch (err) {
                 showError(err);
             }
@@ -1551,36 +2077,70 @@
             toggleProductFields();
         }
 
-        function updateKpis(orders, user) {
-            const commissionPending = orders
-                .filter(o => o.status === 'concluded' && !o.commissionPaid)
-                .reduce((sum, o) => sum + (Number(o.commissionValue) || 0), 0);
-            const totalProfit = orders.reduce((sum, o) => sum + (Number(o.profit) || 0), 0);
-            const totalSales = orders.length;
-            const openCount = orders.filter(o => o.status === 'open').length;
-            const concludedCount = orders.filter(o => o.status === 'concluded').length;
-            const approvalRate = totalSales ? Math.round((concludedCount / totalSales) * 100) : 0;
-            const ticket = totalSales ? orders.reduce((sum, o) => sum + (Number(o.price) || 0), 0) / totalSales : 0;
+        function updateGerenteDashboard(orders, currentUserId) {
+            if (!orders || !currentUserId) return;
+            const myOrders = orders.filter(o => Number(o.sellerId) === Number(currentUserId));
+            const concludedOrders = myOrders.filter(o => (o.status || 'open') === 'concluded');
+            const openOrders = myOrders.filter(o => (o.status || 'open') === 'open');
 
+            const totalCommission = concludedOrders
+                .filter(o => !o.commissionPaid)
+                .reduce((acc, o) => acc + (Number(o.commissionValue ?? o.commissionvalue) || 0), 0);
+            const totalProfit = concludedOrders.reduce((acc, o) => acc + (Number(o.profit) || 0), 0);
+            const totalSales = concludedOrders.length;
+
+            const bannerCommissionEl = document.getElementById('bannerCommission');
+            const bannerProfitEl = document.getElementById('bannerProfit');
+            const bannerSalesEl = document.getElementById('bannerSales');
+            if (bannerCommissionEl) bannerCommissionEl.textContent = formatBRL(totalCommission);
+            if (bannerProfitEl) bannerProfitEl.textContent = formatBRL(totalProfit);
+            if (bannerSalesEl) bannerSalesEl.textContent = `${totalSales} ${totalSales === 1 ? 'venda' : 'vendas'}`;
+
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            const vendasMes = myOrders.filter(o => {
+                const orderDate = new Date(o.date || o.created_at);
+                return orderDate >= startOfMonth && orderDate <= endOfMonth;
+            }).length;
+
+            const vendasMesEl = document.getElementById('vendasMes');
+            const vendasMesSubtitleEl = document.getElementById('vendasMesSubtitle');
+            if (vendasMesEl) vendasMesEl.textContent = vendasMes.toString();
+            if (vendasMesSubtitleEl) {
+                const monthName = now.toLocaleDateString('pt-BR', { month: 'long' });
+                vendasMesSubtitleEl.textContent = `Em ${monthName}`;
+            }
+
+            const totalValue = concludedOrders.reduce((acc, o) => acc + (Number(o.price) || 0), 0);
+            const ticketMedio = concludedOrders.length > 0 ? totalValue / concludedOrders.length : 0;
+            const ticketMedioEl = document.getElementById('ticketMedio');
+            if (ticketMedioEl) ticketMedioEl.textContent = formatBRL(ticketMedio);
+
+            const emAnaliseEl = document.getElementById('emAnalise');
+            if (emAnaliseEl) emAnaliseEl.textContent = openOrders.length.toString();
+
+            const totalOrdens = myOrders.length;
+            const ordensAprovadas = concludedOrders.length;
+            const taxaAprovacao = totalOrdens > 0 ? (ordensAprovadas / totalOrdens) * 100 : 0;
+
+            const taxaAprovacaoEl = document.getElementById('taxaAprovacao');
+            const taxaAprovacaoSubEl = document.getElementById('taxaAprovacaoSub');
+            if (taxaAprovacaoEl) taxaAprovacaoEl.textContent = taxaAprovacao.toFixed(1) + '%';
+            if (taxaAprovacaoSubEl) taxaAprovacaoSubEl.textContent = `${ordensAprovadas} ${ordensAprovadas === 1 ? 'aprovada' : 'aprovadas'}`;
+
+            // Atualiza info do usuário no banner se disponível
+            const user = currentUser;
             const name = user?.name || 'Usuário';
             const role = user?.role || 'Gerente';
             const commissionRate = user?.commission != null ? `${user.commission}% comissão` : '';
             const initials = name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-
-            document.getElementById('userName').textContent = name;
-            document.getElementById('userRole').textContent = `${role}${commissionRate ? ' • ' + commissionRate : ''}`;
-            document.getElementById('userAvatar').textContent = initials;
-
-            document.getElementById('bannerCommission').textContent = formatBRL(commissionPending);
-            document.getElementById('bannerProfit').textContent = formatBRL(totalProfit);
-            document.getElementById('bannerSales').textContent = `${totalSales} ${totalSales === 1 ? 'venda' : 'vendas'}`;
-
-            document.getElementById('vendasMes').textContent = totalSales;
-            document.getElementById('vendasMesSubtitle').textContent = totalSales ? `${totalSales} no período atual` : '--';
-            document.getElementById('ticketMedio').textContent = formatBRL(ticket);
-            document.getElementById('emAnalise').textContent = openCount;
-            document.getElementById('taxaAprovacao').textContent = `${approvalRate}%`;
-            document.getElementById('taxaAprovacaoSub').textContent = `${concludedCount} aprovadas`;
+            const userNameEl = document.getElementById('userName');
+            const userRoleEl = document.getElementById('userRole');
+            const userAvatarEl = document.getElementById('userAvatar');
+            if (userNameEl) userNameEl.textContent = name;
+            if (userRoleEl) userRoleEl.textContent = `${role}${commissionRate ? ' • ' + commissionRate : ''}`;
+            if (userAvatarEl) userAvatarEl.textContent = initials;
             restoreProfileImage();
         }
 
@@ -1591,12 +2151,14 @@
                 if (found) {
                     currentSellerId = found.id;
                     currentUser = found;
+                    loggedUserId = found.id;
                     return;
                 }
             }
             if (!currentSellerId && users.length) {
                 currentSellerId = users[0].id;
                 currentUser = users[0];
+                loggedUserId = users[0].id;
             }
         }
 
