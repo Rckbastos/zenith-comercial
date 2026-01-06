@@ -330,10 +330,10 @@
         }
 
         .form-card.wide-card {
-            width: 108%;
-            max-width: 108%;
-            margin-left: -4%;
-            margin-right: -4%;
+            width: 100%;
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
         }
 
 
@@ -480,6 +480,19 @@
 
         .data-table tbody tr:hover {
             background: rgba(212, 175, 55, 0.05);
+        }
+
+        .orders-table th.actions-col,
+        .orders-table td.actions-col {
+            min-width: 190px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .orders-table th.proof-col,
+        .orders-table td.proof-col {
+            min-width: 140px;
+            text-align: center;
         }
 
         .badge {
@@ -1104,7 +1117,7 @@
         <div id="ordens-abertas" class="content-section">
             <div class="form-card wide-card">
                 <h3><span>📋</span> Ordens de Pagamento em Aberto</h3>
-                <table class="data-table">
+                <table class="data-table orders-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -1119,8 +1132,8 @@
                             <th>Lucro</th>
                             <th>Comissão</th>
                             <th>Data</th>
-                            <th>Comprovante</th>
-                            <th>Ações</th>
+                            <th class="proof-col">Comprovante</th>
+                            <th class="actions-col">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="openOrdersTbody"></tbody>
@@ -1132,7 +1145,7 @@
         <div id="ordens-concluidas" class="content-section">
             <div class="form-card wide-card">
                 <h3><span>✅</span> Ordens de Pagamento Concluídas</h3>
-                <table class="data-table">
+                <table class="data-table orders-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -1147,8 +1160,8 @@
                             <th>Lucro</th>
                             <th>Comissão</th>
                             <th>Data</th>
-                            <th>Comprovante</th>
-                            <th>Status</th>
+                            <th class="proof-col">Comprovante</th>
+                            <th class="actions-col">Status</th>
                         </tr>
                     </thead>
                     <tbody id="concludedOrdersTbody"></tbody>
@@ -2040,16 +2053,45 @@
             const normalized = (period || 'all').toLowerCase();
             if (normalized === 'all') return [...orders];
             const now = new Date();
-            const start = new Date();
-            if (normalized === 'today') start.setHours(0, 0, 0, 0);
-            if (normalized === 'week') start.setDate(now.getDate() - 7);
-            if (normalized === 'month') start.setDate(now.getDate() - 30);
-            return orders.filter(o => {
-                const d = new Date(o.date || o.created_at || now);
-                if (Number.isNaN(d.getTime())) return true;
-                if (normalized === 'today') return d.toDateString() === now.toDateString();
-                return d >= start;
-            });
+            const today = new Date(now);
+            today.setHours(0, 0, 0, 0);
+
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            endOfMonth.setHours(23, 59, 59, 999);
+
+            if (normalized === 'today') {
+                return orders.filter(o => {
+                    const d = new Date(o.date || o.created_at || now);
+                    return Number.isFinite(d.getTime()) && d.toDateString() === today.toDateString();
+                });
+            }
+
+            if (normalized === 'month') {
+                return orders.filter(o => {
+                    const d = new Date(o.date || o.created_at || now);
+                    return Number.isFinite(d.getTime()) && d >= startOfMonth && d <= endOfMonth;
+                });
+            }
+
+            if (normalized === 'week') {
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay()); // domingo
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6); // sábado
+                endOfWeek.setHours(23, 59, 59, 999);
+
+                // limita a semana ao mês corrente
+                const start = startOfWeek < startOfMonth ? startOfMonth : startOfWeek;
+                const end = endOfWeek > endOfMonth ? endOfMonth : endOfWeek;
+
+                return orders.filter(o => {
+                    const d = new Date(o.date || o.created_at || now);
+                    return Number.isFinite(d.getTime()) && d >= start && d <= end;
+                });
+            }
+
+            return [...orders];
         }
 
         function renderOrders(orders, users, services) {
@@ -2089,8 +2131,8 @@
                     <td class=\"profit-color\">${formatBRL(order.profit)}</td>
                     <td class=\"profit-color\">${formatBRL(commissionValue)}</td>
                     <td title="${order.historicalQuote ? 'Cotação histórica: R$ ' + Number(order.historicalQuote).toFixed(4) : 'Cotação automática'}">${formatDate(order.date)}</td>
-                    <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovante(${order.id})\">📎 Ver</button>` : '-'}</td>
-                    <td>${status === 'open' ? `<button class=\"btn btn-primary\" style=\"padding: 0.5rem 1rem; font-size: 0.875rem;\" onclick=\"concluirOrdem(${order.id})\">✅ Concluir</button>` : '<span class=\"badge badge-success\">Concluída</span>'}</td>
+                    <td class=\"proof-col\">${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovante(${order.id})\">📎 Ver</button>` : '-'}</td>
+                    <td class=\"actions-col\">${status === 'open' ? `<button class=\"btn btn-primary\" style=\"padding: 0.5rem 1rem; font-size: 0.875rem;\" onclick=\"concluirOrdem(${order.id})\">✅ Concluir</button>` : '<span class=\"badge badge-success\">Concluída</span>'}</td>
                 `;
 
                 if (status === 'open' && openTbody) openTbody.appendChild(tr);
