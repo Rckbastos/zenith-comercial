@@ -291,8 +291,8 @@
         }
 
         .form-card.wide-card {
-            width: 100%;
-            max-width: 100%;
+            width: 75%;
+            max-width: 75%;
             margin: 0 auto;
             padding: 1.5rem;
             box-sizing: border-box;
@@ -688,10 +688,9 @@
         @media screen and (max-width: 1400px) {
             .form-card,
             .form-card.wide-card {
-                overflow-x: auto;
-            }
-            .data-table {
-                min-width: 1200px;
+                width: 75%;
+                max-width: 75%;
+                overflow: visible;
             }
         }
 
@@ -725,11 +724,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .data-table {
-                display: block;
-                overflow-x: auto;
-            }
-
             .nav-tabs {
                 overflow-x: scroll;
             }
@@ -738,6 +732,8 @@
             .data-table td {
                 padding: 0.65rem 0.7rem;
                 font-size: 0.9rem;
+                white-space: normal;
+                word-break: break-word;
             }
 
             .btn,
