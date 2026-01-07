@@ -778,6 +778,13 @@ app.post('/api/orders', async (req, res) => {
 
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(body, seller, service);
 
+    // Calcular automaticamente se é retroativa
+    const orderDate = new Date(body.date || new Date().toISOString().slice(0, 10));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    orderDate.setHours(0, 0, 0, 0);
+    const isRetroactiveCalculated = orderDate < today;
+
     const rows = await query(
       `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd, historicalQuote, isRetroactive)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
@@ -800,7 +807,7 @@ app.post('/api/orders', async (req, res) => {
         body.wallet || null,
         invoiceFeeUsd ?? body.invoiceUsd ?? body.invoiceusd ?? 0,
         body.historicalQuote || body.historicalquote || null,
-        body.isRetroactive || body.isretroactive || false
+        isRetroactiveCalculated
       ]
     );
     res.status(201).json(normalizeOrder(rows[0]));
@@ -846,6 +853,14 @@ app.patch('/api/orders/:id', async (req, res) => {
     const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
     const merged = { ...existing, ...body, id };
+    // Recalcular isRetroactive se a data foi alterada
+    if (merged.date) {
+      const orderDate = new Date(merged.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      orderDate.setHours(0, 0, 0, 0);
+      merged.isRetroactive = orderDate < today;
+    }
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(merged, seller || existing, service || existing);
 
     const rows = await query(
@@ -855,9 +870,9 @@ app.patch('/api/orders/:id', async (req, res) => {
         merged.customer,
         merged.sellerid || merged.sellerId || null,
         merged.serviceid || merged.serviceId || null,
-        merged.quantity || merged.quantity || 0,
+        merged.quantity ?? 0,
         unitPriceUsed || merged.unitPrice || merged.pricePerUnit || merged.unitprice || null,
-        quoteUsed || merged.quote || merged.quote || existing.quote || null,
+        quoteUsed ?? merged.quote ?? existing.quote ?? null,
         price,
         cost,
         profit,
