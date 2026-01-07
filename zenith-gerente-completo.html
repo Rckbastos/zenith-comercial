@@ -1535,16 +1535,6 @@
             return { iso, br: dateInput.value };
         }
 
-        function removeRetroWarning() {
-            const retroWarning = document.getElementById('retroWarning');
-            if (retroWarning) retroWarning.remove();
-        }
-
-        // Caso um dia exista modal de nova ordem, esta função limpa o aviso
-        function closeOrderModal() {
-            removeRetroWarning();
-        }
-
         function showSection(event, sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
@@ -1849,44 +1839,6 @@
                 e.stopPropagation();
                 calendarDropdown.style.display = 'block';
                 renderCalendar();
-            });
-
-            // Aviso quando selecionar data retroativa
-            orderDateInput.addEventListener('change', function(e) {
-                const raw = (e.target.value || '').trim();
-                const iso = parseBrDateToIso(raw);
-                const selectedDate = iso ? new Date(iso) : new Date(raw);
-                if (!selectedDate || Number.isNaN(selectedDate.getTime())) {
-                    removeRetroWarning();
-                    return;
-                }
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                selectedDate.setHours(0, 0, 0, 0);
-
-                let warningEl = document.getElementById('retroWarning');
-
-                if (selectedDate < today) {
-                    if (!warningEl) {
-                        warningEl = document.createElement('div');
-                        warningEl.id = 'retroWarning';
-                        warningEl.className = 'info-box';
-                        warningEl.style.marginTop = '0.75rem';
-                        warningEl.innerHTML = `
-        <span class="info-box-icon">⚠️</span>
-        <div class="info-box-text">
-          Esta ordem será marcada como <strong>RETROATIVA</strong> pois a data é anterior a hoje.
-        </div>
-      `;
-                        const datePickerWrapper = document.querySelector('.date-picker-wrapper');
-                        if (datePickerWrapper && datePickerWrapper.parentElement) {
-                            datePickerWrapper.parentElement.insertBefore(warningEl, datePickerWrapper.nextSibling);
-                        }
-                    }
-                } else {
-                    removeRetroWarning();
-                }
             });
 
             document.addEventListener('click', function(e) {
