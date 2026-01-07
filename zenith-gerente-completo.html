@@ -450,10 +450,6 @@
             color: #D4AF37;
         }
 
-        /* ====================================
-           TABELAS - SISTEMA COMPLETO
-           ==================================== */
-
         /* Container das tabelas */
         .form-card {
             width: 100%;
@@ -482,7 +478,7 @@
             font-size: 1rem;
             background: #0a0a0a;
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible;
         }
 
         /* Cabeçalho da tabela */
@@ -538,22 +534,12 @@
             border-bottom: none;
         }
 
-        /* Remover ellipsis - mostrar texto completo */
+        /* Mostrar texto completo */
         .data-table th,
         .data-table td {
             overflow: visible;
             text-overflow: clip;
             white-space: nowrap;
-        }
-
-        /* Wallet e textos longos */
-        .data-table td span[title] {
-            display: inline-block;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            vertical-align: middle;
         }
 
         /* Alinhamentos específicos */
@@ -617,7 +603,7 @@
             border: 1px solid rgba(212, 175, 55, 0.4);
         }
 
-        /* Larguras mínimas por tipo de coluna */
+        /* Larguras mínimas por coluna */
         .data-table th:first-child,
         .data-table td:first-child {
             min-width: 80px;
@@ -625,27 +611,22 @@
 
         .data-table th:nth-child(2),
         .data-table td:nth-child(2) {
-            min-width: 120px;
-        }
-
-        .data-table th:contains("Venda"),
-        .data-table th:contains("Custo"),
-        .data-table th:contains("Lucro"),
-        .data-table th:contains("Comissão"),
-        .data-table th:contains("Total"),
-        .data-table td:has(.profit-color) {
-            min-width: 120px;
-            text-align: right;
-        }
-
-        .data-table th:contains("Data"),
-        .data-table th:contains("Período") {
             min-width: 140px;
+        }
+
+        .data-table th:nth-child(3),
+        .data-table td:nth-child(3) {
+            min-width: 140px;
+        }
+
+        .data-table th:nth-child(7),
+        .data-table td:nth-child(7) {
+            min-width: 200px;
         }
 
         .data-table th:last-child,
         .data-table td:last-child {
-            min-width: 120px;
+            min-width: 140px;
             text-align: center;
         }
 
@@ -707,7 +688,7 @@
             }
         }
 
-        /* Fix específico para cores de fundo */
+        /* Backgrounds consolidados */
         .data-table thead tr {
             background: #1a1a1a !important;
         }
@@ -718,11 +699,6 @@
 
         .data-table tbody tr:nth-child(even) {
             background: #0f0f0f !important;
-        }
-
-        .data-table th[style*="background"],
-        .data-table td[style*="background"] {
-            background: inherit !important;
         }
 
         /* Date picker custom */
@@ -2031,8 +2007,8 @@
                 const retroBadge = order.isRetroactive ? '<span class=\"badge\" style=\"background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;\">📅 RETRO</span>' : '';
                 const dateTitle = order.historicalQuote ? ` title=\"Cotação histórica: R$ ${Number(order.historicalQuote).toFixed(4)}\"` : ' title=\"Cotação automática\"';
                 const proofButton = order.payoutProof
-                    ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>`
-                    : `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"openUploadProofModal(${order.id})\">📤 Enviar</button>`;
+                    ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>`
+                    : '-';
                 const baseRow = `
                     <td>#${order.id}${retroBadge ? ' ' + retroBadge : ''}</td>
                     <td>${order.customer || '-'}</td>
@@ -2069,7 +2045,10 @@
                         <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                         <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                         <td><span class=\"badge badge-pending\">Em Análise</span></td>
-                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                        <td>${order.payoutProof 
+                            ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>`
+                            : `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"openUploadProofModal(${order.id})\">📤 Enviar</button>`
+                        }</td>
                         <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                 `;
                     analysisTbody?.appendChild(tr);
@@ -2090,7 +2069,7 @@
                         <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                         <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
                         <td><span class=\"badge badge-success\">Aprovada</span></td>
-                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
+                        <td>${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>` : '-'}</td>
                         <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
                     `;
                     concludedTbody?.appendChild(tr);
