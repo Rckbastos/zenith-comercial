@@ -2175,68 +2175,24 @@
         function verComprovante(id) {
             const modal = document.getElementById('comprovanteModal');
             const order = (cachedOrders || []).find(o => Number(o.id) === Number(id));
-            if (!modal || !order) {
-                alert('⚠️ Ordem não encontrada');
-                return;
-            }
             const walletEl = document.getElementById('walletInfo');
             const imgEl = document.getElementById('comprovanteImg');
             const placeholderEl = document.getElementById('comprovantePlaceholder');
             const openNewTabBtn = document.getElementById('openProofNewTab');
-            const containerEl = document.getElementById('comprovanteImg')?.parentElement;
 
-            if (walletEl) walletEl.textContent = order.wallet || '-';
+            walletEl.textContent = order?.wallet || '-';
 
-            if (order.payoutProof && order.payoutProof.trim() !== '') {
-                let proofs = [];
-                try {
-                    proofs = JSON.parse(order.payoutProof);
-                    if (!Array.isArray(proofs)) proofs = [{ name: 'comprovante', data: order.payoutProof }];
-                } catch {
-                    proofs = [{ name: 'comprovante', data: order.payoutProof }];
+            if (order?.payoutProof) {
+                imgEl.style.display = 'block';
+                imgEl.src = order.payoutProof;
+                placeholderEl.style.display = 'none';
+                if (openNewTabBtn) {
+                    openNewTabBtn.style.display = 'inline-flex';
+                    openNewTabBtn.onclick = () => window.open(order.payoutProof, '_blank');
                 }
-
-                if (containerEl) {
-                    containerEl.innerHTML = proofs.map((proof, i) => {
-                        const isPdf = proof.data.includes('application/pdf');
-                        const isDoc = proof.data.includes('application/msword') || proof.data.includes('application/vnd.openxmlformats');
-
-                        if (isPdf || isDoc) {
-                            return `
-                        <div style="margin-bottom: 1rem; padding: 1rem; background: #1a1a1a; border: 1px solid #333; border-radius: 8px;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <span style="font-size: 2rem;">${isPdf ? '📄' : '📝'}</span>
-                                <div>
-                                    <div style="font-weight: 600; color: #D4AF37;">${proof.name || \`Comprovante ${i + 1}\`}</div>
-                                    <a href="${proof.data}" download="${proof.name || \`comprovante-${i + 1}\`}" 
-                                       style="color: #3b82f6; text-decoration: underline; font-size: 0.85rem;">
-                                        📥 Baixar arquivo
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                        } else {
-                            return `
-                        <div style="margin-bottom: 1rem;">
-                            <div style="font-weight: 600; color: #D4AF37; margin-bottom: 0.5rem;">${proof.name || \`Comprovante ${i + 1}\`}</div>
-                            <img src="${proof.data}" alt="Comprovante ${i + 1}" 
-                                 style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #333;">
-                        </div>
-                    `;
-                        }
-                    }).join('');
-                }
-
-                if (placeholderEl) placeholderEl.style.display = 'none';
-                if (openNewTabBtn) openNewTabBtn.style.display = 'none';
             } else {
-                if (imgEl) {
-                    imgEl.style.display = 'none';
-                    imgEl.src = '';
-                }
-                if (containerEl) containerEl.innerHTML = '<img id="comprovanteImg" src="" alt="Comprovante" style="display: none;">';
-                if (placeholderEl) placeholderEl.style.display = 'block';
+                imgEl.style.display = 'none';
+                placeholderEl.style.display = 'block';
                 if (openNewTabBtn) openNewTabBtn.style.display = 'none';
             }
 
