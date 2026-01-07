@@ -1304,17 +1304,17 @@
                         </div>
                     </div>
 
-                    <!-- Comprovante -->
+                    <!-- Comprovantes -->
                     <div class="form-group" style="margin-top: 2rem;">
-                        <label>Comprovante de Pagamento <span>*</span></label>
-                        <div class="file-upload">
-                            <input type="file" id="paymentProof" accept="image/*,application/pdf" onchange="showFileName(this)">
-                            <label for="paymentProof" class="file-upload-label">
-                                <span>📎</span>
-                                <span>Clique para anexar comprovante</span>
-                            </label>
-                            <div id="fileName" class="file-name"></div>
-                        </div>
+                        <label>Comprovantes de Pagamento (até 4 arquivos) <span>*</span></label>
+                        <input 
+                            type="file" 
+                            id="paymentProof" 
+                            accept="image/*,application/pdf,.doc,.docx" 
+                            multiple
+                            style="padding: 0.75rem; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: #fff; cursor: pointer;"
+                        >
+                        <div id="fileNames" style="margin-top: 0.5rem; font-size: 0.85rem; color: #aaa;"></div>
                     </div>
 
                     <div class="form-actions">
@@ -1444,7 +1444,14 @@
                 <input type="hidden" id="uploadProofOrderId">
                 <div class="form-group">
                     <label>Selecione o comprovante de pagamento <span>*</span></label>
-                    <input type="file" id="uploadProofFile" accept="image/*,application/pdf" required style="padding: 0.75rem; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: #fff; cursor: pointer;">
+                    <input 
+                        type="file" 
+                        id="uploadProofFile" 
+                        accept="image/*,application/pdf,.doc,.docx" 
+                        multiple
+                        required 
+                        style="padding: 0.75rem; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: #fff; cursor: pointer;">
+                    <div id="uploadFileNames" style="margin-top: 0.5rem; font-size: 0.85rem; color: #aaa;"></div>
                 </div>
                 <div class="info-box" style="margin-top: 1rem;">
                     <span class="info-box-icon">💡</span>
@@ -1579,11 +1586,18 @@
         }
 
         function showFileName(input) {
-            const fileNameDiv = document.getElementById('fileName');
-            if (input.files.length > 0) {
-                fileNameDiv.textContent = `✅ ${input.files[0].name}`;
+            const fileNamesDiv = document.getElementById('fileNames');
+            const files = Array.from(input.files || []);
+
+            if (files.length > 0) {
+                fileNamesDiv.innerHTML = files.map((f, i) => {
+                    return `<div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                        <span style="color: #10b981;">✓</span>
+                        <span>${i + 1}. ${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>`;
+                }).join('');
             } else {
-                fileNameDiv.textContent = '';
+                fileNamesDiv.innerHTML = '';
             }
         }
 
@@ -1602,6 +1616,8 @@
             const fileInput = document.getElementById('uploadProofFile');
             if (orderIdInput) orderIdInput.value = orderId;
             if (fileInput) fileInput.value = '';
+            const namesDiv = document.getElementById('uploadFileNames');
+            if (namesDiv) namesDiv.innerHTML = '';
             if (modal) modal.style.display = 'flex';
         }
 
@@ -1609,28 +1625,140 @@
             const modal = document.getElementById('uploadProofModal');
             const form = document.getElementById('uploadProofForm');
             if (form) form.reset();
+            const namesDiv = document.getElementById('uploadFileNames');
+            if (namesDiv) namesDiv.innerHTML = '';
             if (modal) modal.style.display = 'none';
         }
+
+        document.getElementById('paymentProof')?.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const fileNamesDiv = document.getElementById('fileNames');
+            
+            if (files.length > 4) {
+                alert('⚠️ Máximo de 4 arquivos permitidos');
+                e.target.value = '';
+                fileNamesDiv.innerHTML = '';
+                return;
+            }
+            
+            const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            const invalidFiles = files.filter(f => !validFormats.includes(f.type));
+            
+            if (invalidFiles.length > 0) {
+                alert('⚠️ Formato inválido. Aceitos: PDF, JPG, PNG, DOC, DOCX');
+                e.target.value = '';
+                fileNamesDiv.innerHTML = '';
+                return;
+            }
+            
+            const oversizedFiles = files.filter(f => f.size > 10 * 1024 * 1024);
+            if (oversizedFiles.length > 0) {
+                alert('⚠️ Arquivo(s) muito grande(s). Máximo: 10MB por arquivo');
+                e.target.value = '';
+                fileNamesDiv.innerHTML = '';
+                return;
+            }
+            
+            if (files.length > 0) {
+                fileNamesDiv.innerHTML = files.map((f, i) => 
+                    `<div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                        <span style="color: #10b981;">✓</span>
+                        <span>${i + 1}. ${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>`
+                ).join('');
+            } else {
+                fileNamesDiv.innerHTML = '';
+            }
+        });
+
+        document.getElementById('uploadProofFile')?.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const fileNamesDiv = document.getElementById('uploadFileNames');
+            
+            if (files.length > 4) {
+                alert('⚠️ Máximo de 4 arquivos');
+                e.target.value = '';
+                fileNamesDiv.innerHTML = '';
+                return;
+            }
+            
+            const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            const invalidFiles = files.filter(f => !validFormats.includes(f.type));
+            
+            if (invalidFiles.length > 0) {
+                alert('⚠️ Formato inválido. Aceitos: PDF, JPG, PNG, DOC, DOCX');
+                e.target.value = '';
+                fileNamesDiv.innerHTML = '';
+                return;
+            }
+            
+            const oversizedFiles = files.filter(f => f.size > 10 * 1024 * 1024);
+            if (oversizedFiles.length > 0) {
+                alert('⚠️ Arquivo muito grande. Máximo: 10MB por arquivo');
+                e.target.value = '';
+                fileNamesDiv.innerHTML = '';
+                return;
+            }
+            
+            if (files.length > 0) {
+                fileNamesDiv.innerHTML = files.map((f, i) => 
+                    `<div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                        <span style="color: #10b981;">✓</span>
+                        <span>${i + 1}. ${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>`
+                ).join('');
+            } else {
+                fileNamesDiv.innerHTML = '';
+            }
+        });
 
         document.getElementById('uploadProofForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             const orderId = document.getElementById('uploadProofOrderId')?.value;
             const fileInput = document.getElementById('uploadProofFile');
-            const file = fileInput?.files?.[0];
+            const files = fileInput?.files;
             if (!orderId) return;
-            if (!file) {
-                alert('⚠️ Selecione um arquivo');
+            if (!files || files.length === 0) {
+                alert('⚠️ Selecione pelo menos um arquivo');
                 return;
             }
-            if (file.size > 5 * 1024 * 1024) {
-                alert('⚠️ Arquivo muito grande. Máx: 5MB');
+            if (files.length > 4) {
+                alert('⚠️ Máximo de 4 arquivos');
                 return;
             }
+
             try {
-                const base64 = await readFileAsDataUrl(file);
+                // Buscar comprovantes existentes
+                const existingOrder = cachedOrders.find(o => Number(o.id) === Number(orderId));
+                let existingProofs = [];
+                if (existingOrder?.payoutProof) {
+                    try {
+                        existingProofs = JSON.parse(existingOrder.payoutProof);
+                        if (!Array.isArray(existingProofs)) existingProofs = [];
+                    } catch {
+                        existingProofs = [];
+                    }
+                }
+
+                const newProofs = [];
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert(`⚠️ Arquivo "${file.name}" muito grande. Máx: 10MB`);
+                        return;
+                    }
+                    const base64 = await readFileAsDataUrl(file);
+                    newProofs.push({
+                        name: file.name,
+                        data: base64
+                    });
+                }
+
+                const allProofs = [...existingProofs, ...newProofs].slice(0, 4);
+
                 await fetchJson(`/api/orders/${orderId}`, {
                     method: 'PATCH',
-                    body: JSON.stringify({ payoutProof: base64 })
+                    body: JSON.stringify({ payoutProof: JSON.stringify(allProofs) })
                 });
                 alert('✅ Comprovante enviado com sucesso!');
                 closeUploadProofModal();
@@ -1640,8 +1768,6 @@
             }
         });
 
-        let currentComprovanteUrlGerente = null;
-
         function verComprovanteGerente(id) {
             const modal = document.getElementById('comprovanteModalGerente');
             const order = cachedOrders.find(o => Number(o.id) === Number(id));
@@ -1649,34 +1775,68 @@
                 alert('⚠️ Ordem não encontrada');
                 return;
             }
+            
             const walletEl = document.getElementById('walletInfoGerente');
             const imgEl = document.getElementById('comprovanteImgGerente');
             const placeholderEl = document.getElementById('comprovantePlaceholderGerente');
             const openNewTabBtn = document.getElementById('openProofNewTabGerente');
-
+            const containerEl = document.getElementById('comprovanteImgGerente')?.parentElement;
+            
             if (walletEl) walletEl.textContent = order.wallet || '-';
-
+            
             if (order.payoutProof && order.payoutProof.trim() !== '') {
-                currentComprovanteUrlGerente = order.payoutProof;
-                if (imgEl) {
-                    imgEl.style.display = 'block';
-                    imgEl.src = order.payoutProof;
+                let proofs = [];
+                try {
+                    proofs = JSON.parse(order.payoutProof);
+                    if (!Array.isArray(proofs)) proofs = [{ name: 'comprovante', data: order.payoutProof }];
+                } catch {
+                    proofs = [{ name: 'comprovante', data: order.payoutProof }];
                 }
+                
+                if (containerEl) {
+                    containerEl.innerHTML = proofs.map((proof, i) => {
+                        const isPdf = proof.data.includes('application/pdf');
+                        const isDoc = proof.data.includes('application/msword') || proof.data.includes('application/vnd.openxmlformats');
+                        
+                        if (isPdf || isDoc) {
+                            return `
+                        <div style="margin-bottom: 1rem; padding: 1rem; background: #1a1a1a; border: 1px solid #333; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-size: 2rem;">${isPdf ? '📄' : '📝'}</span>
+                                <div>
+                                    <div style="font-weight: 600; color: #D4AF37;">${proof.name || `Comprovante ${i + 1}`}</div>
+                                    <a href="${proof.data}" download="${proof.name || `comprovante-${i + 1}`}" 
+                                       style="color: #3b82f6; text-decoration: underline; font-size: 0.85rem;">
+                                        📥 Baixar arquivo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                        } else {
+                            return `
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-weight: 600; color: #D4AF37; margin-bottom: 0.5rem;">${proof.name || `Comprovante ${i + 1}`}</div>
+                            <img src="${proof.data}" alt="Comprovante ${i + 1}" 
+                                 style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #333;">
+                        </div>
+                    `;
+                        }
+                    }).join('');
+                }
+                
                 if (placeholderEl) placeholderEl.style.display = 'none';
-                if (openNewTabBtn) {
-                    openNewTabBtn.style.display = 'inline-flex';
-                    openNewTabBtn.onclick = () => window.open(order.payoutProof, '_blank');
-                }
+                if (openNewTabBtn) openNewTabBtn.style.display = 'none';
             } else {
-                currentComprovanteUrlGerente = null;
                 if (imgEl) {
                     imgEl.style.display = 'none';
                     imgEl.src = '';
                 }
+                if (containerEl) containerEl.innerHTML = '<img id="comprovanteImgGerente" src="" alt="Comprovante" style="display: none;">';
                 if (placeholderEl) placeholderEl.style.display = 'block';
                 if (openNewTabBtn) openNewTabBtn.style.display = 'none';
             }
-
+            
             modal.style.display = 'flex';
         }
 
@@ -1737,9 +1897,17 @@
             isSubmittingOrder = true;
 
             try {
-                if (fileInput.files.length) {
-                    const payoutProof = await readFileAsDataUrl(fileInput.files[0]);
-                    payload.payoutProof = payoutProof;
+                if (fileInput.files.length > 0) {
+                    const proofArray = [];
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        const file = fileInput.files[i];
+                        const base64 = await readFileAsDataUrl(file);
+                        proofArray.push({
+                            name: file.name,
+                            data: base64
+                        });
+                    }
+                    payload.payoutProof = JSON.stringify(proofArray);
                 }
 
                 await fetchJson('/api/orders', {
@@ -1748,7 +1916,7 @@
                 });
                 alert(`✅ Ordem criada com sucesso!\n\nCliente: ${clientName}\nProduto: ${productType.toUpperCase()}\nStatus: Em Análise\n\nAguarde a aprovação do administrador.`);
                 this.reset();
-                document.getElementById('fileName').textContent = '';
+                document.getElementById('fileNames').innerHTML = '';
                 document.getElementById('usdtFields').style.display = 'none';
                 document.getElementById('remessaFields').style.display = 'none';
                 setOrderDateToday();
