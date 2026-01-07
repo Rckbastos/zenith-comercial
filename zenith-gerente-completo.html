@@ -1947,6 +1947,41 @@
                 orderDateInput.value = `${day}/${month}/${year}`;
                 calendarDropdown.style.display = 'none';
                 orderDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // Verificar se é retroativa e mostrar aviso dinâmico
+                const selectedDateObj = new Date(year, month - 1, day);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                selectedDateObj.setHours(0, 0, 0, 0);
+                
+                let warningEl = document.getElementById('retroWarningDynamic');
+                
+                if (selectedDateObj < today) {
+                    // Data é anterior a hoje - mostrar aviso
+                    if (!warningEl) {
+                        warningEl = document.createElement('div');
+                        warningEl.id = 'retroWarningDynamic';
+                        warningEl.className = 'info-box';
+                        warningEl.style.marginTop = '0.75rem';
+                        warningEl.style.background = 'rgba(251, 191, 36, 0.1)';
+                        warningEl.style.border = '1px solid rgba(251, 191, 36, 0.3)';
+                        warningEl.innerHTML = `
+                <span class="info-box-icon">⚠️</span>
+                <div class="info-box-text">
+                    Esta ordem será marcada como <strong>RETROATIVA</strong> pois a data é anterior a hoje.
+                </div>
+            `;
+                        const datePickerWrapper = document.querySelector('.date-picker-wrapper');
+                        if (datePickerWrapper && datePickerWrapper.parentElement) {
+                            datePickerWrapper.parentElement.appendChild(warningEl);
+                        }
+                    }
+                } else {
+                    // Data é hoje ou futura - remover aviso
+                    if (warningEl) {
+                        warningEl.remove();
+                    }
+                }
             }
 
             selectDate(new Date());
