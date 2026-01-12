@@ -332,18 +332,26 @@
             background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
             border: 1px solid #333;
             border-radius: 12px;
-            padding: 1.5rem;
+            padding: 2rem;
             margin: 0 auto 2rem auto;
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
-            overflow: visible;
+            height: auto;
+            min-height: fit-content;
+            max-height: none;
+            overflow-x: auto;
+            overflow-y: visible;
         }
 
         .form-card.wide-card {
             width: 100%;
             max-width: 100%;
-            overflow: visible;
+            height: auto;
+            min-height: fit-content;
+            max-height: none;
+            overflow-x: auto;
+            overflow-y: visible;
         }
 
 
@@ -555,7 +563,11 @@
             padding: 2rem;
             margin: 0 auto 2rem auto;
             box-sizing: border-box;
+            height: auto;
+            min-height: fit-content;
+            max-height: none;
             overflow-x: auto;
+            overflow-y: visible;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -563,7 +575,11 @@
             width: 95%;
             max-width: 2400px;
             margin: 0 auto 2rem auto;
+            height: auto;
+            min-height: fit-content;
+            max-height: none;
             overflow-x: auto;
+            overflow-y: visible;
         }
 
         /* Tabela base */
@@ -576,6 +592,7 @@
             font-size: 1rem;
             background: #0a0a0a;
             border-radius: 8px;
+            overflow: visible;
         }
 
         /* Cabeçalho da tabela */
@@ -1019,7 +1036,11 @@
             .form-card.wide-card {
                 width: 75%;
                 max-width: 75%;
-                overflow: visible;
+                height: auto;
+                min-height: fit-content;
+                max-height: none;
+                overflow-x: auto;
+                overflow-y: visible;
             }
         }
 
@@ -1119,7 +1140,7 @@
             }
 
             .form-card {
-                padding: 1.5rem;
+                padding: 2rem;
             }
 
             .form-card h3 {
@@ -1186,8 +1207,8 @@
             </div>
 
             <div class="filter-buttons">
-                <button class="filter-btn active" data-period="all" onclick="setFilter('all')">Todas</button>
-                <button class="filter-btn" data-period="today" onclick="setFilter('today')">Hoje</button>
+                <button class="filter-btn" data-period="all" onclick="setFilter('all')">Todas</button>
+                <button class="filter-btn active" data-period="today" onclick="setFilter('today')">Hoje</button>
                 <button class="filter-btn" data-period="week" onclick="setFilter('week')">Semanal</button>
                 <button class="filter-btn" data-period="month" onclick="setFilter('month')">Mensal</button>
             </div>
@@ -1780,7 +1801,7 @@
         let cachedServices = [];
         let cachedOrders = [];
         let cachedAssignments = [];
-        let currentFilter = 'all';
+        let currentFilter = 'today';
         let editingUserId = null;
         let editingServiceId = null;
         let editingAssignmentsUserId = null;
@@ -2657,7 +2678,7 @@
 
         window.addEventListener('load', function() {
             atualizarCotacao();
-            setFilter('month');
+            setFilter('today');
             loadAdminData();
         });
 

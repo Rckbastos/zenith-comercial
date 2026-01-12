@@ -287,18 +287,26 @@
             background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
             border: 1px solid #333;
             border-radius: 12px;
-            padding: 1.5rem;
+            padding: 2rem;
             margin: 0 auto 2rem auto;
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
-            overflow: visible;
+            height: auto;
+            min-height: fit-content;
+            max-height: none;
+            overflow-x: auto;
+            overflow-y: visible;
         }
 
         .form-card.wide-card {
             width: 100%;
             max-width: 100%;
-            overflow: visible;
+            height: auto;
+            min-height: fit-content;
+            max-height: none;
+            overflow-x: auto;
+            overflow-y: visible;
         }
 
         .form-card h3 {
@@ -460,7 +468,11 @@
             padding: 2rem;
             margin: 0 auto 2rem auto;
             box-sizing: border-box;
+            height: auto;
+            min-height: fit-content;
+            max-height: none;
             overflow-x: auto;
+            overflow-y: visible;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -468,7 +480,11 @@
             width: 95%;
             max-width: 2400px;
             margin: 0 auto 2rem auto;
+            height: auto;
+            min-height: fit-content;
+            max-height: none;
             overflow-x: auto;
+            overflow-y: visible;
         }
 
         /* Tabela base */
@@ -481,6 +497,7 @@
             font-size: 1rem;
             background: #0a0a0a;
             border-radius: 8px;
+            overflow: visible;
         }
 
         /* Cabeçalho da tabela */
@@ -1072,7 +1089,7 @@
             }
 
             .form-card {
-                padding: 1.25rem;
+                padding: 2rem;
             }
 
             .form-card h3 {
