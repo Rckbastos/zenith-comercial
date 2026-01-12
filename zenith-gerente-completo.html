@@ -283,7 +283,8 @@
         }
 
         /* Form Styles */
-        .form-card {
+        .form-card,
+        .form-card.wide-card {
             background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
             border: 1px solid #333;
             border-radius: 12px;
@@ -295,17 +296,8 @@
             height: auto;
             min-height: fit-content;
             max-height: none;
-            overflow-x: auto;
-            overflow-y: visible;
-        }
-
-        .form-card.wide-card {
-            width: 100%;
-            max-width: 100%;
-            height: auto;
-            min-height: fit-content;
-            max-height: none;
-            overflow-x: auto;
+            overflow: visible;
+            overflow-x: visible;
             overflow-y: visible;
         }
 
@@ -460,8 +452,8 @@
 
         /* Container das tabelas */
         .form-card {
-            width: 95%;
-            max-width: 2400px;
+            width: 100%;
+            max-width: 100%;
             background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
             border: 1px solid #333;
             border-radius: 12px;
@@ -471,26 +463,24 @@
             height: auto;
             min-height: fit-content;
             max-height: none;
-            overflow-x: auto;
-            overflow-y: visible;
-            -webkit-overflow-scrolling: touch;
+            overflow: visible;
         }
 
         .form-card.wide-card {
-            width: 95%;
-            max-width: 2400px;
+            width: 100%;
+            max-width: 100%;
             margin: 0 auto 2rem auto;
             height: auto;
             min-height: fit-content;
             max-height: none;
-            overflow-x: auto;
-            overflow-y: visible;
+            overflow: visible;
         }
 
         /* Tabela base */
         .data-table {
             width: 100%;
-            table-layout: auto;
+            min-width: 0;
+            table-layout: fixed;
             border-collapse: separate;
             border-spacing: 0;
             margin-top: 1.5rem;
@@ -517,7 +507,8 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             border-bottom: 2px solid #D4AF37;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
             background: #1a1a1a;
             box-sizing: border-box;
         }
@@ -530,7 +521,8 @@
             font-weight: 500;
             color: #ffffff;
             border-bottom: 1px solid #222;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
             background: #0a0a0a;
             box-sizing: border-box;
         }
@@ -558,7 +550,8 @@
         .data-table td {
             overflow: visible;
             text-overflow: clip;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
         }
 
         /* Alinhamentos específicos */
@@ -1027,13 +1020,8 @@
             .nav-tabs {
                 width: 100%;
             }
-            .form-card,
-            .form-card.wide-card {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
             .data-table {
-                min-width: 1200px;
+                min-width: 0;
             }
         }
 
