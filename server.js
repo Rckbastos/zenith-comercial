@@ -953,13 +953,8 @@ function calculateRemessaDashboardMetrics(orders = []) {
   let somaMeuLucroTotal = 0;
   let somaRepasseIntermediario = 0;
   let somaProfitReal = 0;
-  let somaPoolDivisaoReal = 0;
   let somaInvoiceFeeUsd = 0;
   let somaInvoiceCostUsd = 0;
-  let somaLucroIntermediarioBruto = 0;
-  let somaUnitPricePadrao = 0;
-  let somaDiffUnitPrice = 0;
-  let countUnitPriceInformado = 0;
   let volumeUsd = 0;
   let totalOperacoesCalculadas = 0;
   let ordensSemBaseQuote = 0;
@@ -977,28 +972,20 @@ function calculateRemessaDashboardMetrics(orders = []) {
   orders.forEach(order => {
     const quantity = Number(order.quantity ?? 0) || 0;
     const R = Number(order.quote ?? order.historicalQuote ?? order.historicalquote) || 0;
-    const unitPriceDb = Number(order.unitPrice ?? order.unitprice);
-
+    if (!(quantity > 0)) return;
     if (!(R > 0)) {
       ordensSemBaseQuote++;
       return;
     }
 
-    if (!(quantity > 0)) {
-      return;
-    }
-
     const invoiceFeeUsd = getFee(quantity);
     const invoiceCostUsd = invoiceFeeUsd > 0 ? 25 : 0;
-    const saleBaseUsd = quantity + invoiceFeeUsd;
     const costBaseUsd = quantity + invoiceCostUsd;
-    const unitPricePadrao = R + 0.09;
     const profitReal = Number(order.profit ?? 0) || 0;
 
-    const lucroTxBrl = saleBaseUsd * R * 0.004;
-    const poolDivisaoReal = profitReal - lucroTxBrl;
-    const lucroRepasseMeu = poolDivisaoReal / 2;
-    const repasseIntermediarioBrl = poolDivisaoReal / 2;
+    const lucroTxBrl = costBaseUsd * R * 0.004;
+    const lucroRepasseMeu = profitReal / 2;
+    const repasseIntermediarioBrl = profitReal / 2;
     const meuLucroTotal = lucroTxBrl + lucroRepasseMeu;
 
     somaLucroTx += lucroTxBrl;
@@ -1006,15 +993,8 @@ function calculateRemessaDashboardMetrics(orders = []) {
     somaMeuLucroTotal += meuLucroTotal;
     somaRepasseIntermediario += repasseIntermediarioBrl;
     somaProfitReal += profitReal;
-    somaPoolDivisaoReal += poolDivisaoReal;
     somaInvoiceFeeUsd += invoiceFeeUsd;
     somaInvoiceCostUsd += invoiceCostUsd;
-    somaLucroIntermediarioBruto += poolDivisaoReal;
-    somaUnitPricePadrao += unitPricePadrao;
-    if (Number.isFinite(unitPriceDb)) {
-      somaDiffUnitPrice += unitPriceDb - unitPricePadrao;
-      countUnitPriceInformado++;
-    }
     volumeUsd += quantity;
     totalOperacoesCalculadas++;
   });
@@ -1025,19 +1005,13 @@ function calculateRemessaDashboardMetrics(orders = []) {
     somaMeuLucroTotal,
     somaRepasseIntermediario,
     somaProfitReal,
-    somaPoolDivisaoReal,
-    somaProfitReal,
-    somaDelta: somaProfitReal - somaMeuLucroTotal, // compat com frontend atual, embora não usado no novo modelo
+    somaInvoiceFeeUsd,
+    somaInvoiceCostUsd,
     somaLucroRepasse: somaLucroRepasseMeu,
     somaLucroTotal: somaMeuLucroTotal,
     auditoria: {
       somaInvoiceFeeUsd,
-      somaInvoiceCostUsd,
-      somaLucroIntermediarioBruto,
-      somaUnitPricePadrao,
-      mediaUnitPricePadrao: totalOperacoesCalculadas > 0 ? somaUnitPricePadrao / totalOperacoesCalculadas : 0,
-      somaDiffUnitPrice,
-      countUnitPriceInformado
+      somaInvoiceCostUsd
     },
     volumeUsd,
     totalOperacoes: orders.length,
