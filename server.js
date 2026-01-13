@@ -949,17 +949,20 @@ function filterOrdersByPeriodServer(orders, period) {
 
 function calculateRemessaDashboardMetrics(orders = []) {
   let somaLucroTx = 0;
-  let somaLucroRepasse = 0;
-  let somaLucroTotal = 0;
-  let somaDelta = 0;
+  let somaLucroRepasseMeu = 0;
+  let somaMeuLucroTotal = 0;
   let somaRepasseIntermediario = 0;
+  let somaProfitReal = 0;
+  let somaPoolDivisaoReal = 0;
   let somaInvoiceFeeUsd = 0;
   let somaInvoiceCostUsd = 0;
   let somaLucroIntermediarioBruto = 0;
+  let somaUnitPricePadrao = 0;
+  let somaDiffUnitPrice = 0;
+  let countUnitPriceInformado = 0;
   let volumeUsd = 0;
   let totalOperacoesCalculadas = 0;
   let ordensSemBaseQuote = 0;
-  let ordensSemUnitPrice = 0;
 
   const getFee = typeof getInvoiceFeeUsd === 'function'
     ? getInvoiceFeeUsd
@@ -974,62 +977,74 @@ function calculateRemessaDashboardMetrics(orders = []) {
   orders.forEach(order => {
     const quantity = Number(order.quantity ?? 0) || 0;
     const R = Number(order.quote ?? order.historicalQuote ?? order.historicalquote) || 0;
-    const unitPrice = Number(order.unitPrice ?? order.unitprice) || 0;
-    const profitReal = Number(order.profit ?? 0) || 0;
+    const unitPriceDb = Number(order.unitPrice ?? order.unitprice);
 
     if (!(R > 0)) {
       ordensSemBaseQuote++;
       return;
     }
 
-    if (!(unitPrice > 0)) {
-      ordensSemUnitPrice++;
+    if (!(quantity > 0)) {
       return;
     }
 
     const invoiceFeeUsd = getFee(quantity);
     const invoiceCostUsd = invoiceFeeUsd > 0 ? 25 : 0;
-    const usdVenda = quantity + invoiceFeeUsd;
-    const custoRate = R * 1.012; // spread 1.2% igual ao computeFinancials para remessa
+    const saleBaseUsd = quantity + invoiceFeeUsd;
+    const costBaseUsd = quantity + invoiceCostUsd;
+    const unitPricePadrao = R + 0.09;
+    const profitReal = Number(order.profit ?? 0) || 0;
 
-    const lucroTxBrl = usdVenda * R * 0.004; // diferença de spread 0.4%
-    const lucroIntermediarioTotalBrl = (usdVenda * (unitPrice - custoRate)) - (invoiceCostUsd * custoRate);
-    const lucroRepasseBrl = Math.max(lucroIntermediarioTotalBrl, 0) / 2;
-    const repasseIntermediarioBrl = Math.max(lucroIntermediarioTotalBrl, 0) / 2;
-    const lucroTotalTeorico = lucroTxBrl + lucroRepasseBrl;
-    const delta = profitReal - lucroTotalTeorico;
+    const lucroTxBrl = saleBaseUsd * R * 0.004;
+    const poolDivisaoReal = profitReal - lucroTxBrl;
+    const lucroRepasseMeu = poolDivisaoReal / 2;
+    const repasseIntermediarioBrl = poolDivisaoReal / 2;
+    const meuLucroTotal = lucroTxBrl + lucroRepasseMeu;
 
     somaLucroTx += lucroTxBrl;
-    somaLucroRepasse += lucroRepasseBrl;
-    somaLucroTotal += lucroTotalTeorico;
-    somaDelta += delta;
+    somaLucroRepasseMeu += lucroRepasseMeu;
+    somaMeuLucroTotal += meuLucroTotal;
     somaRepasseIntermediario += repasseIntermediarioBrl;
+    somaProfitReal += profitReal;
+    somaPoolDivisaoReal += poolDivisaoReal;
     somaInvoiceFeeUsd += invoiceFeeUsd;
     somaInvoiceCostUsd += invoiceCostUsd;
-    somaLucroIntermediarioBruto += lucroIntermediarioTotalBrl;
+    somaLucroIntermediarioBruto += poolDivisaoReal;
+    somaUnitPricePadrao += unitPricePadrao;
+    if (Number.isFinite(unitPriceDb)) {
+      somaDiffUnitPrice += unitPriceDb - unitPricePadrao;
+      countUnitPriceInformado++;
+    }
     volumeUsd += quantity;
     totalOperacoesCalculadas++;
   });
 
   return {
     somaLucroTx,
-    somaLucroRepasse,
-    somaLucroTotal,
-    somaDelta,
+    somaLucroRepasseMeu,
+    somaMeuLucroTotal,
     somaRepasseIntermediario,
+    somaProfitReal,
+    somaPoolDivisaoReal,
+    somaProfitReal,
+    somaDelta: somaProfitReal - somaMeuLucroTotal, // compat com frontend atual, embora não usado no novo modelo
+    somaLucroRepasse: somaLucroRepasseMeu,
+    somaLucroTotal: somaMeuLucroTotal,
     auditoria: {
       somaInvoiceFeeUsd,
       somaInvoiceCostUsd,
-      somaLucroIntermediarioBruto
+      somaLucroIntermediarioBruto,
+      somaUnitPricePadrao,
+      mediaUnitPricePadrao: totalOperacoesCalculadas > 0 ? somaUnitPricePadrao / totalOperacoesCalculadas : 0,
+      somaDiffUnitPrice,
+      countUnitPriceInformado
     },
     volumeUsd,
     totalOperacoes: orders.length,
     totalOperacoesCalculadas,
     ordensSemBaseQuote,
-    ordensSemUnitPrice,
     temOrdensSemCotacao: ordensSemBaseQuote > 0,
-    temOrdensSemUnitPrice: ordensSemUnitPrice > 0,
-    // compatibilidade com avisos antigos
+    temOrdensSemUnitPrice: false,
     ordensComFallbackUnitPrice: 0,
     temFallbackUnitPrice: false
   };
@@ -1038,15 +1053,16 @@ function calculateRemessaDashboardMetrics(orders = []) {
 app.get('/api/dashboard/remessa', async (req, res) => {
   try {
     const period = (req.query.periodo || req.query.period || 'all').toString().toLowerCase();
-    const rows = await query(
-      'SELECT o.*, s.name AS servicename FROM orders o LEFT JOIN services s ON s.id = o.serviceId WHERE o.status = $1',
-      ['concluded']
-    );
+  const rows = await query(
+    'SELECT o.*, s.name AS servicename, s.costPercentual, s.costpercentual FROM orders o LEFT JOIN services s ON s.id = o.serviceId WHERE o.status = $1',
+    ['concluded']
+  );
 
-    const orders = rows.map(row => ({
-      ...normalizeOrder(row),
-      serviceName: row.servicename || row.serviceName || row.servicename
-    }));
+  const orders = rows.map(row => ({
+    ...normalizeOrder(row),
+    serviceName: row.servicename || row.serviceName || row.servicename,
+    serviceCostPercentual: Number(row.costPercentual ?? row.costpercentual ?? 1.2)
+  }));
 
     const remessaOrders = orders.filter(order => {
       const productType = (order.productType || order.producttype || '').toString().trim().toLowerCase();
