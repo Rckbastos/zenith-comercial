@@ -981,6 +981,12 @@ function calculateRemessaDashboardMetrics(orders = []) {
       };
 
   orders.forEach(order => {
+    const productType = (order.productType || order.producttype || '').toString().trim().toLowerCase();
+    const serviceName = (order.serviceName || '').toString().trim().toLowerCase();
+    if (productType !== 'remessa' && serviceName !== 'remessa') {
+      return;
+    }
+
     const quantity = Number(order.quantity ?? 0) || 0;
     const R = Number(order.quote ?? order.historicalQuote ?? order.historicalquote) || 0;
     if (!(quantity > 0)) return;
