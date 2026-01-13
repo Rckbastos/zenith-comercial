@@ -902,7 +902,7 @@ app.delete('/api/orders/:id', async (req, res) => {
   res.status(204).end();
 });
 
-function filterOrdersByPeriodServer(orders, period) {
+function filterOrdersByPeriodServer(orders, period, selectedDate) {
   const normalized = (period || 'all').toLowerCase();
   if (normalized === 'all') return [...orders];
 
@@ -913,6 +913,17 @@ function filterOrdersByPeriodServer(orders, period) {
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   endOfMonth.setHours(23, 59, 59, 999);
+
+  if (normalized === 'date' && selectedDate) {
+    const target = new Date(selectedDate);
+    target.setHours(0, 0, 0, 0);
+    if (!Number.isFinite(target.getTime())) return [...orders];
+    return orders.filter(order => {
+      const d = new Date(order.date || order.created_at || target);
+      d.setHours(0, 0, 0, 0);
+      return Number.isFinite(d.getTime()) && d.getTime() === target.getTime();
+    });
+  }
 
   if (normalized === 'today') {
     return orders.filter(order => {
@@ -1027,10 +1038,11 @@ function calculateRemessaDashboardMetrics(orders = []) {
 app.get('/api/dashboard/remessa', async (req, res) => {
   try {
     const period = (req.query.periodo || req.query.period || 'all').toString().toLowerCase();
-  const rows = await query(
-    'SELECT o.*, s.name AS servicename, s.costPercentual, s.costpercentual FROM orders o LEFT JOIN services s ON s.id = o.serviceId WHERE o.status = $1',
-    ['concluded']
-  );
+    const selectedDate = req.query.date;
+    const rows = await query(
+      'SELECT o.*, s.name AS servicename, s.costPercentual, s.costpercentual FROM orders o LEFT JOIN services s ON s.id = o.serviceId WHERE o.status = $1',
+      ['concluded']
+    );
 
   const orders = rows.map(row => ({
     ...normalizeOrder(row),
@@ -1044,7 +1056,7 @@ app.get('/api/dashboard/remessa', async (req, res) => {
       return productType === 'remessa' || serviceName === 'remessa';
     });
 
-    const filtered = filterOrdersByPeriodServer(remessaOrders, period);
+    const filtered = filterOrdersByPeriodServer(remessaOrders, period, selectedDate);
     const metrics = calculateRemessaDashboardMetrics(filtered);
 
     res.json(metrics);

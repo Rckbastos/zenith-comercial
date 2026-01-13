@@ -247,6 +247,31 @@
             border-color: #D4AF37;
         }
 
+        .date-filter {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            border: 2px solid #D4AF37;
+            border-radius: 6px;
+            background: #0a0a0a;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .date-filter label {
+            color: #D4AF37;
+            font-size: 0.95rem;
+        }
+
+        .date-filter input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -1247,6 +1272,10 @@
                 <button class="filter-btn active" data-period="today" onclick="setFilter('today')">Hoje</button>
                 <button class="filter-btn" data-period="week" onclick="setFilter('week')">Semanal</button>
                 <button class="filter-btn" data-period="month" onclick="setFilter('month')">Mensal</button>
+                <div class="date-filter">
+                    <label for="filterDateInput">Data:</label>
+                    <input type="date" id="filterDateInput" onchange="setFilter('date', this.value)">
+                </div>
             </div>
 
             <div class="kpi-grid">
@@ -1892,6 +1921,7 @@
         let cachedOrders = [];
         let cachedAssignments = [];
         let currentFilter = 'today';
+        let currentDateFilter = null;
         let editingUserId = null;
         let editingServiceId = null;
         let editingAssignmentsUserId = null;
@@ -2567,7 +2597,7 @@
             });
         }
 
-        function filterOrdersByPeriod(orders, period) {
+        function filterOrdersByPeriod(orders, period, selectedDate) {
             if (!orders || !orders.length) return [];
             const normalized = (period || 'all').toLowerCase();
             if (normalized === 'all') return [...orders];
@@ -2578,6 +2608,17 @@
             const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
             const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
             endOfMonth.setHours(23, 59, 59, 999);
+
+            if (normalized === 'date' && selectedDate) {
+                const target = new Date(selectedDate);
+                target.setHours(0, 0, 0, 0);
+                if (!Number.isFinite(target.getTime())) return [...orders];
+                return orders.filter(o => {
+                    const d = new Date(o.date || o.created_at || target);
+                    d.setHours(0, 0, 0, 0);
+                    return Number.isFinite(d.getTime()) && d.getTime() === target.getTime();
+                });
+            }
 
             if (normalized === 'today') {
                 return orders.filter(o => {
@@ -2773,21 +2814,31 @@
             loadAdminData();
         });
 
-        function setFilter(period) {
+        function setFilter(period, dateValue) {
             const normalized = (period || 'all').toLowerCase();
             currentFilter = normalized;
+            currentDateFilter = normalized === 'date' ? dateValue : null;
+
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 const btnPeriod = (btn.dataset.period || '').toLowerCase();
                 btn.classList.toggle('active', btnPeriod === normalized);
             });
+
+            if (normalized === 'date') {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            } else {
+                const dateInput = document.getElementById('filterDateInput');
+                if (dateInput) dateInput.value = '';
+            }
+
             applyFilterAndRender();
         }
 
         function applyFilterAndRender() {
-            const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter);
+            const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter, currentDateFilter);
             updateKpis(filteredOrders, cachedOrders, currentFilter);
-            // Tabelas sempre exibem todas as ordens; filtro afeta apenas os KPIs
-            renderOrders(cachedOrders, cachedUsers, cachedServices);
+            const ordersForTables = currentFilter === 'date' ? filteredOrders : cachedOrders;
+            renderOrders(ordersForTables, cachedUsers, cachedServices);
             loadRemessaDashboard();
         }
 
@@ -2879,7 +2930,8 @@
         async function loadRemessaDashboard() {
             try {
                 const periodo = currentFilter || 'all';
-                const data = await fetchJson(`/api/dashboard/remessa?periodo=${encodeURIComponent(periodo)}`);
+                const dateParam = currentFilter === 'date' && currentDateFilter ? `&date=${encodeURIComponent(currentDateFilter)}` : '';
+                const data = await fetchJson(`/api/dashboard/remessa?periodo=${encodeURIComponent(periodo)}${dateParam}`);
                 updateRemessaKpis(data || {});
             } catch (error) {
                 console.error('Erro ao carregar dashboard remessa:', error);
