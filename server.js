@@ -949,19 +949,27 @@ function filterOrdersByPeriodServer(orders, period) {
 
 function calculateRemessaDashboardMetrics(orders = []) {
   let somaLucroTx = 0;
-  let somaLucroRepasseBruto = 0;
-  let somaLucroRepasseClamp = 0;
-  let somaLucroTotalBruto = 0;
-  let somaLucroTotalClamp = 0;
-  let somaDeltaBruto = 0;
-  let somaDeltaClamp = 0;
-  let somaRepasseIntermediarioBruto = 0;
-  let somaRepasseIntermediarioClamp = 0;
+  let somaLucroRepasse = 0;
+  let somaLucroTotal = 0;
+  let somaDelta = 0;
+  let somaRepasseIntermediario = 0;
+  let somaInvoiceFeeUsd = 0;
+  let somaInvoiceCostUsd = 0;
   let somaLucroIntermediarioBruto = 0;
   let volumeUsd = 0;
-  let ordensComBaseQuote = 0;
+  let totalOperacoesCalculadas = 0;
   let ordensSemBaseQuote = 0;
-  let ordensComFallbackUnitPrice = 0;
+  let ordensSemUnitPrice = 0;
+
+  const getFee = typeof getInvoiceFeeUsd === 'function'
+    ? getInvoiceFeeUsd
+    : (remessaUsd) => {
+        const v = Number(remessaUsd) || 0;
+        if (v <= 0) return 0;
+        if (v <= 5000) return 80;
+        if (v <= 10000) return 40;
+        return 0;
+      };
 
   orders.forEach(order => {
     const quantity = Number(order.quantity ?? 0) || 0;
@@ -969,73 +977,61 @@ function calculateRemessaDashboardMetrics(orders = []) {
     const unitPrice = Number(order.unitPrice ?? order.unitprice) || 0;
     const profitReal = Number(order.profit ?? 0) || 0;
 
-    volumeUsd += quantity;
-
     if (!(R > 0)) {
       ordensSemBaseQuote++;
       return;
     }
 
-    ordensComBaseQuote++;
-
-    let vendaClienteUsd;
-    if (unitPrice > 0) {
-      vendaClienteUsd = unitPrice;
-    } else {
-      vendaClienteUsd = R + 0.09;
-      ordensComFallbackUnitPrice++;
+    if (!(unitPrice > 0)) {
+      ordensSemUnitPrice++;
+      return;
     }
 
-    const lucroTxBrl = quantity * R * 0.004;
+    const invoiceFeeUsd = getFee(quantity);
+    const invoiceCostUsd = invoiceFeeUsd > 0 ? 25 : 0;
+    const usdVenda = quantity + invoiceFeeUsd;
+    const custoRate = R * 1.012; // spread 1.2% igual ao computeFinancials para remessa
 
-    const custoIntermediarioUsd = R * 1.012;
-    const lucroIntermediarioPorUsd = vendaClienteUsd - custoIntermediarioUsd;
-    const lucroIntermediarioTotalBrl = quantity * lucroIntermediarioPorUsd;
-
-    const lucroRepasseBrlBruto = lucroIntermediarioTotalBrl / 2;
-    const lucroRepasseBrlClamp = Math.max(lucroIntermediarioTotalBrl, 0) / 2;
-
-    const repasseIntermediarioBrlBruto = lucroIntermediarioTotalBrl / 2;
-    const repasseIntermediarioBrlClamp = Math.max(lucroIntermediarioTotalBrl, 0) / 2;
-
-    const lucroTotalTeoricoBruto = lucroTxBrl + lucroRepasseBrlBruto;
-    const lucroTotalTeoricoClamp = lucroTxBrl + lucroRepasseBrlClamp;
-
-    const deltaBruto = profitReal - lucroTotalTeoricoBruto;
-    const deltaClamp = profitReal - lucroTotalTeoricoClamp;
+    const lucroTxBrl = usdVenda * R * 0.004; // diferença de spread 0.4%
+    const lucroIntermediarioTotalBrl = (usdVenda * (unitPrice - custoRate)) - (invoiceCostUsd * custoRate);
+    const lucroRepasseBrl = Math.max(lucroIntermediarioTotalBrl, 0) / 2;
+    const repasseIntermediarioBrl = Math.max(lucroIntermediarioTotalBrl, 0) / 2;
+    const lucroTotalTeorico = lucroTxBrl + lucroRepasseBrl;
+    const delta = profitReal - lucroTotalTeorico;
 
     somaLucroTx += lucroTxBrl;
-    somaLucroRepasseBruto += lucroRepasseBrlBruto;
-    somaLucroRepasseClamp += lucroRepasseBrlClamp;
-    somaLucroTotalBruto += lucroTotalTeoricoBruto;
-    somaLucroTotalClamp += lucroTotalTeoricoClamp;
-    somaDeltaBruto += deltaBruto;
-    somaDeltaClamp += deltaClamp;
-    somaRepasseIntermediarioBruto += repasseIntermediarioBrlBruto;
-    somaRepasseIntermediarioClamp += repasseIntermediarioBrlClamp;
+    somaLucroRepasse += lucroRepasseBrl;
+    somaLucroTotal += lucroTotalTeorico;
+    somaDelta += delta;
+    somaRepasseIntermediario += repasseIntermediarioBrl;
+    somaInvoiceFeeUsd += invoiceFeeUsd;
+    somaInvoiceCostUsd += invoiceCostUsd;
     somaLucroIntermediarioBruto += lucroIntermediarioTotalBrl;
+    volumeUsd += quantity;
+    totalOperacoesCalculadas++;
   });
 
   return {
     somaLucroTx,
-    somaLucroRepasse: somaLucroRepasseClamp,
-    somaLucroTotal: somaLucroTotalClamp,
-    somaDelta: somaDeltaBruto,
-    somaRepasseIntermediario: somaRepasseIntermediarioClamp,
+    somaLucroRepasse,
+    somaLucroTotal,
+    somaDelta,
+    somaRepasseIntermediario,
     auditoria: {
-      somaLucroRepasseBruto,
-      somaLucroTotalBruto,
-      somaDeltaClamp,
-      somaRepasseIntermediarioBruto,
+      somaInvoiceFeeUsd,
+      somaInvoiceCostUsd,
       somaLucroIntermediarioBruto
     },
     volumeUsd,
     totalOperacoes: orders.length,
-    totalOperacoesCalculadas: ordensComBaseQuote,
+    totalOperacoesCalculadas,
     ordensSemBaseQuote,
-    ordensComFallbackUnitPrice,
+    ordensSemUnitPrice,
     temOrdensSemCotacao: ordensSemBaseQuote > 0,
-    temFallbackUnitPrice: ordensComFallbackUnitPrice > 0
+    temOrdensSemUnitPrice: ordensSemUnitPrice > 0,
+    // compatibilidade com avisos antigos
+    ordensComFallbackUnitPrice: 0,
+    temFallbackUnitPrice: false
   };
 }
 
