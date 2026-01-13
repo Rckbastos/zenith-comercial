@@ -478,7 +478,7 @@
 
         /* Tabela base */
         .data-table {
-            width: 100%;
+            width: 80%;
             min-width: 0;
             table-layout: fixed;
             border-collapse: separate;
@@ -507,8 +507,9 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             border-bottom: 2px solid #D4AF37;
-            white-space: normal;
-            word-break: break-word;
+            white-space: nowrap;
+            word-break: keep-all;
+            overflow-wrap: normal;
             background: #1a1a1a;
             box-sizing: border-box;
         }
@@ -521,8 +522,9 @@
             font-weight: 500;
             color: #ffffff;
             border-bottom: 1px solid #222;
-            white-space: normal;
-            word-break: break-word;
+            white-space: nowrap;
+            word-break: keep-all;
+            overflow-wrap: normal;
             background: #0a0a0a;
             box-sizing: border-box;
         }
