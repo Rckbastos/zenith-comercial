@@ -902,6 +902,172 @@ app.delete('/api/orders/:id', async (req, res) => {
   res.status(204).end();
 });
 
+function filterOrdersByPeriodServer(orders, period) {
+  const normalized = (period || 'all').toLowerCase();
+  if (normalized === 'all') return [...orders];
+
+  const now = new Date();
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  endOfMonth.setHours(23, 59, 59, 999);
+
+  if (normalized === 'today') {
+    return orders.filter(order => {
+      const d = new Date(order.date || order.created_at || today);
+      return Number.isFinite(d.getTime()) && d.toDateString() === today.toDateString();
+    });
+  }
+
+  if (normalized === 'month') {
+    return orders.filter(order => {
+      const d = new Date(order.date || order.created_at || today);
+      return Number.isFinite(d.getTime()) && d >= startOfMonth && d <= endOfMonth;
+    });
+  }
+
+  if (normalized === 'week') {
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const start = startOfWeek < startOfMonth ? startOfMonth : startOfWeek;
+    const end = endOfWeek > endOfMonth ? endOfMonth : endOfWeek;
+
+    return orders.filter(order => {
+      const d = new Date(order.date || order.created_at || today);
+      return Number.isFinite(d.getTime()) && d >= start && d <= end;
+    });
+  }
+
+  return [...orders];
+}
+
+function calculateRemessaDashboardMetrics(orders = []) {
+  let somaLucroTx = 0;
+  let somaLucroRepasseBruto = 0;
+  let somaLucroRepasseClamp = 0;
+  let somaLucroTotalBruto = 0;
+  let somaLucroTotalClamp = 0;
+  let somaDeltaBruto = 0;
+  let somaDeltaClamp = 0;
+  let somaRepasseIntermediarioBruto = 0;
+  let somaRepasseIntermediarioClamp = 0;
+  let somaLucroIntermediarioBruto = 0;
+  let volumeUsd = 0;
+  let ordensComBaseQuote = 0;
+  let ordensSemBaseQuote = 0;
+  let ordensComFallbackUnitPrice = 0;
+
+  orders.forEach(order => {
+    const quantity = Number(order.quantity ?? 0) || 0;
+    const R = Number(order.quote ?? order.historicalQuote ?? order.historicalquote) || 0;
+    const unitPrice = Number(order.unitPrice ?? order.unitprice) || 0;
+    const profitReal = Number(order.profit ?? 0) || 0;
+
+    volumeUsd += quantity;
+
+    if (!(R > 0)) {
+      ordensSemBaseQuote++;
+      return;
+    }
+
+    ordensComBaseQuote++;
+
+    let vendaClienteUsd;
+    if (unitPrice > 0) {
+      vendaClienteUsd = unitPrice;
+    } else {
+      vendaClienteUsd = R + 0.09;
+      ordensComFallbackUnitPrice++;
+    }
+
+    const lucroTxBrl = quantity * R * 0.004;
+
+    const custoIntermediarioUsd = R * 1.012;
+    const lucroIntermediarioPorUsd = vendaClienteUsd - custoIntermediarioUsd;
+    const lucroIntermediarioTotalBrl = quantity * lucroIntermediarioPorUsd;
+
+    const lucroRepasseBrlBruto = lucroIntermediarioTotalBrl / 2;
+    const lucroRepasseBrlClamp = Math.max(lucroIntermediarioTotalBrl, 0) / 2;
+
+    const repasseIntermediarioBrlBruto = lucroIntermediarioTotalBrl / 2;
+    const repasseIntermediarioBrlClamp = Math.max(lucroIntermediarioTotalBrl, 0) / 2;
+
+    const lucroTotalTeoricoBruto = lucroTxBrl + lucroRepasseBrlBruto;
+    const lucroTotalTeoricoClamp = lucroTxBrl + lucroRepasseBrlClamp;
+
+    const deltaBruto = profitReal - lucroTotalTeoricoBruto;
+    const deltaClamp = profitReal - lucroTotalTeoricoClamp;
+
+    somaLucroTx += lucroTxBrl;
+    somaLucroRepasseBruto += lucroRepasseBrlBruto;
+    somaLucroRepasseClamp += lucroRepasseBrlClamp;
+    somaLucroTotalBruto += lucroTotalTeoricoBruto;
+    somaLucroTotalClamp += lucroTotalTeoricoClamp;
+    somaDeltaBruto += deltaBruto;
+    somaDeltaClamp += deltaClamp;
+    somaRepasseIntermediarioBruto += repasseIntermediarioBrlBruto;
+    somaRepasseIntermediarioClamp += repasseIntermediarioBrlClamp;
+    somaLucroIntermediarioBruto += lucroIntermediarioTotalBrl;
+  });
+
+  return {
+    somaLucroTx,
+    somaLucroRepasse: somaLucroRepasseClamp,
+    somaLucroTotal: somaLucroTotalClamp,
+    somaDelta: somaDeltaBruto,
+    somaRepasseIntermediario: somaRepasseIntermediarioClamp,
+    auditoria: {
+      somaLucroRepasseBruto,
+      somaLucroTotalBruto,
+      somaDeltaClamp,
+      somaRepasseIntermediarioBruto,
+      somaLucroIntermediarioBruto
+    },
+    volumeUsd,
+    totalOperacoes: orders.length,
+    totalOperacoesCalculadas: ordensComBaseQuote,
+    ordensSemBaseQuote,
+    ordensComFallbackUnitPrice,
+    temOrdensSemCotacao: ordensSemBaseQuote > 0,
+    temFallbackUnitPrice: ordensComFallbackUnitPrice > 0
+  };
+}
+
+app.get('/api/dashboard/remessa', async (req, res) => {
+  try {
+    const period = (req.query.periodo || req.query.period || 'all').toString().toLowerCase();
+    const rows = await query(
+      'SELECT o.*, s.name AS servicename FROM orders o LEFT JOIN services s ON s.id = o.serviceId WHERE o.status = $1',
+      ['concluded']
+    );
+
+    const orders = rows.map(row => ({
+      ...normalizeOrder(row),
+      serviceName: row.servicename || row.serviceName || row.servicename
+    }));
+
+    const remessaOrders = orders.filter(order => {
+      const productType = (order.productType || order.producttype || '').toString().trim().toLowerCase();
+      const serviceName = (order.serviceName || '').toString().trim().toLowerCase();
+      return productType === 'remessa' || serviceName === 'remessa';
+    });
+
+    const filtered = filterOrdersByPeriodServer(remessaOrders, period);
+    const metrics = calculateRemessaDashboardMetrics(filtered);
+
+    res.json(metrics);
+  } catch (err) {
+    console.error('Erro ao calcular dashboard de remessa:', err);
+    res.status(500).json({ error: 'Falha ao carregar dashboard de remessa', detail: err.message });
+  }
+});
+
 // Atualiza credenciais (email/senha) vinculadas a um usuário
 app.patch('/api/users/:id/credentials', async (req, res) => {
   const id = Number(req.params.id);

@@ -319,6 +319,46 @@
             color: #D4AF37;
         }
 
+        .kpi-value.delta-positive {
+            color: #10b981;
+        }
+
+        .kpi-value.delta-negative {
+            color: #ef4444;
+        }
+
+        .kpi-subtitle {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 0.15rem;
+            letter-spacing: 0.2px;
+        }
+
+        .kpi-card.remessa-highlight {
+            border-color: #D4AF37;
+            box-shadow: 0 8px 18px rgba(212, 175, 55, 0.15);
+        }
+
+        .kpi-icon.remessa-green {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+        }
+
+        .kpi-icon.remessa-blue {
+            background: rgba(59, 130, 246, 0.12);
+            color: #3b82f6;
+        }
+
+        .kpi-icon.remessa-gold {
+            background: rgba(212, 175, 55, 0.15);
+            color: #D4AF37;
+        }
+
+        .kpi-icon.remessa-purple {
+            background: rgba(139, 92, 246, 0.15);
+            color: #8b5cf6;
+        }
+
         .kpi-trend {
             display: flex;
             align-items: center;
@@ -1257,6 +1297,72 @@
                         <span>Total processado</span>
                     </div>
                 </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <h3 style="color: #D4AF37; margin-bottom: 1rem; font-size: 1.25rem;">📊 Detalhamento Remessa</h3>
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Remessa Lucro TX</span>
+                            <div class="kpi-icon remessa-green">💰</div>
+                        </div>
+                        <div class="kpi-value" id="kpiRemessaLucroTx" style="color: #10b981;">R$ 0,00</div>
+                        <div class="kpi-trend">
+                            <span>↑</span>
+                            <span>Spread 0.80% → 1.20%</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Remessa Lucro Repasse</span>
+                            <div class="kpi-icon remessa-blue">🤝</div>
+                        </div>
+                        <div class="kpi-value" id="kpiRemessaLucroRepasse" style="color: #3b82f6;">R$ 0,00</div>
+                        <div class="kpi-trend">
+                            <span>↑</span>
+                            <span>50% divisão intermediário</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card remessa-highlight" style="border: 2px solid #D4AF37;">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Lucro Total Remessa</span>
+                            <div class="kpi-icon remessa-gold">📈</div>
+                        </div>
+                        <div class="kpi-value" id="kpiRemessaLucroTotal" style="color: #D4AF37;">R$ 0,00</div>
+                        <div class="kpi-trend">
+                            <span>↑</span>
+                            <span>TX + Repasse</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Delta Real vs Teórico</span>
+                            <div class="kpi-icon remessa-gold" id="kpiRemessaDeltaIcon">📊</div>
+                        </div>
+                        <div class="kpi-value" id="kpiRemessaDelta" style="color: #10b981;">R$ 0,00</div>
+                        <div class="kpi-trend">
+                            <span>↔</span>
+                            <span id="kpiRemessaDeltaSub">Diferença</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Repasse Intermediário</span>
+                            <div class="kpi-icon remessa-purple">↗️</div>
+                        </div>
+                        <div class="kpi-value" id="kpiRepasseIntermediario" style="color: #8b5cf6;">R$ 0,00</div>
+                        <div class="kpi-trend">
+                            <span>→</span>
+                            <span>Parte do intermediário (50%)</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="remessaWarnings" style="display: none;"></div>
             </div>
         </div>
 
@@ -2662,6 +2768,7 @@
                 updateAssignSelects(users, services);
                 renderAssignments(assignments);
                 applyFilterAndRender();
+                await loadRemessaDashboard();
 
                 const failed = results.filter(r => r.status === 'rejected');
                 if (failed.length) {
@@ -2693,6 +2800,7 @@
             updateKpis(filteredOrders, cachedOrders, currentFilter);
             // Tabelas sempre exibem todas as ordens; filtro afeta apenas os KPIs
             renderOrders(cachedOrders, cachedUsers, cachedServices);
+            loadRemessaDashboard();
         }
 
         function updateKpis(filteredOrders = [], allOrders = [], currentPeriod = 'all') {
@@ -2721,6 +2829,73 @@
             if (profitEl) profitEl.textContent = formatBRL(totalNetProfit);
             if (openEl) openEl.textContent = openCount.toString();
             if (closedEl) closedEl.textContent = closedCount.toString();
+        }
+
+        function updateRemessaKpis(data = {}) {
+            const tx = Number(data.somaLucroTx || 0);
+            const repasse = Number(data.somaLucroRepasse || 0);
+            const total = Number(data.somaLucroTotal || 0);
+            const delta = Number(data.somaDelta || 0);
+            const repasseIntermediario = Number(data.somaRepasseIntermediario || 0);
+
+            const setValue = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = formatBRL(value);
+            };
+
+            setValue('kpiRemessaLucroTx', tx);
+            setValue('kpiRemessaLucroRepasse', repasse);
+            setValue('kpiRemessaLucroTotal', total);
+            setValue('kpiRemessaDelta', delta);
+            setValue('kpiRepasseIntermediario', repasseIntermediario);
+
+            const deltaPositive = delta >= 0;
+            const deltaEl = document.getElementById('kpiRemessaDelta');
+            if (deltaEl) {
+                deltaEl.style.color = deltaPositive ? '#10b981' : '#ef4444';
+            }
+
+            const deltaIconEl = document.getElementById('kpiRemessaDeltaIcon');
+            if (deltaIconEl) deltaIconEl.textContent = deltaPositive ? '📊' : '⚠️';
+
+            const deltaSubEl = document.getElementById('kpiRemessaDeltaSub');
+            if (deltaSubEl) deltaSubEl.textContent = deltaPositive ? 'Acima do esperado' : 'Abaixo do esperado';
+
+            const warningContainer = document.getElementById('remessaWarnings');
+            if (warningContainer) {
+                const warnings = [];
+                if (data.temOrdensSemCotacao) {
+                    warnings.push(`${data.ordensSemBaseQuote || 0} ordem(ns) sem cotação base`);
+                }
+                if (data.temFallbackUnitPrice) {
+                    warnings.push(`${data.ordensComFallbackUnitPrice || 0} ordem(ns) usando fallback de preço`);
+                }
+
+                if (warnings.length) {
+                    warningContainer.innerHTML = `
+                        <div class="info-box" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.3); margin-top: 1rem;">
+                            <span class="info-box-icon">⚠️</span>
+                            <div class="info-box-text" style="color: #fbbf24;">
+                                <strong>Atenção:</strong> ${warnings.join(' | ')}
+                            </div>
+                        </div>
+                    `;
+                    warningContainer.style.display = 'block';
+                } else {
+                    warningContainer.style.display = 'none';
+                    warningContainer.innerHTML = '';
+                }
+            }
+        }
+
+        async function loadRemessaDashboard() {
+            try {
+                const periodo = currentFilter || 'all';
+                const data = await fetchJson(`/api/dashboard/remessa?periodo=${encodeURIComponent(periodo)}`);
+                updateRemessaKpis(data || {});
+            } catch (error) {
+                console.error('Erro ao carregar dashboard remessa:', error);
+            }
         }
     </script>
 </body>
