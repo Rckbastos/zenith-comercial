@@ -114,7 +114,7 @@
 
         /* Container */
         .container {
-            width: 65%;
+            width: 95%;
             max-width: 1400px;
             margin: 0 auto;
             padding: 2rem 1rem;
@@ -1803,15 +1803,26 @@
                 let proofs = [];
                 try {
                     proofs = JSON.parse(order.payoutProof);
-                    if (!Array.isArray(proofs)) proofs = [{ name: 'comprovante', data: order.payoutProof }];
+                    if (!Array.isArray(proofs)) proofs = [proofs];
                 } catch {
-                    proofs = [{ name: 'comprovante', data: order.payoutProof }];
+                    proofs = [order.payoutProof];
                 }
+
+                const normalizedProofs = proofs.map((p, i) => {
+                    if (typeof p === 'string') {
+                        return { name: `Comprovante ${i + 1}`, data: p };
+                    }
+                    if (p && typeof p === 'object') {
+                        return { name: p.name || `Comprovante ${i + 1}`, data: p.data || p.url || '' };
+                    }
+                    return { name: `Comprovante ${i + 1}`, data: '' };
+                }).filter(p => p.data);
                 
                 if (containerEl) {
-                    containerEl.innerHTML = proofs.map((proof, i) => {
-                        const isPdf = proof.data.includes('application/pdf');
-                        const isDoc = proof.data.includes('application/msword') || proof.data.includes('application/vnd.openxmlformats');
+                    containerEl.innerHTML = normalizedProofs.map((proof, i) => {
+                        const dataStr = proof.data || '';
+                        const isPdf = dataStr.includes('application/pdf');
+                        const isDoc = dataStr.includes('application/msword') || dataStr.includes('application/vnd.openxmlformats');
                         
                         if (isPdf || isDoc) {
                             return `
@@ -1820,7 +1831,7 @@
                                 <span style="font-size: 2rem;">${isPdf ? '📄' : '📝'}</span>
                                 <div>
                                     <div style="font-weight: 600; color: #D4AF37;">${proof.name || `Comprovante ${i + 1}`}</div>
-                                    <a href="${proof.data}" download="${proof.name || `comprovante-${i + 1}`}" 
+                                    <a href="${dataStr}" download="${proof.name || `comprovante-${i + 1}`}" 
                                        style="color: #3b82f6; text-decoration: underline; font-size: 0.85rem;">
                                         📥 Baixar arquivo
                                     </a>
@@ -1832,7 +1843,7 @@
                             return `
                         <div style="margin-bottom: 1rem;">
                             <div style="font-weight: 600; color: #D4AF37; margin-bottom: 0.5rem;">${proof.name || `Comprovante ${i + 1}`}</div>
-                            <img src="${proof.data}" alt="Comprovante ${i + 1}" 
+                            <img src="${dataStr}" alt="Comprovante ${i + 1}" 
                                  style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #333;">
                         </div>
                     `;
