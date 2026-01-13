@@ -2601,6 +2601,13 @@
             if (!orders || !orders.length) return [];
             const normalized = (period || 'all').toLowerCase();
             if (normalized === 'all') return [...orders];
+            const getDateOnly = (value) => {
+                if (!value) return null;
+                if (typeof value === 'string') return value.slice(0, 10);
+                const d = new Date(value);
+                if (!Number.isFinite(d.getTime())) return null;
+                return d.toISOString().slice(0, 10);
+            };
             const now = new Date();
             const today = new Date(now);
             today.setHours(0, 0, 0, 0);
@@ -2610,13 +2617,11 @@
             endOfMonth.setHours(23, 59, 59, 999);
 
             if (normalized === 'date' && selectedDate) {
-                const target = new Date(selectedDate);
-                target.setHours(0, 0, 0, 0);
-                if (!Number.isFinite(target.getTime())) return [...orders];
+                const targetStr = getDateOnly(selectedDate);
+                if (!targetStr) return [...orders];
                 return orders.filter(o => {
-                    const d = new Date(o.date || o.created_at || target);
-                    d.setHours(0, 0, 0, 0);
-                    return Number.isFinite(d.getTime()) && d.getTime() === target.getTime();
+                    const dStr = getDateOnly(o.date || o.created_at || selectedDate);
+                    return dStr === targetStr;
                 });
             }
 

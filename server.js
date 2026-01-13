@@ -915,13 +915,18 @@ function filterOrdersByPeriodServer(orders, period, selectedDate) {
   endOfMonth.setHours(23, 59, 59, 999);
 
   if (normalized === 'date' && selectedDate) {
-    const target = new Date(selectedDate);
-    target.setHours(0, 0, 0, 0);
-    if (!Number.isFinite(target.getTime())) return [...orders];
+    const getDateOnly = (value) => {
+      if (!value) return null;
+      if (typeof value === 'string') return value.slice(0, 10);
+      const d = new Date(value);
+      if (!Number.isFinite(d.getTime())) return null;
+      return d.toISOString().slice(0, 10);
+    };
+    const targetStr = getDateOnly(selectedDate);
+    if (!targetStr) return [...orders];
     return orders.filter(order => {
-      const d = new Date(order.date || order.created_at || target);
-      d.setHours(0, 0, 0, 0);
-      return Number.isFinite(d.getTime()) && d.getTime() === target.getTime();
+      const dStr = getDateOnly(order.date || order.created_at || selectedDate);
+      return dStr === targetStr;
     });
   }
 
