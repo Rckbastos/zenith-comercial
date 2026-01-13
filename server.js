@@ -1150,7 +1150,9 @@ app.post('/api/login', async (req, res) => {
   res.json({
     status: 'ok',
     role: account.role,
-    target: account.target
+    target: account.target,
+    login: account.login,
+    email: account.email
   });
 });
 

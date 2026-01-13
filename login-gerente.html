@@ -123,8 +123,10 @@
                 if (data.role !== 'gerente') {
                     throw new Error('Apenas gerentes podem acessar esta página');
                 }
-                // Guarda o login utilizado para vincular o usuário no dashboard
-                localStorage.setItem('loggedLogin', payload.login);
+                // Guarda login/email retornado para vincular o usuário no dashboard
+                const loginKey = (data.email || data.login || payload.login || '').toLowerCase();
+                localStorage.setItem('loggedLogin', loginKey);
+                localStorage.setItem('loggedLoginRaw', data.email || data.login || payload.login || '');
                 window.location.href = data.target || '/zenith-gerente-completo.html';
             } catch (err) {
                 errorEl.textContent = err.message || 'Erro ao autenticar';

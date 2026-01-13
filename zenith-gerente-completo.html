@@ -2425,7 +2425,11 @@
         function resolveSellerId(users) {
             const storedLogin = (localStorage.getItem('loggedLogin') || '').toLowerCase();
             if (storedLogin) {
-                const found = users.find(u => (u.email || '').toLowerCase() === storedLogin || (u.name || '').toLowerCase() === storedLogin);
+                const found = users.find(u =>
+                    (u.email || '').toLowerCase() === storedLogin ||
+                    (u.name || '').toLowerCase() === storedLogin ||
+                    (u.login || '').toLowerCase() === storedLogin
+                );
                 if (found) {
                     currentSellerId = found.id;
                     currentUser = found;
