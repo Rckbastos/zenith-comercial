@@ -1289,24 +1289,64 @@ app.get('/api/dashboard/remessa', async (req, res) => {
   try {
     const period = (req.query.periodo || req.query.period || 'all').toString().toLowerCase();
     const selectedDate = req.query.date;
+    
+    // Buscar ordens concluded + serviços + usuários
     const rows = await query(
-      'SELECT o.*, s.name AS servicename, s.costPercentual, s.costpercentual FROM orders o LEFT JOIN services s ON s.id = o.serviceId WHERE o.status = $1',
+      'SELECT o.* FROM orders o WHERE o.status = $1',
       ['concluded']
     );
+    const services = await query('SELECT * FROM services');
+    const users = await query('SELECT * FROM users');
+    
+    const servicesMap = Object.fromEntries(services.map(s => [s.id, normalizeService(s)]));
+    const servicesByName = services
+      .map(normalizeService)
+      .reduce((acc, svc) => {
+        if (svc.name) acc[svc.name.toLowerCase()] = svc;
+        return acc;
+      }, {});
+    const usersMap = Object.fromEntries(users.map(u => [u.id, normalizeUser(u)]));
 
-  const orders = rows.map(row => ({
-    ...normalizeOrder(row),
-    serviceName: row.servicename || row.serviceName || row.servicename,
-    serviceCostPercentual: Number(row.costPercentual ?? row.costpercentual ?? 1.2)
-  }));
+    // RECALCULAR todas as ordens (igual /api/orders)
+    const enriched = await Promise.all(rows.map(async (row) => {
+      const order = normalizeOrder(row);
+      let service = servicesMap[order.serviceId];
+      if (!service && order.productType) {
+        service = servicesByName[order.productType.toLowerCase()];
+      }
+      const seller = usersMap[order.sellerId];
+      
+      try {
+        const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
+        return { 
+          ...order, 
+          ...calc, 
+          quote: calc.quoteUsed, 
+          unitPrice: calc.unitPriceUsed,
+          serviceName: service?.name
+        };
+      } catch (err) {
+        console.warn(`⚠️ Falha ao recalcular ordem #${order.id}:`, err.message);
+        return {
+          ...order,
+          serviceName: service?.name,
+          quote: order.quote ?? order.historicalQuote ?? null,
+          unitPrice: order.unitPrice ?? order.unitprice ?? null
+        };
+      }
+    }));
 
-    const remessaOrders = orders.filter(order => {
+    // Filtrar apenas remessas
+    const remessaOrders = enriched.filter(order => {
       const productType = (order.productType || order.producttype || '').toString().trim().toLowerCase();
       const serviceName = (order.serviceName || '').toString().trim().toLowerCase();
       return productType === 'remessa' || serviceName === 'remessa';
     });
 
+    // Aplicar filtro de período
     const filtered = filterOrdersByPeriodServer(remessaOrders, period, selectedDate);
+    
+    // Calcular métricas
     const metrics = calculateRemessaDashboardMetrics(filtered);
 
     res.json(metrics);
