@@ -1125,6 +1125,9 @@ function filterOrdersByPeriodServer(orders, period, selectedDate) {
   const normalized = (period || 'all').toLowerCase();
   if (normalized === 'all') return [...orders];
 
+  const getOrderDateValue = (order = {}) =>
+    order.date ?? order.created_at ?? order.createdAt ?? order.sentAt ?? order.sentat ?? null;
+
   const getDateOnly = (value) => {
     if (!value) return null;
     if (typeof value === 'string') {
@@ -1145,19 +1148,19 @@ function filterOrdersByPeriodServer(orders, period, selectedDate) {
     const targetStr = getDateOnly(selectedDate);
     if (!targetStr) return [...orders];
     return orders.filter(order => {
-      const orderDateStr = getDateOnly(order.date);
+      const orderDateStr = getDateOnly(getOrderDateValue(order));
       return orderDateStr === targetStr;
     });
   }
 
   if (normalized === 'today') {
-    return orders.filter(order => getDateOnly(order.date) === todayStr);
+    return orders.filter(order => getDateOnly(getOrderDateValue(order)) === todayStr);
   }
 
   if (normalized === 'month') {
     const yearMonth = todayStr.slice(0, 7);
     return orders.filter(order => {
-      const orderDateStr = getDateOnly(order.date);
+      const orderDateStr = getDateOnly(getOrderDateValue(order));
       return orderDateStr && orderDateStr.startsWith(yearMonth);
     });
   }
@@ -1174,7 +1177,7 @@ function filterOrdersByPeriodServer(orders, period, selectedDate) {
     const endStr = `${endOfWeek.getFullYear()}-${String(endOfWeek.getMonth() + 1).padStart(2, '0')}-${String(endOfWeek.getDate()).padStart(2, '0')}`;
 
     return orders.filter(order => {
-      const orderDateStr = getDateOnly(order.date);
+      const orderDateStr = getDateOnly(getOrderDateValue(order));
       return orderDateStr && orderDateStr >= startStr && orderDateStr <= endStr;
     });
   }
