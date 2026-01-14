@@ -6,6 +6,10 @@
             navigator.serviceWorker.register(serviceWorkerPath)
                 .then(registration => {
                     console.log('Service Worker registrado:', registration.scope);
+                    // Recarrega quando um SW novo assumir o controle para garantir atualização imediata
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        window.location.reload();
+                    });
                 })
                 .catch(error => {
                     console.log('Falha ao registrar Service Worker:', error);

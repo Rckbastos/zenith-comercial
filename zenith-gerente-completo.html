@@ -64,13 +64,13 @@
         }
 
         .header-title h1 {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: #D4AF37;
         }
 
         .header-title p {
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             color: #888;
         }
 
@@ -112,9 +112,43 @@
             color: #888;
         }
 
+        .top-info-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: linear-gradient(135deg, #1a3a52 0%, #0a2a42 100%);
+            border-bottom: 2px solid #D4AF37;
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .top-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .top-info-label {
+            color: #D4AF37;
+            font-weight: 600;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        .top-info-value {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.15rem;
+            white-space: nowrap;
+        }
+
         /* Container */
         .container {
-            width: 95%;
+            width: 65%;
             max-width: 1400px;
             margin: 0 auto;
             padding: 2rem 1rem;
@@ -262,7 +296,7 @@
         }
 
         .stat-title {
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             color: #888;
             font-weight: 500;
         }
@@ -272,7 +306,7 @@
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 2.25rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
@@ -663,14 +697,14 @@
 
         @media screen and (max-width: 1600px) {
             .container {
-                width: 95%;
+                width: 75%;
                 margin: 0 auto;
             }
         }
 
         @media screen and (max-width: 1400px) {
             .container {
-                width: 95%;
+                width: 85%;
                 margin: 0 auto;
             }
             .data-table {
@@ -692,6 +726,22 @@
             }
         }
 
+        @media screen and (max-width: 992px) {
+            .container {
+                width: 100%;
+                padding: 1rem 0.5rem;
+            }
+            .nav-tabs {
+                width: 100%;
+            }
+            .data-table {
+                min-width: 0;
+            }
+            .orders-table {
+                min-width: 0;
+            }
+        }
+
         @media screen and (max-width: 768px) {
             .container {
                 width: 100%;
@@ -702,7 +752,43 @@
             }
             .data-table th,
             .data-table td {
-                padding: 0.875rem 0.5rem;
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            .header {
+                padding: 1rem;
+            }
+            .commission-banner {
+                padding: 1.5rem;
+            }
+            .commission-value {
+                font-size: 2rem;
+            }
+            .commission-icon {
+                display: none;
+            }
+            .stats-grid,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .nav-tabs {
+                overflow-x: scroll;
+            }
+            .nav-tab {
+                padding: 0.65rem 1rem;
+                font-size: 0.95rem;
+            }
+            .btn,
+            .btn-primary,
+            .btn-secondary {
+                padding: 0.65rem 1rem;
+                font-size: 0.95rem;
+            }
+            .form-card {
+                padding: 2rem;
+            }
+            .form-card h3 {
+                font-size: 1.35rem;
             }
         }
 
@@ -1006,102 +1092,14 @@
             border-top: 1px solid #333;
             justify-content: flex-end;
         }
-        /* Responsividade */
-        @media screen and (min-width: 1600px) {
-            .container {
-                width: 65%;
-            }
-        }
-
-        @media screen and (max-width: 1400px) {
-            .container {
-                width: 75%;
-            }
-            .data-table {
-                font-size: 0.9rem;
-            }
-        }
-
-        @media screen and (max-width: 992px) {
-            .container {
-                width: 100%;
-                padding: 1rem 0.5rem;
-            }
-            .nav-tabs {
-                width: 100%;
-            }
-            .data-table {
-                min-width: 0;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            .header {
-                padding: 1rem;
-            }
-
-            .commission-banner {
-                padding: 1.5rem;
-            }
-
-            .commission-value {
-                font-size: 2rem;
-            }
-
-            .commission-icon {
-                display: none;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-tabs {
-                overflow-x: scroll;
-            }
-
-            .nav-tab {
-                padding: 0.65rem 1rem;
-                font-size: 0.95rem;
-            }
-
-            .data-table th,
-            .data-table td {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.85rem;
-            }
-
-            .btn,
-            .btn-primary,
-            .btn-secondary {
-                padding: 0.65rem 1rem;
-                font-size: 0.95rem;
-            }
-
-            .form-card {
-                padding: 2rem;
-            }
-
-            .form-card h3 {
-                font-size: 1.35rem;
-            }
-        }
     </style>
 </head>
 <body>
     <!-- Barra Fixa de Cotação -->
-    <div style="position: sticky; top: 0; z-index: 1000; background: linear-gradient(135deg, #1a3a52 0%, #0a2a42 100%); border-bottom: 2px solid #D4AF37; padding: 0.75rem 2rem; display: flex; justify-content: center; align-items: center; gap: 3rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="color: #D4AF37; font-weight: 600; font-size: 0.875rem;">💰 Dólar:</span>
-            <span id="topUsdtPrice" style="color: #fff; font-weight: 700; font-size: 1rem;">R$ 5,5424</span>
+    <div class="top-info-bar">
+        <div class="top-info-item">
+            <span class="top-info-label">💰 Dólar:</span>
+            <span id="topUsdtPrice" class="top-info-value">R$ --</span>
         </div>
     </div>
 
@@ -2189,9 +2187,15 @@
 
         async function fetchJson(path, options = {}) {
             const res = await fetch(apiBase + path, {
-                headers: { 'Content-Type': 'application/json' },
-                ...options
+                credentials: 'include',
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
             });
+            if (res.status === 401) {
+                localStorage.removeItem('loggedLogin');
+                window.location.href = '/login-gerente.html';
+                return;
+            }
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(text || res.statusText);
@@ -2487,6 +2491,7 @@
         }
 
         function logout() {
+            fetch('/api/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
             localStorage.removeItem('loggedLogin');
             window.location.href = '/login-gerente.html';
         }

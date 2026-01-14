@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zenith-comercial-v8';
+const CACHE_NAME = 'zenith-comercial-v9';
 const urlsToCache = [
   'pwa.js',
   'zenith-logo.png',
@@ -39,7 +39,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Interceptar requisições
+// Interceptar requisições (network-first para pegar atualizações assim que publicadas)
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
@@ -55,9 +55,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Navegação: segue direto, sem fallback para index (para não redirecionar ao falhar)
+  // Navegação: usa rede primeiro, volta para cache se estiver offline
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request));
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(request, response.clone()))
+              .catch(err => console.warn('Cache put falhou (navigate):', err));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
     return;
   }
 
@@ -67,22 +78,22 @@ self.addEventListener('fetch', event => {
   }
 
   event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-
-      return fetch(request).then(networkResponse => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' || networkResponse.redirected) {
-          return networkResponse;
+    fetch(request)
+      .then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic' && !networkResponse.redirected) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(request, responseToCache))
+            .catch(err => console.warn('Cache put falhou:', err));
         }
-
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME)
-          .then(cache => cache.put(request, responseToCache))
-          .catch(err => console.warn('Cache put falhou:', err));
-
         return networkResponse;
-      }).catch(() => caches.match(request));
-    })
+      })
+      .catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        // Sem cache disponível: propaga erro para o navegador
+        throw new Error('Offline e sem cache disponível');
+      })
   );
 });
 

@@ -1,14 +1,23 @@
+process.env.TZ = 'America/Sao_Paulo';
+
 const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const connectionString = process.env.DATABASE_URL;
+const AUTH_SECRET = process.env.AUTH_SECRET || 'dev-secret-change-me';
+const TOKEN_TTL_MS = Number(process.env.AUTH_TTL_MS || 1000 * 60 * 60 * 24 * 7); // 7 dias
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 if (!connectionString) {
   console.warn('⚠️ DATABASE_URL não definido. Configure no Railway para persistir dados.');
+}
+if (AUTH_SECRET === 'dev-secret-change-me') {
+  console.warn('⚠️ AUTH_SECRET não definido. Tokens de login estão usando valor padrão.');
 }
 
 const pool = new Pool({
@@ -44,6 +53,83 @@ async function runMigrations() {
   `);
 }
 
+function parseCookies(header = '') {
+  return header
+    .split(';')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .reduce((acc, part) => {
+      const [key, ...rest] = part.split('=');
+      acc[key] = decodeURIComponent(rest.join('='));
+      return acc;
+    }, {});
+}
+
+function signAuthToken(payload = {}) {
+  const data = { ...payload, exp: Date.now() + TOKEN_TTL_MS };
+  const payloadB64 = Buffer.from(JSON.stringify(data)).toString('base64url');
+  const signature = crypto.createHmac('sha256', AUTH_SECRET).update(payloadB64).digest('base64url');
+  return `${payloadB64}.${signature}`;
+}
+
+function verifyAuthToken(token) {
+  try {
+    if (!token) return null;
+    const [payloadB64, signature] = token.split('.');
+    if (!payloadB64 || !signature) return null;
+    const expected = crypto.createHmac('sha256', AUTH_SECRET).update(payloadB64).digest('base64url');
+    const sigBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expected);
+    if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+      return null;
+    }
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+    if (payload.exp && payload.exp < Date.now()) return null;
+    return payload;
+  } catch (err) {
+    console.warn('Token inválido:', err.message);
+    return null;
+  }
+}
+
+function getTokenFromRequest(req) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.slice(7);
+  }
+  const cookies = parseCookies(req.headers.cookie || '');
+  return cookies.auth_token || null;
+}
+
+function setAuthCookie(res, token) {
+  res.cookie('auth_token', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: IS_PROD,
+    maxAge: TOKEN_TTL_MS
+  });
+}
+
+function getLocalDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+const PUBLIC_API_PATHS = ['/login', '/health', '/logout'];
+function authMiddleware(req, res, next) {
+  if (PUBLIC_API_PATHS.includes(req.path)) return next();
+  const token = getTokenFromRequest(req);
+  const payload = verifyAuthToken(token);
+  if (!payload) {
+    return res.status(401).json({ error: 'Não autenticado' });
+  }
+  req.user = payload;
+  next();
+}
+
 // aceita payloads maiores (comprovantes base64)
 app.use(express.json({ limit: '6mb' }));
 
@@ -64,6 +150,9 @@ app.use((req, res, next) => {
   );
   next();
 });
+
+// Autenticação protegendo todas as rotas /api (exceto login/health)
+app.use('/api', authMiddleware);
 
 app.use(express.static(__dirname));
 
@@ -799,7 +888,7 @@ app.post('/api/orders', async (req, res) => {
         cost,
         profit,
         commissionValue,
-        body.date || new Date().toISOString().slice(0, 10),
+        body.date || getLocalDateString(),
         body.status || 'open',
         false,
         body.productType || 'Serviço',
@@ -877,7 +966,7 @@ app.patch('/api/orders/:id', async (req, res) => {
         cost,
         profit,
         commissionValue,
-        merged.date || new Date().toISOString().slice(0, 10),
+        merged.date || getLocalDateString(),
         merged.status || 'open',
         merged.commissionpaid ?? merged.commissionPaid ?? false,
         merged.producttype || merged.productType || 'Serviço',
@@ -906,57 +995,57 @@ function filterOrdersByPeriodServer(orders, period, selectedDate) {
   const normalized = (period || 'all').toLowerCase();
   if (normalized === 'all') return [...orders];
 
-  const now = new Date();
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
+  const getDateOnly = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string') {
+      return value.slice(0, 10);
+    }
+    const d = new Date(value);
+    if (!Number.isFinite(d.getTime())) return null;
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  endOfMonth.setHours(23, 59, 59, 999);
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   if (normalized === 'date' && selectedDate) {
-    const getDateOnly = (value) => {
-      if (!value) return null;
-      if (typeof value === 'string') return value.slice(0, 10);
-      const d = new Date(value);
-      if (!Number.isFinite(d.getTime())) return null;
-      return d.toISOString().slice(0, 10);
-    };
     const targetStr = getDateOnly(selectedDate);
     if (!targetStr) return [...orders];
     return orders.filter(order => {
-      const dStr = getDateOnly(order.date || order.created_at || selectedDate);
-      return dStr === targetStr;
+      const orderDateStr = getDateOnly(order.date);
+      return orderDateStr === targetStr;
     });
   }
 
   if (normalized === 'today') {
-    return orders.filter(order => {
-      const d = new Date(order.date || order.created_at || today);
-      return Number.isFinite(d.getTime()) && d.toDateString() === today.toDateString();
-    });
+    return orders.filter(order => getDateOnly(order.date) === todayStr);
   }
 
   if (normalized === 'month') {
+    const yearMonth = todayStr.slice(0, 7);
     return orders.filter(order => {
-      const d = new Date(order.date || order.created_at || today);
-      return Number.isFinite(d.getTime()) && d >= startOfMonth && d <= endOfMonth;
+      const orderDateStr = getDateOnly(order.date);
+      return orderDateStr && orderDateStr.startsWith(yearMonth);
     });
   }
 
   if (normalized === 'week') {
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayOfWeek = today.getDay();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setDate(today.getDate() - dayOfWeek);
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
 
-    const start = startOfWeek < startOfMonth ? startOfMonth : startOfWeek;
-    const end = endOfWeek > endOfMonth ? endOfMonth : endOfWeek;
+    const startStr = `${startOfWeek.getFullYear()}-${String(startOfWeek.getMonth() + 1).padStart(2, '0')}-${String(startOfWeek.getDate()).padStart(2, '0')}`;
+    const endStr = `${endOfWeek.getFullYear()}-${String(endOfWeek.getMonth() + 1).padStart(2, '0')}-${String(endOfWeek.getDate()).padStart(2, '0')}`;
 
     return orders.filter(order => {
-      const d = new Date(order.date || order.created_at || today);
-      return Number.isFinite(d.getTime()) && d >= start && d <= end;
+      const orderDateStr = getDateOnly(order.date);
+      return orderDateStr && orderDateStr >= startStr && orderDateStr <= endStr;
     });
   }
 
@@ -1147,13 +1236,32 @@ app.post('/api/login', async (req, res) => {
     return res.status(401).json({ error: 'Credenciais inválidas' });
   }
 
+  const token = signAuthToken({
+    login: account.login,
+    email: account.email,
+    role: account.role,
+    target: account.target
+  });
+  setAuthCookie(res, token);
+
   res.json({
     status: 'ok',
     role: account.role,
     target: account.target,
     login: account.login,
-    email: account.email
+    email: account.email,
+    token
   });
+});
+
+app.post('/api/logout', (req, res) => {
+  res.cookie('auth_token', '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: IS_PROD,
+    maxAge: 0
+  });
+  res.status(204).end();
 });
 
 initDb()

@@ -2445,10 +2445,15 @@
 
         async function fetchJson(path, options = {}) {
             const res = await fetch(apiBase + path, {
-                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 cache: 'no-store',
-                ...options
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
             });
+            if (res.status === 401) {
+                window.location.href = '/login-admin.html';
+                return;
+            }
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(text || res.statusText);
@@ -2606,53 +2611,47 @@
                 if (typeof value === 'string') return value.slice(0, 10);
                 const d = new Date(value);
                 if (!Number.isFinite(d.getTime())) return null;
-                return d.toISOString().slice(0, 10);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
             };
-            const now = new Date();
-            const today = new Date(now);
-            today.setHours(0, 0, 0, 0);
 
-            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            endOfMonth.setHours(23, 59, 59, 999);
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
             if (normalized === 'date' && selectedDate) {
                 const targetStr = getDateOnly(selectedDate);
                 if (!targetStr) return [...orders];
-                return orders.filter(o => {
-                    const dStr = getDateOnly(o.date || o.created_at || selectedDate);
-                    return dStr === targetStr;
-                });
+                return orders.filter(o => getDateOnly(o.date) === targetStr);
             }
 
             if (normalized === 'today') {
-                return orders.filter(o => {
-                    const d = new Date(o.date || o.created_at || now);
-                    return Number.isFinite(d.getTime()) && d.toDateString() === today.toDateString();
-                });
+                return orders.filter(o => getDateOnly(o.date) === todayStr);
             }
 
             if (normalized === 'month') {
+                const yearMonth = todayStr.slice(0, 7);
                 return orders.filter(o => {
-                    const d = new Date(o.date || o.created_at || now);
-                    return Number.isFinite(d.getTime()) && d >= startOfMonth && d <= endOfMonth;
+                    const d = getDateOnly(o.date);
+                    return d && d.startsWith(yearMonth);
                 });
             }
 
             if (normalized === 'week') {
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const dayOfWeek = today.getDay();
                 const startOfWeek = new Date(today);
-                startOfWeek.setDate(today.getDate() - today.getDay()); // domingo
+                startOfWeek.setDate(today.getDate() - dayOfWeek); // domingo
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setDate(startOfWeek.getDate() + 6); // sábado
-                endOfWeek.setHours(23, 59, 59, 999);
 
-                // limita a semana ao mês corrente
-                const start = startOfWeek < startOfMonth ? startOfMonth : startOfWeek;
-                const end = endOfWeek > endOfMonth ? endOfMonth : endOfWeek;
+                const startStr = `${startOfWeek.getFullYear()}-${String(startOfWeek.getMonth() + 1).padStart(2, '0')}-${String(startOfWeek.getDate()).padStart(2, '0')}`;
+                const endStr = `${endOfWeek.getFullYear()}-${String(endOfWeek.getMonth() + 1).padStart(2, '0')}-${String(endOfWeek.getDate()).padStart(2, '0')}`;
 
                 return orders.filter(o => {
-                    const d = new Date(o.date || o.created_at || now);
-                    return Number.isFinite(d.getTime()) && d >= start && d <= end;
+                    const d = getDateOnly(o.date);
+                    return d && d >= startStr && d <= endStr;
                 });
             }
 
