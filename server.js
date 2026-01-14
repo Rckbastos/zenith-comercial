@@ -51,6 +51,18 @@ async function runMigrations() {
     ALTER TABLE services
       ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'BRL';
   `);
+
+  // Campos para registro de trava (hedge)
+  await query(`
+    ALTER TABLE orders 
+    ADD COLUMN IF NOT EXISTS hedgeQtyUsdt NUMERIC(18,8),
+    ADD COLUMN IF NOT EXISTS hedgePriceBrl NUMERIC(18,8),
+    ADD COLUMN IF NOT EXISTS hedgeTotalBrl NUMERIC(18,2),
+    ADD COLUMN IF NOT EXISTS hedgeAt TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS hedgeNotes TEXT,
+    ADD COLUMN IF NOT EXISTS hedgeCompleted BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS sentAt TIMESTAMPTZ;
+  `);
 }
 
 function parseCookies(header = '') {
@@ -566,7 +578,14 @@ function normalizeOrder(row = {}) {
     commissionPaid: row.commissionPaid ?? row.commissionpaid,
     productType: row.productType ?? row.producttype,
     payoutProof: row.payoutProof ?? row.payoutproof,
-    wallet: row.wallet
+    wallet: row.wallet,
+    hedgeQtyUsdt: row.hedgeqtyusdt != null ? Number(row.hedgeqtyusdt) : (row.hedgeQtyUsdt != null ? Number(row.hedgeQtyUsdt) : null),
+    hedgePriceBrl: row.hedgepricebrl != null ? Number(row.hedgepricebrl) : (row.hedgePriceBrl != null ? Number(row.hedgePriceBrl) : null),
+    hedgeTotalBrl: row.hedgetotalbrl != null ? Number(row.hedgetotalbrl) : (row.hedgeTotalBrl != null ? Number(row.hedgeTotalBrl) : null),
+    hedgeAt: row.hedgeat ?? row.hedgeAt ?? null,
+    hedgeNotes: row.hedgenotes ?? row.hedgeNotes ?? null,
+    hedgeCompleted: Boolean(row.hedgecompleted ?? row.hedgeCompleted ?? false),
+    sentAt: row.sentat ?? row.sentAt ?? null
   };
 }
 
@@ -991,6 +1010,117 @@ app.delete('/api/orders/:id', async (req, res) => {
   res.status(204).end();
 });
 
+// Registrar trava (hedge) executada
+app.patch('/api/orders/:id/hedge', async (req, res) => {
+  const id = Number(req.params.id);
+  const body = req.body || {};
+  
+  try {
+    const [existing] = await query('SELECT * FROM orders WHERE id=$1', [id]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Ordem não encontrada' });
+    }
+    
+    const hedgeTotalBrl = Number(body.hedgeTotalBrl);
+    if (!Number.isFinite(hedgeTotalBrl) || hedgeTotalBrl <= 0) {
+      return res.status(400).json({ 
+        error: 'hedgeTotalBrl é obrigatório e deve ser maior que zero' 
+      });
+    }
+    
+    const hedgeQtyUsdt = body.hedgeQtyUsdt ? Number(body.hedgeQtyUsdt) : null;
+    const hedgePriceBrl = body.hedgePriceBrl ? Number(body.hedgePriceBrl) : null;
+    const hedgeNotes = body.hedgeNotes || null;
+    const hedgeAt = body.hedgeAt ? new Date(body.hedgeAt) : new Date();
+    
+    if (hedgeQtyUsdt && hedgePriceBrl) {
+      const calculado = hedgeQtyUsdt * hedgePriceBrl;
+      const diff = Math.abs(calculado - hedgeTotalBrl);
+      const diffPct = (diff / hedgeTotalBrl) * 100;
+      
+      if (diffPct > 1 && diff > 50) {
+        return res.status(400).json({
+          error: 'TRAVA_TOTAL_DIVERGE_DE_QTY_PRICE',
+          message: 'O total informado diverge do cálculo (quantidade × preço)',
+          calculado: calculado.toFixed(2),
+          informado: hedgeTotalBrl.toFixed(2),
+          diferenca: diff.toFixed(2),
+          diferencaPct: diffPct.toFixed(2) + '%'
+        });
+      }
+    }
+    
+    const rows = await query(`
+      UPDATE orders SET
+        hedgeTotalBrl = $1,
+        hedgeQtyUsdt = $2,
+        hedgePriceBrl = $3,
+        hedgeAt = $4,
+        hedgeNotes = $5,
+        hedgeCompleted = true
+      WHERE id = $6
+      RETURNING *
+    `, [hedgeTotalBrl, hedgeQtyUsdt, hedgePriceBrl, hedgeAt, hedgeNotes, id]);
+    
+    res.json(normalizeOrder(rows[0]));
+    
+  } catch (err) {
+    console.error('Erro ao salvar trava:', err);
+    res.status(500).json({ 
+      error: 'Falha ao salvar trava', 
+      detail: err.message 
+    });
+  }
+});
+
+// Marcar ordem como enviada (valida comprovante + trava)
+app.post('/api/orders/:id/send', async (req, res) => {
+  const id = Number(req.params.id);
+  
+  try {
+    const [order] = await query('SELECT * FROM orders WHERE id=$1', [id]);
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Ordem não encontrada' });
+    }
+    
+    if (!order.payoutproof && !order.payoutProof) {
+      return res.status(409).json({ 
+        error: 'Comprovante de pagamento não anexado',
+        field: 'payoutProof'
+      });
+    }
+    
+    const hedgeCompleted = Boolean(order.hedgecompleted ?? order.hedgeCompleted);
+    const hedgeTotalBrl = Number(order.hedgetotalbrl ?? order.hedgeTotalBrl ?? 0);
+    
+    if (!hedgeCompleted || hedgeTotalBrl <= 0) {
+      return res.status(409).json({ 
+        error: 'Trava não foi registrada',
+        field: 'hedgeCompleted'
+      });
+    }
+    
+    const rows = await query(
+      'UPDATE orders SET sentAt=$1 WHERE id=$2 RETURNING *',
+      [new Date(), id]
+    );
+    
+    res.json({
+      status: 'ok',
+      message: 'Ordem marcada como enviada',
+      order: normalizeOrder(rows[0])
+    });
+    
+  } catch (err) {
+    console.error('Erro ao enviar ordem:', err);
+    res.status(500).json({ 
+      error: 'Falha ao enviar ordem', 
+      detail: err.message 
+    });
+  }
+});
+
 function filterOrdersByPeriodServer(orders, period, selectedDate) {
   const normalized = (period || 'all').toLowerCase();
   if (normalized === 'all') return [...orders];
@@ -1061,9 +1191,12 @@ function calculateRemessaDashboardMetrics(orders = []) {
   let somaInvoiceFeeUsd = 0;
   let somaInvoiceCostUsd = 0;
   let somaDelta = 0;
+  let somaLucroTxPendente = 0;
   let volumeUsd = 0;
   let totalOperacoesCalculadas = 0;
   let ordensSemBaseQuote = 0;
+  let ordensSemTrava = 0;
+  let ordensComTrava = 0;
 
   const getFee = typeof getInvoiceFeeUsd === 'function'
     ? getInvoiceFeeUsd
@@ -1095,7 +1228,21 @@ function calculateRemessaDashboardMetrics(orders = []) {
     const costBaseUsd = quantity + invoiceCostUsd;
     const profitReal = Number(order.profit ?? 0) || 0;
 
-    const lucroTxBrl = costBaseUsd * R * 0.004;
+    const hedgeCompleted = Boolean(order.hedgeCompleted ?? order.hedgecompleted ?? false);
+    const hedgeTotalBrl = Number(order.hedgeTotalBrl ?? order.hedgetotalbrl ?? 0) || 0;
+    const custoTravaRealBrl = Number(order.cost ?? 0) || 0;
+
+    let lucroTxBrl = 0;
+
+    if (hedgeCompleted && hedgeTotalBrl > 0 && custoTravaRealBrl > 0) {
+      lucroTxBrl = hedgeTotalBrl - custoTravaRealBrl;
+      ordensComTrava++;
+    } else {
+      const lucroTxTeorico = costBaseUsd * R * 0.004;
+      somaLucroTxPendente += lucroTxTeorico;
+      ordensSemTrava++;
+    }
+
     const lucroRepasseMeu = profitReal / 2;
     const repasseIntermediarioBrl = profitReal / 2;
     const meuLucroTotal = lucroTxBrl + lucroRepasseMeu;
@@ -1126,13 +1273,19 @@ function calculateRemessaDashboardMetrics(orders = []) {
     somaDelta,
     auditoria: {
       somaInvoiceFeeUsd,
-      somaInvoiceCostUsd
+      somaInvoiceCostUsd,
+      lucroTxPendente: somaLucroTxPendente,
+      ordensSemTrava,
+      ordensComTrava
     },
     volumeUsd,
     totalOperacoes: orders.length,
     totalOperacoesCalculadas,
     ordensSemBaseQuote,
+    ordensSemTrava,
+    ordensComTrava,
     temOrdensSemCotacao: ordensSemBaseQuote > 0,
+    temOrdensSemTrava: ordensSemTrava > 0,
     temOrdensSemUnitPrice: false,
     ordensComFallbackUnitPrice: 0,
     temFallbackUnitPrice: false

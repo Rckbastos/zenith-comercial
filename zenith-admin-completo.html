@@ -918,6 +918,32 @@
             color: #fff;
         }
 
+        .btn:disabled,
+        .btn-primary:disabled,
+        .btn-secondary:disabled,
+        .btn-success:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .btn-trava {
+            background: #f59e0b;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: background 0.2s ease;
+        }
+
+        .btn-trava:hover {
+            background: #d97706;
+            color: #0a0a0a;
+        }
+
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -1039,6 +1065,40 @@
             padding: 1.5rem;
             border-top: 1px solid #333;
             justify-content: flex-end;
+        }
+
+        /* Modal de Trava (hedge) */
+        .hedge-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1300;
+            backdrop-filter: blur(2px);
+        }
+
+        .hedge-modal {
+            background: #0f0f0f;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 520px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+            color: #f5f5f5;
+        }
+
+        .hedge-modal h3 {
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            color: #D4AF37;
+            font-size: 1.25rem;
+        }
+
+        .hedge-modal small {
+            color: #9ca3af;
         }
 
         .modal-subtitle {
@@ -1662,6 +1722,7 @@
                             <th>Data</th>
                             <th>Status Comprovante</th>
                             <th class="proof-col">Comprovante</th>
+                            <th>Trava</th>
                             <th class="actions-col">Ações</th>
                         </tr>
                     </thead>
@@ -1691,6 +1752,7 @@
                             <th>Data</th>
                             <th>Status Comprovante</th>
                             <th class="proof-col">Comprovante</th>
+                            <th>Trava</th>
                             <th class="actions-col">Status</th>
                         </tr>
                     </thead>
@@ -2683,6 +2745,21 @@
 
                 const hasProof = Boolean(order.payoutProof);
                 const proofStatus = `<span class="proof-status" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hasProof ? '#10b981' : '#ef4444'};"></span>`;
+                const hedgeCompleted = Boolean(order.hedgeCompleted);
+                const hedgeTotalBrl = Number(order.hedgeTotalBrl ?? 0) || 0;
+                const hedgeDate = order.hedgeAt ? new Date(order.hedgeAt) : null;
+                const hedgeDateLabel = hedgeDate && !Number.isNaN(hedgeDate.getTime()) ? hedgeDate.toLocaleDateString('pt-BR') : '';
+                const hedgeCell = hedgeCompleted && hedgeTotalBrl > 0
+                    ? `
+                        <div style="color: #10b981; font-weight: 700;">
+                            ✅ ${formatBRL(hedgeTotalBrl)}
+                        </div>
+                        ${hedgeDateLabel ? `<small style="color: #9ca3af;">${hedgeDateLabel}</small>` : ''}
+                      `
+                    : `<button class="btn-trava" data-order-id="${order.id}">Registrar Trava</button>`;
+                const canConclude = hasProof && hedgeCompleted && hedgeTotalBrl > 0;
+                const concludeLabel = canConclude ? '✅ Concluir' : '🔒 Anexe comprovante e registra a trava';
+                const concludeBtn = `<button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" ${canConclude ? `onclick=\"concluirOrdem(${order.id})\"` : 'disabled title="Requer comprovante e trava registrada"'}>${concludeLabel}</button>`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>#${order.id}${order.isRetroactive ? ' <span class="badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;">📅 RETRO</span>' : ''}</td>
@@ -2699,7 +2776,8 @@
                     <td title="${order.historicalQuote ? 'Cotação histórica: R$ ' + Number(order.historicalQuote).toFixed(4) : 'Cotação automática'}">${formatDate(order.date)}</td>
                     <td style="text-align:center;">${proofStatus}</td>
                     <td class=\"proof-col\">${order.payoutProof ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovante(${order.id})\">📎 Ver</button>` : '-'}</td>
-                    <td class=\"actions-col\">${status === 'open' ? `<button class=\"btn btn-primary\" style=\"padding: 0.5rem 1rem; font-size: 0.875rem;\" onclick=\"concluirOrdem(${order.id})\">✅ Concluir</button>` : '<span class=\"badge badge-success\">Concluída</span>'}</td>
+                    <td>${hedgeCell}</td>
+                    <td class=\"actions-col\">${status === 'open' ? concludeBtn : '<span class=\"badge badge-success\">Concluída</span>'}</td>
                 `;
 
                 if (status === 'open' && openTbody) openTbody.appendChild(tr);
@@ -2776,6 +2854,104 @@
                 await fetchJson(`/api/assignments/${assign.id}`, { method: 'DELETE' });
             }
             loadAdminData();
+        }
+
+        // Modal de Trava (hedge)
+        document.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('btn-trava')) {
+                e.preventDefault();
+                const orderId = e.target.dataset.orderId;
+                await openHedgeModal(orderId);
+            }
+        });
+
+        async function openHedgeModal(orderId) {
+            const order = (cachedOrders || []).find(o => Number(o.id) === Number(orderId));
+            if (!order) {
+                alert('Ordem não encontrada para registrar trava.');
+                return;
+            }
+
+            const existing = document.querySelector('.hedge-modal-overlay');
+            if (existing) existing.remove();
+
+            const now = new Date();
+            const isoLocal = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+            const overlay = document.createElement('div');
+            overlay.className = 'hedge-modal-overlay';
+            overlay.innerHTML = `
+                <div class="hedge-modal" onclick="event.stopPropagation();">
+                    <h3>Registrar Trava - Ordem #${orderId}</h3>
+                    <p><strong>Cliente:</strong> ${order.customer || '-'}</p>
+                    <p><strong>Remessa:</strong> ${order.quantity || 0} USD</p>
+                    <p><strong>Custo estimado:</strong> ${formatBRL(order.cost || 0)}</p>
+                    
+                    <form id="hedge-form">
+                        <div class="form-group">
+                            <label>Total BRL (obrigatório) *</label>
+                            <input type="number" step="0.01" name="hedgeTotalBrl" required placeholder="Ex: 5480.00">
+                            <small>Custo total pago na execução da trava</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Quantidade USDT (opcional)</label>
+                            <input type="number" step="0.00000001" name="hedgeQtyUsdt" placeholder="Ex: 1000.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Preço BRL/USDT (opcional)</label>
+                            <input type="number" step="0.00000001" name="hedgePriceBrl" placeholder="Ex: 5.48">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Data/Hora</label>
+                            <input type="datetime-local" name="hedgeAt" value="${isoLocal}">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Observações</label>
+                            <textarea name="hedgeNotes" rows="3" placeholder="Ex: Executado via Binance P2P"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="submit" class="btn btn-primary">Salvar Trava</button>
+                            <button type="button" class="btn btn-secondary" onclick="this.closest('.hedge-modal-overlay').remove()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            overlay.addEventListener('click', (ev) => {
+                if (ev.target === overlay) overlay.remove();
+            });
+
+            document.body.appendChild(overlay);
+
+            const form = overlay.querySelector('#hedge-form');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const payload = {
+                    hedgeTotalBrl: formData.get('hedgeTotalBrl') ? parseFloat(formData.get('hedgeTotalBrl')) : null,
+                    hedgeQtyUsdt: formData.get('hedgeQtyUsdt') ? parseFloat(formData.get('hedgeQtyUsdt')) : null,
+                    hedgePriceBrl: formData.get('hedgePriceBrl') ? parseFloat(formData.get('hedgePriceBrl')) : null,
+                    hedgeAt: formData.get('hedgeAt') || null,
+                    hedgeNotes: formData.get('hedgeNotes') || null
+                };
+
+                try {
+                    await fetchJson(`/api/orders/${orderId}/hedge`, {
+                        method: 'PATCH',
+                        body: JSON.stringify(payload)
+                    });
+                    alert('✅ Trava registrada com sucesso!');
+                    overlay.remove();
+                    await loadAdminData();
+                } catch (err) {
+                    alert(err?.message || 'Erro ao salvar trava');
+                }
+            });
         }
 
         async function loadAdminData() {
