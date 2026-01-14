@@ -1187,14 +1187,12 @@ function filterOrdersByPeriodServer(orders, period, selectedDate) {
 
 function calculateRemessaDashboardMetrics(orders = []) {
   let somaLucroTx = 0;
-  let somaLucroRepasseMeu = 0;
   let somaMeuLucroTotal = 0;
-  let somaRepasseIntermediario = 0;
+  let somaLucroRepasse = 0;
   let somaProfitReal = 0;
+  let somaDelta = 0;
   let somaInvoiceFeeUsd = 0;
   let somaInvoiceCostUsd = 0;
-  let somaDelta = 0;
-  let somaLucroTxPendente = 0;
   let volumeUsd = 0;
   let totalOperacoesCalculadas = 0;
   let ordensSemBaseQuote = 0;
@@ -1231,33 +1229,29 @@ function calculateRemessaDashboardMetrics(orders = []) {
     const costBaseUsd = quantity + invoiceCostUsd;
     const profitReal = Number(order.profit ?? 0) || 0;
 
-    const hedgeCompleted = Boolean(order.hedgeCompleted ?? order.hedgecompleted ?? false);
+    // Lucro TX (trava)
     const hedgeTotalBrl = Number(order.hedgeTotalBrl ?? order.hedgetotalbrl ?? 0) || 0;
-    const custoTravaRealBrl = Number(order.cost ?? 0) || 0;
-
+    const custoRealBrl = Number(order.cost ?? 0) || 0;
     let lucroTxBrl = 0;
-
     if (hedgeTotalBrl > 0) {
-      lucroTxBrl = hedgeTotalBrl - custoTravaRealBrl; // custo do gerente - meu custo real
-      hedgeCompleted ? ordensComTrava++ : ordensSemTrava++;
+      lucroTxBrl = hedgeTotalBrl - custoRealBrl;
+      ordensComTrava++;
     } else {
-      const lucroTxTeorico = costBaseUsd * R * 0.004;
-      somaLucroTxPendente += lucroTxTeorico;
       ordensSemTrava++;
     }
 
-    const commissionVal = Number(order.commissionValue ?? order.commissionvalue ?? 0) || 0;
-    const lucroRepasseMeu = commissionVal;
-    const repasseIntermediarioBrl = commissionVal > 0 ? 0 : profitReal - commissionVal;
-    const meuLucroTotal = lucroTxBrl + lucroRepasseMeu;
-    const delta = profitReal - meuLucroTotal; // diferença entre lucro real e teórico (taxa + meu repasse)
+    // Lucro repasse (comissão da ordem)
+    const lucroRepasse = Number(order.commissionValue ?? order.commissionvalue ?? 0) || 0;
+
+    const meuLucroTotal = lucroTxBrl + lucroRepasse;
+    const delta = profitReal - meuLucroTotal;
 
     somaLucroTx += lucroTxBrl;
-    somaLucroRepasseMeu += lucroRepasseMeu;
+    somaLucroRepasse += lucroRepasse;
     somaMeuLucroTotal += meuLucroTotal;
-    somaRepasseIntermediario += repasseIntermediarioBrl;
     somaProfitReal += profitReal;
     somaDelta += delta;
+    // métricas de auditoria
     somaInvoiceFeeUsd += invoiceFeeUsd;
     somaInvoiceCostUsd += invoiceCostUsd;
     volumeUsd += quantity;
@@ -1266,19 +1260,13 @@ function calculateRemessaDashboardMetrics(orders = []) {
 
   return {
     somaLucroTx,
-    somaLucroRepasseMeu,
-    somaMeuLucroTotal,
-    somaRepasseIntermediario,
-    somaProfitReal,
-    somaInvoiceFeeUsd,
-    somaInvoiceCostUsd,
-    somaLucroRepasse: somaLucroRepasseMeu,
+    somaLucroRepasse,
     somaLucroTotal: somaMeuLucroTotal,
+    somaProfitReal,
     somaDelta,
     auditoria: {
       somaInvoiceFeeUsd,
       somaInvoiceCostUsd,
-      lucroTxPendente: somaLucroTxPendente,
       ordensSemTrava,
       ordensComTrava
     },
