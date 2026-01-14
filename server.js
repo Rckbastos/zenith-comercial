@@ -1060,6 +1060,7 @@ function calculateRemessaDashboardMetrics(orders = []) {
   let somaProfitReal = 0;
   let somaInvoiceFeeUsd = 0;
   let somaInvoiceCostUsd = 0;
+  let somaDelta = 0;
   let volumeUsd = 0;
   let totalOperacoesCalculadas = 0;
   let ordensSemBaseQuote = 0;
@@ -1098,12 +1099,14 @@ function calculateRemessaDashboardMetrics(orders = []) {
     const lucroRepasseMeu = profitReal / 2;
     const repasseIntermediarioBrl = profitReal / 2;
     const meuLucroTotal = lucroTxBrl + lucroRepasseMeu;
+    const delta = profitReal - meuLucroTotal; // diferença entre lucro real e teórico (taxa + meu repasse)
 
     somaLucroTx += lucroTxBrl;
     somaLucroRepasseMeu += lucroRepasseMeu;
     somaMeuLucroTotal += meuLucroTotal;
     somaRepasseIntermediario += repasseIntermediarioBrl;
     somaProfitReal += profitReal;
+    somaDelta += delta;
     somaInvoiceFeeUsd += invoiceFeeUsd;
     somaInvoiceCostUsd += invoiceCostUsd;
     volumeUsd += quantity;
@@ -1120,6 +1123,7 @@ function calculateRemessaDashboardMetrics(orders = []) {
     somaInvoiceCostUsd,
     somaLucroRepasse: somaLucroRepasseMeu,
     somaLucroTotal: somaMeuLucroTotal,
+    somaDelta,
     auditoria: {
       somaInvoiceFeeUsd,
       somaInvoiceCostUsd
