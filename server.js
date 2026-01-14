@@ -1234,7 +1234,8 @@ function calculateRemessaDashboardMetrics(orders = []) {
     const custoRealBrl = Number(order.cost ?? 0) || 0;
     let lucroTxBrl = 0;
     if (hedgeTotalBrl > 0) {
-      lucroTxBrl = hedgeTotalBrl - custoRealBrl;
+      // Lucro TX = custo do gerente (order.cost) - custo real informado na trava
+      lucroTxBrl = custoRealBrl - hedgeTotalBrl;
       ordensComTrava++;
     } else {
       ordensSemTrava++;
