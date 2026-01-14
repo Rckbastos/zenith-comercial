@@ -1513,6 +1513,7 @@
         let assignedServices = [];
         let lastUsdtQuote = null;
         let cachedOrders = [];
+        window.cachedOrders = cachedOrders;
 
         function getTodayIsoLocal() {
             const now = new Date();
@@ -2334,6 +2335,7 @@
                 const assignments = results[2].status === 'fulfilled' ? results[2].value : [];
 
                 cachedOrders = orders;
+                window.cachedOrders = orders;
                 resolveSellerId(users);
                 assignedServices = assignments
                     .filter(a => Number(a.userId ?? a.userid) === Number(currentSellerId))
