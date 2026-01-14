@@ -2758,8 +2758,7 @@
                       `
                     : `<button class="btn-trava" data-order-id="${order.id}">Registrar Trava</button>`;
                 const canConclude = hasProof && hedgeCompleted && hedgeTotalBrl > 0;
-                const concludeLabel = canConclude ? '✅ Concluir' : '🔒 Anexe comprovante e registra a trava';
-                const concludeBtn = `<button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" ${canConclude ? `onclick=\"concluirOrdem(${order.id})\"` : 'disabled title="Requer comprovante e trava registrada"'}>${concludeLabel}</button>`;
+                const concludeBtn = `<button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; ${canConclude ? '' : 'opacity:0.4;'}" ${canConclude ? `onclick=\"concluirOrdem(${order.id})\"` : 'disabled title="Requer comprovante e trava registrada"'}>✅ Concluir</button>`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>#${order.id}${order.isRetroactive ? ' <span class="badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;">📅 RETRO</span>' : ''}</td>
