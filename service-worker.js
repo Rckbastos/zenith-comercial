@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zenith-comercial-v9';
+const CACHE_NAME = 'zenith-comercial-v10';
 const urlsToCache = [
   'pwa.js',
   'zenith-logo.png',
@@ -60,9 +60,10 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request)
         .then(response => {
-          if (response && response.status === 200) {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const responseClone = response.clone(); // clone antes de cache.put
             caches.open(CACHE_NAME)
-              .then(cache => cache.put(request, response.clone()))
+              .then(cache => cache.put(request, responseClone))
               .catch(err => console.warn('Cache put falhou (navigate):', err));
           }
           return response;
@@ -80,12 +81,13 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(request)
       .then(networkResponse => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic' && !networkResponse.redirected) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => cache.put(request, responseToCache))
-            .catch(err => console.warn('Cache put falhou:', err));
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' || networkResponse.redirected) {
+          return networkResponse;
         }
+        const responseToCache = networkResponse.clone(); // clone antes de consumir
+        caches.open(CACHE_NAME)
+          .then(cache => cache.put(request, responseToCache))
+          .catch(err => console.warn('Cache put falhou:', err));
         return networkResponse;
       })
       .catch(async () => {
