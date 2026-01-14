@@ -1448,18 +1448,6 @@
                             <span>TX + Repasse</span>
                         </div>
                     </div>
-
-                    <div class="kpi-card">
-                        <div class="kpi-header">
-                            <span class="kpi-title">Delta Real vs Teórico</span>
-                            <div class="kpi-icon remessa-gold" id="kpiRemessaDeltaIcon">📊</div>
-                        </div>
-                        <div class="kpi-value" id="kpiRemessaDelta" style="color: #10b981;">R$ 0,00</div>
-                        <div class="kpi-trend">
-                            <span>↔</span>
-                            <span id="kpiRemessaDeltaSub">Diferença</span>
-                        </div>
-                    </div>
                 </div>
                 <div id="remessaWarnings" style="display: none;"></div>
             </div>
@@ -1757,6 +1745,12 @@
         <div id="ordens-concluidas" class="content-section">
             <div class="form-card wide-card">
                 <h3><span>✅</span> Ordens de Pagamento Concluídas</h3>
+                <div class="filter-buttons" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <label for="serviceFilterConcluded" style="color: #D4AF37; font-weight: 600; white-space: nowrap;">Filtrar por Serviço:</label>
+                    <select id="serviceFilterConcluded" class="form-control" style="min-width: 250px; padding: 0.75rem 1rem; background: #0a0a0a; border: 2px solid #D4AF37; border-radius: 6px; color: #fff; font-size: 1rem;" onchange="filterConcludedOrdersByService()">
+                        <option value="all">Todos os Serviços</option>
+                    </select>
+                </div>
                 <table class="data-table orders-table">
                     <thead>
                         <tr>
@@ -2006,6 +2000,7 @@
         let cachedAssignments = [];
         let currentFilter = 'today';
         let currentDateFilter = null;
+        let currentServiceFilter = 'all';
         let editingUserId = null;
         let editingServiceId = null;
         let editingAssignmentsUserId = null;
@@ -2802,7 +2797,7 @@
                 `;
 
                 if (status === 'open' && openTbody) openTbody.appendChild(tr);
-                if (status === 'concluded' && concludedTbody) concludedTbody.appendChild(tr.cloneNode(true));
+                // tabela de concluídas renderizada separadamente
 
                 if (status === 'concluded') {
                     const totalSale = Number(order.price) || 0;
@@ -2998,6 +2993,7 @@
                 updateAssignSelects(users, services);
                 renderAssignments(assignments);
                 applyFilterAndRender();
+                populateServiceFilter();
                 await loadRemessaDashboard();
 
                 const failed = results.filter(r => r.status === 'rejected');
@@ -3039,7 +3035,102 @@
             const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter, currentDateFilter);
             updateKpis(filteredOrders, cachedOrders, currentFilter);
             renderOrders(filteredOrders, cachedUsers, cachedServices);
+            renderFilteredConcludedOrders();
             loadRemessaDashboard();
+        }
+
+        function populateServiceFilter() {
+            const select = document.getElementById('serviceFilterConcluded');
+            if (!select) return;
+            
+            const currentValue = select.value || 'all';
+            select.innerHTML = '<option value="all">Todos os Serviços</option>';
+            
+            cachedServices.forEach(service => {
+                const option = document.createElement('option');
+                option.value = service.name;
+                option.textContent = service.name + (service.status === 'Inativo' ? ' (Inativo)' : '');
+                select.appendChild(option);
+            });
+            
+            select.value = currentValue;
+        }
+
+        function filterConcludedOrdersByService() {
+            const select = document.getElementById('serviceFilterConcluded');
+            currentServiceFilter = select ? select.value : 'all';
+            renderFilteredConcludedOrders();
+        }
+
+        function renderFilteredConcludedOrders() {
+            const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter, currentDateFilter);
+            const concludedOrders = filteredOrders.filter(o => (o.status || 'open') === 'concluded');
+            
+            const finalOrders = currentServiceFilter === 'all' 
+                ? concludedOrders 
+                : concludedOrders.filter(order => {
+                    const service = cachedServices.find(s => s.id === order.serviceId);
+                    const serviceName = service?.name || order.productType || '';
+                    return serviceName.toLowerCase().includes(currentServiceFilter.toLowerCase());
+                });
+            
+            renderConcludedOrdersTable(finalOrders);
+        }
+
+        function renderConcludedOrdersTable(orders) {
+            const concludedTbody = document.getElementById('concludedOrdersTbody');
+            if (!concludedTbody) return;
+            concludedTbody.innerHTML = '';
+            
+            const usersMap = Object.fromEntries(cachedUsers.map(u => [u.id, u]));
+            const servicesMap = Object.fromEntries(cachedServices.map(s => [s.id, s]));
+            
+            orders.forEach(order => {
+                const seller = usersMap[order.sellerId];
+                const service = servicesMap[order.serviceId];
+                const serviceName = service?.name || order.productType || 'Serviço';
+                const sellerName = seller?.name || '—';
+                const commissionValue = order.commissionValue ?? 0;
+                const unitPriceDisplay = Number(order.unitPrice) || (order.price && order.quantity ? Number(order.price) / Number(order.quantity) : null);
+                
+                const hasProof = Boolean(order.payoutProof);
+                const proofStatus = `<span class="proof-status" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hasProof ? '#10b981' : '#ef4444'};"></span>`;
+                
+                const hedgeCompleted = Boolean(order.hedgeCompleted);
+                const hedgeTotalBrl = Number(order.hedgeTotalBrl ?? 0) || 0;
+                const hedgeDate = order.hedgeAt ? new Date(order.hedgeAt) : null;
+                const hedgeDateLabel = hedgeDate && !Number.isNaN(hedgeDate.getTime()) ? hedgeDate.toLocaleDateString('pt-BR') : '';
+                const hedgeCell = hedgeCompleted && hedgeTotalBrl > 0
+                    ? `<div style="color: #10b981; font-weight: 700;">✅ ${formatBRL(hedgeTotalBrl)}</div>${hedgeDateLabel ? `<small style="color: #9ca3af;">${hedgeDateLabel}</small>` : ''}`
+                    : '-';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${order.id}${order.isRetroactive ? ' <span class="badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;">📅 RETRO</span>' : ''}</td>
+                    <td>${order.customer || '-'}</td>
+                    <td>${sellerName}</td>
+                    <td><span class="badge badge-gold">${serviceName}</span></td>
+                    <td>${order.quantity != null ? order.quantity : '-'}</td>
+                    <td>${unitPriceDisplay != null ? formatBRL4(unitPriceDisplay) : '-'}</td>
+                    <td>${order.wallet ? `<span title="${order.wallet}">${order.wallet}</span>` : '-'}</td>
+                    <td>${formatBRL(order.price)}</td>
+                    <td>${formatBRL(order.cost)}</td>
+                    <td class="profit-color">${formatBRL(order.profit)}</td>
+                    <td class="profit-color">${formatBRL(commissionValue)}</td>
+                    <td title="${order.historicalQuote ? 'Cotação histórica: R$ ' + Number(order.historicalQuote).toFixed(4) : 'Cotação automática'}">${formatDate(order.date)}</td>
+                    <td style="text-align:center;">${proofStatus}</td>
+                    <td class="proof-col">${order.payoutProof ? `<button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;" onclick="verComprovante(${order.id})">📎 Ver</button>` : '-'}</td>
+                    <td>${hedgeCell}</td>
+                    <td class="actions-col"><span class="badge badge-success">Concluída</span></td>
+                `;
+                concludedTbody.appendChild(tr);
+            });
+            
+            if (!orders.length) {
+                const emptyTr = document.createElement('tr');
+                emptyTr.innerHTML = '<td colspan="16" style="text-align: center; color: #888; padding: 2rem;">Nenhuma ordem concluída encontrada para este filtro</td>';
+                concludedTbody.appendChild(emptyTr);
+            }
         }
 
         function updateKpis(filteredOrders = [], allOrders = [], currentPeriod = 'all') {
@@ -3074,7 +3165,6 @@
             const tx = Number(data.somaLucroTx || 0);
             const repasse = Number(data.somaLucroRepasse || 0);
             const total = Number(data.somaLucroTotal || 0);
-            const delta = Number(data.somaDelta || 0);
             const repasseIntermediario = Number(data.somaRepasseIntermediario || 0);
 
             const setValue = (id, value) => {
@@ -3085,20 +3175,7 @@
             setValue('kpiRemessaLucroTx', tx);
             setValue('kpiRemessaLucroRepasse', repasse);
             setValue('kpiRemessaLucroTotal', total);
-            setValue('kpiRemessaDelta', delta);
             setValue('kpiRepasseIntermediario', repasseIntermediario);
-
-            const deltaPositive = delta >= 0;
-            const deltaEl = document.getElementById('kpiRemessaDelta');
-            if (deltaEl) {
-                deltaEl.style.color = deltaPositive ? '#10b981' : '#ef4444';
-            }
-
-            const deltaIconEl = document.getElementById('kpiRemessaDeltaIcon');
-            if (deltaIconEl) deltaIconEl.textContent = deltaPositive ? '📊' : '⚠️';
-
-            const deltaSubEl = document.getElementById('kpiRemessaDeltaSub');
-            if (deltaSubEl) deltaSubEl.textContent = deltaPositive ? 'Acima do esperado' : 'Abaixo do esperado';
 
             const warningContainer = document.getElementById('remessaWarnings');
             if (warningContainer) {

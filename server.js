@@ -1190,7 +1190,6 @@ function calculateRemessaDashboardMetrics(orders = []) {
   let somaMeuLucroTotal = 0;
   let somaLucroRepasse = 0;
   let somaProfitReal = 0;
-  let somaDelta = 0;
   let somaInvoiceFeeUsd = 0;
   let somaInvoiceCostUsd = 0;
   let volumeUsd = 0;
@@ -1245,13 +1244,11 @@ function calculateRemessaDashboardMetrics(orders = []) {
     const lucroRepasse = Number(order.commissionValue ?? order.commissionvalue ?? 0) || 0;
 
     const meuLucroTotal = lucroTxBrl + lucroRepasse;
-    const delta = profitReal - meuLucroTotal;
 
     somaLucroTx += lucroTxBrl;
     somaLucroRepasse += lucroRepasse;
     somaMeuLucroTotal += meuLucroTotal;
     somaProfitReal += profitReal;
-    somaDelta += delta;
     // métricas de auditoria
     somaInvoiceFeeUsd += invoiceFeeUsd;
     somaInvoiceCostUsd += invoiceCostUsd;
@@ -1264,7 +1261,6 @@ function calculateRemessaDashboardMetrics(orders = []) {
     somaLucroRepasse,
     somaLucroTotal: somaMeuLucroTotal,
     somaProfitReal,
-    somaDelta,
     auditoria: {
       somaInvoiceFeeUsd,
       somaInvoiceCostUsd,
