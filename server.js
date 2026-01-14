@@ -1234,8 +1234,8 @@ function calculateRemessaDashboardMetrics(orders = []) {
 
     let lucroTxBrl = 0;
 
-    if (hedgeTotalBrl > 0 && custoTravaRealBrl > 0) {
-      lucroTxBrl = hedgeTotalBrl - custoTravaRealBrl;
+    if (hedgeTotalBrl > 0) {
+      lucroTxBrl = hedgeTotalBrl - custoTravaRealBrl; // custo do gerente - meu custo real
       hedgeCompleted ? ordensComTrava++ : ordensSemTrava++;
     } else {
       const lucroTxTeorico = costBaseUsd * R * 0.004;
@@ -1245,7 +1245,7 @@ function calculateRemessaDashboardMetrics(orders = []) {
 
     const commissionVal = Number(order.commissionValue ?? order.commissionvalue ?? 0) || 0;
     const lucroRepasseMeu = commissionVal;
-    const repasseIntermediarioBrl = profitReal - commissionVal;
+    const repasseIntermediarioBrl = commissionVal > 0 ? 0 : profitReal - commissionVal;
     const meuLucroTotal = lucroTxBrl + lucroRepasseMeu;
     const delta = profitReal - meuLucroTotal; // diferença entre lucro real e teórico (taxa + meu repasse)
 

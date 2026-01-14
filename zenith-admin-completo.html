@@ -3038,8 +3038,7 @@
         function applyFilterAndRender() {
             const filteredOrders = filterOrdersByPeriod(cachedOrders, currentFilter, currentDateFilter);
             updateKpis(filteredOrders, cachedOrders, currentFilter);
-            const ordersForTables = currentFilter === 'date' ? filteredOrders : cachedOrders;
-            renderOrders(ordersForTables, cachedUsers, cachedServices);
+            renderOrders(filteredOrders, cachedUsers, cachedServices);
             loadRemessaDashboard();
         }
 
