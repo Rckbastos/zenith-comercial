@@ -3102,7 +3102,7 @@
                 const hedgeDateLabel = hedgeDate && !Number.isNaN(hedgeDate.getTime()) ? hedgeDate.toLocaleDateString('pt-BR') : '';
                 const hedgeCell = hedgeCompleted && hedgeTotalBrl > 0
                     ? `<div style="color: #10b981; font-weight: 700;">✅ ${formatBRL(hedgeTotalBrl)}</div>${hedgeDateLabel ? `<small style="color: #9ca3af;">${hedgeDateLabel}</small>` : ''}`
-                    : '-';
+                    : `<button class="btn-trava" data-order-id="${order.id}">Registrar Trava</button>`;
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
