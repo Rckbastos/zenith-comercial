@@ -147,6 +147,13 @@ function toDateOnlyLocal(value) {
   return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 }
 
+function calculateIsRetroactive(dateValue) {
+  const orderDate = toDateOnlyLocal(dateValue);
+  const today = toDateOnlyLocal(getLocalDateString());
+  if (!orderDate || !today) return false;
+  return orderDate.getTime() < today.getTime();
+}
+
 const PUBLIC_API_PATHS = ['/login', '/health', '/logout'];
 function authMiddleware(req, res, next) {
   if (PUBLIC_API_PATHS.includes(req.path)) return next();
@@ -880,14 +887,21 @@ app.get('/api/orders', async (_req, res) => {
     // Recalcula sempre para garantir consistência com a lógica atual
     try {
       const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
-      return { ...order, ...calc, quote: calc.quoteUsed, unitPrice: calc.unitPriceUsed };
+      return { 
+        ...order, 
+        ...calc, 
+        quote: calc.quoteUsed, 
+        unitPrice: calc.unitPriceUsed,
+        isRetroactive: calculateIsRetroactive(order.date)
+      };
     } catch (err) {
       console.warn(`⚠️ Falha ao recalcular ordem #${order.id}:`, err.message);
       // mantém dados persistidos para não quebrar a listagem
       return {
         ...order,
         quote: order.quote ?? order.historicalQuote ?? null,
-        unitPrice: order.unitPrice ?? order.unitprice ?? null
+        unitPrice: order.unitPrice ?? order.unitprice ?? null,
+        isRetroactive: calculateIsRetroactive(order.date)
       };
     }
   }));
@@ -904,9 +918,7 @@ app.post('/api/orders', async (req, res) => {
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(body, seller, service);
 
     // Calcular automaticamente se é retroativa
-    const orderDate = toDateOnlyLocal(body.date || getLocalDateString()) || new Date();
-    const today = toDateOnlyLocal(getLocalDateString()) || new Date();
-    const isRetroactiveCalculated = orderDate.getTime() < today.getTime();
+    const isRetroactiveCalculated = calculateIsRetroactive(body.date || getLocalDateString());
 
     const rows = await query(
       `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd, historicalQuote, isRetroactive)
@@ -978,9 +990,7 @@ app.patch('/api/orders/:id', async (req, res) => {
     const merged = { ...existing, ...body, id };
     // Recalcular isRetroactive se a data foi alterada
     if (merged.date) {
-      const orderDate = toDateOnlyLocal(merged.date);
-      const today = toDateOnlyLocal(getLocalDateString()) || new Date();
-      merged.isRetroactive = orderDate ? orderDate.getTime() < today.getTime() : false;
+      merged.isRetroactive = calculateIsRetroactive(merged.date);
     }
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(merged, seller || existing, service || existing);
 
@@ -1332,7 +1342,8 @@ app.get('/api/dashboard/remessa', async (req, res) => {
           ...calc, 
           quote: calc.quoteUsed, 
           unitPrice: calc.unitPriceUsed,
-          serviceName: service?.name
+          serviceName: service?.name,
+          isRetroactive: calculateIsRetroactive(order.date)
         };
       } catch (err) {
         console.warn(`⚠️ Falha ao recalcular ordem #${order.id}:`, err.message);
@@ -1340,7 +1351,8 @@ app.get('/api/dashboard/remessa', async (req, res) => {
           ...order,
           serviceName: service?.name,
           quote: order.quote ?? order.historicalQuote ?? null,
-          unitPrice: order.unitPrice ?? order.unitprice ?? null
+          unitPrice: order.unitPrice ?? order.unitprice ?? null,
+          isRetroactive: calculateIsRetroactive(order.date)
         };
       }
     }));
