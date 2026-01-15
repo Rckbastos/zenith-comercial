@@ -660,7 +660,18 @@
         }
 
         .orders-table {
-            min-width: 1400px;
+            min-width: 1800px;
+        }
+
+        /* Evita quebra de linha nas tabelas de ordens */
+        .orders-table th,
+        .orders-table td {
+            white-space: nowrap;
+        }
+
+        .orders-table td span[title] {
+            white-space: nowrap;
+        }
         }
 
         /* Cabeçalho da tabela */
