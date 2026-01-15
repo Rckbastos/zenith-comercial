@@ -2853,6 +2853,7 @@
                 const commissionValue = order.commissionValue ?? 0;
                 const status = order.status || 'open';
                 const unitPriceDisplay = Number(order.unitPrice) || (order.price && order.quantity ? Number(order.price) / Number(order.quantity) : null);
+                const isRetro = order.isRetroactive || order.isretroactive || false;
 
                 const hasProof = Boolean(order.payoutProof);
                 const proofStatus = `<span class="proof-status" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hasProof ? '#10b981' : '#ef4444'};"></span>`;
@@ -2872,7 +2873,7 @@
                 const concludeBtn = `<button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; ${canConclude ? '' : 'opacity:0.4;'}" ${canConclude ? `onclick=\"concluirOrdem(${order.id})\"` : 'disabled title="Requer comprovante e trava registrada"'}>✅ Concluir</button>`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>#${order.id}${order.isRetroactive ? ' <span class="badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;">📅 RETRO</span>' : ''}</td>
+                    <td>#${order.id}${isRetro ? ' <span class="badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;">📅 RETRO</span>' : ''}</td>
                     <td>${order.customer || '-'}</td>
                     <td>${sellerName}</td>
                     <td><span class=\"badge badge-gold\">${serviceName}</span></td>
@@ -3188,6 +3189,7 @@
                 const sellerName = seller?.name || '—';
                 const commissionValue = order.commissionValue ?? 0;
                 const unitPriceDisplay = Number(order.unitPrice) || (order.price && order.quantity ? Number(order.price) / Number(order.quantity) : null);
+                const isRetro = order.isRetroactive || order.isretroactive || false;
                 
                 const hasProof = Boolean(order.payoutProof);
                 const proofStatus = `<span class="proof-status" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hasProof ? '#10b981' : '#ef4444'};"></span>`;
@@ -3202,7 +3204,7 @@
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>#${order.id}${order.isRetroactive ? ' <span class="badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;">📅 RETRO</span>' : ''}</td>
+                    <td>#${order.id}${isRetro ? ' <span class="badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem;">📅 RETRO</span>' : ''}</td>
                     <td>${order.customer || '-'}</td>
                     <td>${sellerName}</td>
                     <td><span class="badge badge-gold">${serviceName}</span></td>
