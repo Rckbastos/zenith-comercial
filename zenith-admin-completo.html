@@ -661,7 +661,61 @@
 
         .orders-table {
             min-width: 1800px;
+            table-layout: fixed;
+            width: 100%;
         }
+
+        /* Larguras fixas por coluna nas tabelas de ordens */
+        .orders-table th:nth-child(1),
+        .orders-table td:nth-child(1) { width: 80px; }   /* ID */
+
+        .orders-table th:nth-child(2),
+        .orders-table td:nth-child(2) { width: 120px; }  /* Cliente */
+
+        .orders-table th:nth-child(3),
+        .orders-table td:nth-child(3) { width: 120px; }  /* Vendedor */
+
+        .orders-table th:nth-child(4),
+        .orders-table td:nth-child(4) { width: 140px; }  /* Serviço */
+
+        .orders-table th:nth-child(5),
+        .orders-table td:nth-child(5) { width: 70px; }   /* Qtd */
+
+        .orders-table th:nth-child(6),
+        .orders-table td:nth-child(6) { width: 110px; }  /* Preço (un.) */
+
+        .orders-table th:nth-child(7),
+        .orders-table td:nth-child(7) { width: 200px; }  /* Wallet */
+
+        .orders-table th:nth-child(8),
+        .orders-table td:nth-child(8) { width: 110px; }  /* Venda */
+
+        .orders-table th:nth-child(9),
+        .orders-table td:nth-child(9) { width: 110px; }  /* Custo */
+
+        .orders-table th:nth-child(10),
+        .orders-table td:nth-child(10) { width: 110px; } /* Lucro */
+
+        .orders-table th:nth-child(11),
+        .orders-table td:nth-child(11) { width: 110px; } /* Comissão */
+
+        .orders-table th:nth-child(12),
+        .orders-table td:nth-child(12) { width: 100px; } /* Data */
+
+        .orders-table th:nth-child(13),
+        .orders-table td:nth-child(13) { width: 100px; } /* Lançamento */
+
+        .orders-table th:nth-child(14),
+        .orders-table td:nth-child(14) { width: 90px; text-align: center; } /* Status Comprovante */
+
+        .orders-table th:nth-child(15),
+        .orders-table td:nth-child(15) { width: 100px; text-align: center; } /* Comprovante */
+
+        .orders-table th:nth-child(16),
+        .orders-table td:nth-child(16) { width: 140px; } /* Trava */
+
+        .orders-table th:nth-child(17),
+        .orders-table td:nth-child(17) { width: 120px; text-align: center; } /* Ações/Status */
 
         /* Evita quebra de linha nas tabelas de ordens */
         .orders-table th,
@@ -671,7 +725,6 @@
 
         .orders-table td span[title] {
             white-space: nowrap;
-        }
         }
 
         /* Cabeçalho da tabela */
