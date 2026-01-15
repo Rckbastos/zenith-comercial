@@ -1356,6 +1356,7 @@
                             <th>Lucro</th>
                             <th>Comissão</th>
                             <th>Data</th>
+                            <th>Lançamento</th>
                             <th>Status</th>
                             <th>Comprovante</th>
                             <th>Ações</th>
@@ -1384,6 +1385,7 @@
                             <th>Lucro</th>
                             <th>Comissão</th>
                             <th>Data</th>
+                            <th>Lançamento</th>
                             <th>Status</th>
                             <th>Comprovante</th>
                             <th>Ações</th>
@@ -1412,6 +1414,7 @@
                             <th>Lucro</th>
                             <th>Comissão</th>
                             <th>Data</th>
+                            <th>Lançamento</th>
                             <th>Status</th>
                             <th>Comprovante</th>
                             <th>Ações</th>
@@ -2229,6 +2232,10 @@
             return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date);
         }
 
+        function formatLaunchDate(order = {}) {
+            return formatOrderDate(order.launchDate || order.launchdate || order.created_at || order.createdAt || null);
+        }
+
         function renderOrdersForSeller(orders, users) {
             if (!currentSellerId && users.length) {
                 currentSellerId = users[0].id;
@@ -2268,6 +2275,7 @@
                     <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                     <td${dateTitle}>${formatOrderDate(order.date || Date.now())}</td>
+                    <td>${formatLaunchDate(order)}</td>
                     <td>${statusLabel}</td>
                     <td>${proofButton}</td>
                     <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
@@ -2291,6 +2299,7 @@
                         <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                         <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                         <td${dateTitle}>${formatOrderDate(order.date || Date.now())}</td>
+                        <td>${formatLaunchDate(order)}</td>
                         <td><span class=\"badge badge-pending\">Em Análise</span></td>
                         <td>${order.payoutProof 
                             ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>`
@@ -2315,6 +2324,7 @@
                         <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                         <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
                         <td${dateTitle}>${formatOrderDate(order.date || Date.now())}</td>
+                        <td>${formatLaunchDate(order)}</td>
                         <td><span class=\"badge badge-success\">Aprovada</span></td>
                         <td>${order.payoutProof 
                             ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>`

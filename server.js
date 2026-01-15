@@ -44,7 +44,8 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS unitPrice NUMERIC(14,6),
       ADD COLUMN IF NOT EXISTS invoiceUsd NUMERIC(14,4) DEFAULT 0,
       ADD COLUMN IF NOT EXISTS historicalQuote NUMERIC(14,6),
-      ADD COLUMN IF NOT EXISTS isRetroactive BOOLEAN DEFAULT false;
+      ADD COLUMN IF NOT EXISTS isRetroactive BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS launchDate DATE;
   `);
 
   await query(`
@@ -147,11 +148,22 @@ function toDateOnlyLocal(value) {
   return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 }
 
-function calculateIsRetroactive(dateValue) {
-  const orderDate = toDateOnlyLocal(dateValue);
-  const today = toDateOnlyLocal(getLocalDateString());
-  if (!orderDate || !today) return false;
-  return orderDate.getTime() < today.getTime();
+function getLaunchDateFallback(order = {}) {
+  return (
+    order.launchDate ||
+    order.launchdate ||
+    order.created_at ||
+    order.createdAt ||
+    order.date ||
+    getLocalDateString()
+  );
+}
+
+function calculateIsRetroactive(orderDateValue, launchDateValue) {
+  const orderDate = toDateOnlyLocal(orderDateValue);
+  const launchDate = toDateOnlyLocal(launchDateValue);
+  if (!orderDate || !launchDate) return false;
+  return orderDate.getTime() < launchDate.getTime();
 }
 
 const PUBLIC_API_PATHS = ['/login', '/health', '/logout'];
@@ -598,6 +610,7 @@ function normalizeOrder(row = {}) {
     profit: Number(row.profit ?? 0),
     commissionValue: Number(row.commissionValue ?? row.commissionvalue ?? 0),
     date: row.date,
+    launchDate: row.launchdate ?? row.launchDate ?? null,
     status: row.status,
     commissionPaid: row.commissionPaid ?? row.commissionpaid,
     productType: row.productType ?? row.producttype,
@@ -665,6 +678,7 @@ async function initDb() {
       profit NUMERIC(14,2) DEFAULT 0,
       commissionValue NUMERIC(14,2) DEFAULT 0,
       date DATE DEFAULT CURRENT_DATE,
+      launchDate DATE,
       status TEXT DEFAULT 'open',
       commissionPaid BOOLEAN DEFAULT false,
       productType TEXT
@@ -892,7 +906,7 @@ app.get('/api/orders', async (_req, res) => {
         ...calc, 
         quote: calc.quoteUsed, 
         unitPrice: calc.unitPriceUsed,
-        isRetroactive: calculateIsRetroactive(order.date)
+        isRetroactive: calculateIsRetroactive(order.date, getLaunchDateFallback(order))
       };
     } catch (err) {
       console.warn(`⚠️ Falha ao recalcular ordem #${order.id}:`, err.message);
@@ -901,7 +915,7 @@ app.get('/api/orders', async (_req, res) => {
         ...order,
         quote: order.quote ?? order.historicalQuote ?? null,
         unitPrice: order.unitPrice ?? order.unitprice ?? null,
-        isRetroactive: calculateIsRetroactive(order.date)
+        isRetroactive: calculateIsRetroactive(order.date, getLaunchDateFallback(order))
       };
     }
   }));
@@ -917,12 +931,13 @@ app.post('/api/orders', async (req, res) => {
 
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(body, seller, service);
 
-    // Calcular automaticamente se é retroativa
-    const isRetroactiveCalculated = calculateIsRetroactive(body.date || getLocalDateString());
+    const orderDate = body.date || getLocalDateString();
+    const launchDate = body.launchDate || getLocalDateString();
+    const isRetroactiveCalculated = calculateIsRetroactive(orderDate, launchDate);
 
     const rows = await query(
-      `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd, historicalQuote, isRetroactive)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
+      `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, launchDate, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd, historicalQuote, isRetroactive)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
       [
         body.customer,
         body.sellerId || null,
@@ -934,7 +949,8 @@ app.post('/api/orders', async (req, res) => {
         cost,
         profit,
         commissionValue,
-        body.date || getLocalDateString(),
+        orderDate,
+        launchDate,
         body.status || 'open',
         false,
         body.productType || 'Serviço',
@@ -988,15 +1004,16 @@ app.patch('/api/orders/:id', async (req, res) => {
     const [service] = body.serviceId ? await query('SELECT * FROM services WHERE id=$1', [body.serviceId]) : [null];
 
     const merged = { ...existing, ...body, id };
+    merged.launchDate = body.launchDate ?? body.launchdate ?? existing.launchDate ?? existing.launchdate ?? getLaunchDateFallback(existing);
     // Recalcular isRetroactive se a data foi alterada
-    if (merged.date) {
-      merged.isRetroactive = calculateIsRetroactive(merged.date);
+    if (merged.date || merged.launchDate) {
+      merged.isRetroactive = calculateIsRetroactive(merged.date, merged.launchDate);
     }
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(merged, seller || existing, service || existing);
 
     const rows = await query(
-      `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, status=$12, commissionPaid=$13, productType=$14, payoutProof=$15, wallet=$16, invoiceUsd=$17, historicalQuote=$18, isRetroactive=$19
-       WHERE id=$20 RETURNING *`,
+      `UPDATE orders SET customer=$1, sellerId=$2, serviceId=$3, quantity=$4, unitPrice=$5, quote=$6, price=$7, cost=$8, profit=$9, commissionValue=$10, date=$11, launchDate=$12, status=$13, commissionPaid=$14, productType=$15, payoutProof=$16, wallet=$17, invoiceUsd=$18, historicalQuote=$19, isRetroactive=$20
+       WHERE id=$21 RETURNING *`,
       [
         merged.customer,
         merged.sellerid || merged.sellerId || null,
@@ -1009,6 +1026,7 @@ app.patch('/api/orders/:id', async (req, res) => {
         profit,
         commissionValue,
         merged.date || getLocalDateString(),
+        merged.launchDate || getLaunchDateFallback(existing),
         merged.status || 'open',
         merged.commissionpaid ?? merged.commissionPaid ?? false,
         merged.producttype || merged.productType || 'Serviço',
@@ -1343,7 +1361,7 @@ app.get('/api/dashboard/remessa', async (req, res) => {
           quote: calc.quoteUsed, 
           unitPrice: calc.unitPriceUsed,
           serviceName: service?.name,
-          isRetroactive: calculateIsRetroactive(order.date)
+          isRetroactive: calculateIsRetroactive(order.date, getLaunchDateFallback(order))
         };
       } catch (err) {
         console.warn(`⚠️ Falha ao recalcular ordem #${order.id}:`, err.message);
@@ -1352,7 +1370,7 @@ app.get('/api/dashboard/remessa', async (req, res) => {
           serviceName: service?.name,
           quote: order.quote ?? order.historicalQuote ?? null,
           unitPrice: order.unitPrice ?? order.unitprice ?? null,
-          isRetroactive: calculateIsRetroactive(order.date)
+          isRetroactive: calculateIsRetroactive(order.date, getLaunchDateFallback(order))
         };
       }
     }));
