@@ -720,7 +720,11 @@
         /* Evita quebra de linha nas tabelas de ordens */
         .orders-table th,
         .orders-table td {
-            white-space: nowrap;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            word-break: normal !important;
+            padding: 1rem 0.5rem !important;
         }
 
         .orders-table td span[title] {
@@ -787,8 +791,6 @@
         .data-table td {
             overflow: visible;
             text-overflow: clip;
-            white-space: normal;
-            word-break: break-word;
         }
 
         /* Alinhamentos específicos */
