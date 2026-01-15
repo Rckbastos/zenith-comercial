@@ -638,6 +638,13 @@
             overflow: visible;
         }
 
+        /* Wrapper horizontal para tabelas largas */
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
         /* Tabela base */
         .data-table {
             width: 100%;
@@ -650,6 +657,10 @@
             background: #0a0a0a;
             border-radius: 8px;
             overflow: visible;
+        }
+
+        .orders-table {
+            min-width: 1400px;
         }
 
         /* Cabeçalho da tabela */
@@ -1715,6 +1726,7 @@
         <div id="ordens-abertas" class="content-section">
             <div class="form-card wide-card">
                 <h3><span>📋</span> Ordens de Pagamento em Aberto</h3>
+                <div class="table-scroll">
                 <table class="data-table orders-table">
                     <thead>
                         <tr>
@@ -1739,6 +1751,7 @@
                     </thead>
                     <tbody id="openOrdersTbody"></tbody>
                 </table>
+                </div>
             </div>
         </div>
 
@@ -1752,6 +1765,7 @@
                         <option value="all">Todos os Serviços</option>
                     </select>
                 </div>
+                <div class="table-scroll">
                 <table class="data-table orders-table">
                     <thead>
                         <tr>
@@ -1776,6 +1790,7 @@
                     </thead>
                     <tbody id="concludedOrdersTbody"></tbody>
                 </table>
+                </div>
             </div>
         </div>
         <!-- Comissões Pendentes Section -->
