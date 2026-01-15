@@ -1089,6 +1089,30 @@
             flex-direction: column;
         }
 
+        /* Modo fullscreen do modal de comprovante */
+        .modal-comprovante.fullscreen {
+            max-width: 95vw !important;
+            width: 95vw !important;
+            max-height: 95vh !important;
+            height: 95vh !important;
+        }
+
+        .modal-comprovante.fullscreen .modal-body {
+            flex: 1;
+            max-height: calc(95vh - 150px);
+        }
+
+        .modal-comprovante.fullscreen .comprovante-image-container {
+            min-height: calc(95vh - 200px) !important;
+            max-height: calc(95vh - 200px) !important;
+        }
+
+        .modal-comprovante.fullscreen .comprovante-image-container img,
+        .modal-comprovante.fullscreen .comprovante-image-container embed {
+            max-height: calc(95vh - 220px) !important;
+            height: auto !important;
+        }
+
         .modal-comprovante .modal-body {
             flex: 1;
             overflow-y: auto;
@@ -2070,7 +2094,7 @@
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="fecharModal()">Fechar</button>
-                <button type="button" class="btn btn-primary" id="openProofNewTab" style="display: none;">🔗 Abrir em nova guia</button>
+                <button type="button" class="btn btn-primary" id="openProofNewTab" style="display: none;">🔍 Ampliar</button>
             </div>
         </div>
     </div>
@@ -2526,8 +2550,18 @@
                 if (placeholderEl) placeholderEl.style.display = 'none';
 
                 if (openNewTabBtn) {
+                    openNewTabBtn.textContent = '🔍 Ampliar';
                     openNewTabBtn.style.display = 'inline-flex';
-                    openNewTabBtn.onclick = () => window.open(proofData, '_blank');
+                    openNewTabBtn.onclick = () => {
+                        const modalCard = modal.querySelector('.modal-comprovante');
+                        if (!modalCard.classList.contains('fullscreen')) {
+                            modalCard.classList.add('fullscreen');
+                            openNewTabBtn.textContent = '🔍 Reduzir';
+                        } else {
+                            modalCard.classList.remove('fullscreen');
+                            openNewTabBtn.textContent = '🔍 Ampliar';
+                        }
+                    };
                 }
             } else {
                 if (containerEl) {
@@ -2540,7 +2574,12 @@
         }
 
         function fecharModal() {
-            document.getElementById('comprovanteModal').style.display = 'none';
+            const modal = document.getElementById('comprovanteModal');
+            const modalCard = modal.querySelector('.modal-comprovante');
+            if (modalCard) modalCard.classList.remove('fullscreen');
+            const btn = document.getElementById('openProofNewTab');
+            if (btn) btn.textContent = '🔍 Ampliar';
+            modal.style.display = 'none';
         }
 
         async function atualizarCotacao() {
