@@ -2482,20 +2482,57 @@
             const imgEl = document.getElementById('comprovanteImg');
             const placeholderEl = document.getElementById('comprovantePlaceholder');
             const openNewTabBtn = document.getElementById('openProofNewTab');
+            const containerEl = imgEl?.parentElement;
 
             walletEl.textContent = order?.wallet || '-';
 
             if (order?.payoutProof) {
-                imgEl.style.display = 'block';
-                imgEl.src = order.payoutProof;
-                placeholderEl.style.display = 'none';
+                let proofData = order.payoutProof;
+
+                // Se for JSON, parseia e pega o primeiro item
+                if (typeof proofData === 'string' && proofData.trim().startsWith('[')) {
+                    try {
+                        const parsed = JSON.parse(proofData);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            proofData = parsed[0].data || parsed[0];
+                        }
+                    } catch (e) {
+                        console.error('Erro ao parsear JSON do comprovante:', e);
+                    }
+                }
+
+                const isPDF = typeof proofData === 'string' && proofData.includes('application/pdf');
+
+                if (containerEl) containerEl.innerHTML = '';
+
+                if (isPDF) {
+                    const embed = document.createElement('embed');
+                    embed.src = proofData;
+                    embed.type = 'application/pdf';
+                    embed.style.width = '100%';
+                    embed.style.height = '60vh';
+                    embed.style.borderRadius = '8px';
+                    containerEl?.appendChild(embed);
+                } else {
+                    const img = document.createElement('img');
+                    img.src = proofData;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '60vh';
+                    img.style.objectFit = 'contain';
+                    img.style.borderRadius = '8px';
+                    containerEl?.appendChild(img);
+                }
+
+                if (placeholderEl) placeholderEl.style.display = 'none';
+
                 if (openNewTabBtn) {
                     openNewTabBtn.style.display = 'inline-flex';
-                    openNewTabBtn.onclick = () => window.open(order.payoutProof, '_blank');
+                    openNewTabBtn.onclick = () => window.open(proofData, '_blank');
                 }
             } else {
-                imgEl.style.display = 'none';
-                placeholderEl.style.display = 'block';
+                if (containerEl) {
+                    containerEl.innerHTML = '<p id="comprovantePlaceholder" class="comprovante-placeholder">📄 Nenhum comprovante enviado</p>';
+                }
                 if (openNewTabBtn) openNewTabBtn.style.display = 'none';
             }
 
