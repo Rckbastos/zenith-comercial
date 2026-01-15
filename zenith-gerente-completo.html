@@ -2215,6 +2215,20 @@
             return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 4, maximumFractionDigits: 4 });
         }
 
+        function formatOrderDate(value) {
+            if (!value) return '--';
+            if (typeof value === 'string') {
+                const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (match) {
+                    const [, y, m, d] = match;
+                    return `${d}/${m}/${y}`;
+                }
+            }
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '--';
+            return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date);
+        }
+
         function renderOrdersForSeller(orders, users) {
             if (!currentSellerId && users.length) {
                 currentSellerId = users[0].id;
@@ -2253,7 +2267,7 @@
                     <td>${formatBRL(order.cost)}</td>
                     <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                     <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
-                    <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                    <td${dateTitle}>${formatOrderDate(order.date || Date.now())}</td>
                     <td>${statusLabel}</td>
                     <td>${proofButton}</td>
                     <td><button class=\"btn btn-secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.85rem;\" onclick=\"deleteOrder(${order.id})\">🗑️</button></td>
@@ -2276,7 +2290,7 @@
                         <td>${formatBRL(order.cost)}</td>
                         <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                         <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
-                        <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td${dateTitle}>${formatOrderDate(order.date || Date.now())}</td>
                         <td><span class=\"badge badge-pending\">Em Análise</span></td>
                         <td>${order.payoutProof 
                             ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>`
@@ -2300,7 +2314,7 @@
                         <td>${formatBRL(order.cost)}</td>
                         <td class=\"profit-value\">${order.profit != null ? formatBRL(order.profit) : '-'}</td>
                         <td class=\"profit-value\">${order.commissionValue != null ? formatBRL(order.commissionValue) : '-'}</td>
-                        <td${dateTitle}>${new Date(order.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                        <td${dateTitle}>${formatOrderDate(order.date || Date.now())}</td>
                         <td><span class=\"badge badge-success\">Aprovada</span></td>
                         <td>${order.payoutProof 
                             ? `<button class=\"btn btn-secondary\" style=\"padding: 0.35rem 0.75rem; font-size: 0.85rem;\" onclick=\"verComprovanteGerente(${order.id})\">📎 Ver</button>`
