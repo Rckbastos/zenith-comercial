@@ -130,6 +130,23 @@ function getLocalDateString() {
   return `${year}-${month}-${day}`;
 }
 
+function toDateOnlyLocal(value) {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+  if (typeof value === 'string') {
+    const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, y, m, d] = match;
+      return new Date(Number(y), Number(m) - 1, Number(d));
+    }
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
 const PUBLIC_API_PATHS = ['/login', '/health', '/logout'];
 function authMiddleware(req, res, next) {
   if (PUBLIC_API_PATHS.includes(req.path)) return next();
@@ -887,11 +904,9 @@ app.post('/api/orders', async (req, res) => {
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(body, seller, service);
 
     // Calcular automaticamente se é retroativa
-    const orderDate = new Date(body.date || new Date().toISOString().slice(0, 10));
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    orderDate.setHours(0, 0, 0, 0);
-    const isRetroactiveCalculated = orderDate < today;
+    const orderDate = toDateOnlyLocal(body.date || getLocalDateString()) || new Date();
+    const today = toDateOnlyLocal(getLocalDateString()) || new Date();
+    const isRetroactiveCalculated = orderDate.getTime() < today.getTime();
 
     const rows = await query(
       `INSERT INTO orders (customer, sellerId, serviceId, quantity, unitPrice, quote, price, cost, profit, commissionValue, date, status, commissionPaid, productType, payoutProof, wallet, invoiceUsd, historicalQuote, isRetroactive)
@@ -963,11 +978,9 @@ app.patch('/api/orders/:id', async (req, res) => {
     const merged = { ...existing, ...body, id };
     // Recalcular isRetroactive se a data foi alterada
     if (merged.date) {
-      const orderDate = new Date(merged.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      orderDate.setHours(0, 0, 0, 0);
-      merged.isRetroactive = orderDate < today;
+      const orderDate = toDateOnlyLocal(merged.date);
+      const today = toDateOnlyLocal(getLocalDateString()) || new Date();
+      merged.isRetroactive = orderDate ? orderDate.getTime() < today.getTime() : false;
     }
     const { price, cost, profit, commissionValue, quoteUsed, unitPriceUsed, invoiceUsd: invoiceFeeUsd } = await computeFinancials(merged, seller || existing, service || existing);
 
