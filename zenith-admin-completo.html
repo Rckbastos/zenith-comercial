@@ -3214,6 +3214,7 @@
                     <td class="profit-color">${formatBRL(order.profit)}</td>
                     <td class="profit-color">${formatBRL(commissionValue)}</td>
                     <td title="${order.historicalQuote ? 'Cotação histórica: R$ ' + Number(order.historicalQuote).toFixed(4) : 'Cotação automática'}">${formatDate(order.date)}</td>
+                    <td>${formatLaunchDate(order)}</td>
                     <td style="text-align:center;">${proofStatus}</td>
                     <td class="proof-col">${order.payoutProof ? `<button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;" onclick="verComprovante(${order.id})">📎 Ver</button>` : '-'}</td>
                     <td>${hedgeCell}</td>
