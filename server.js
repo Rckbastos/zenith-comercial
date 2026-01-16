@@ -1395,6 +1395,80 @@ app.get('/api/dashboard/remessa', async (req, res) => {
   }
 });
 
+app.get('/api/dashboard/usdt', async (req, res) => {
+  try {
+    const period = (req.query.periodo || req.query.period || 'all').toString().toLowerCase();
+    const selectedDate = req.query.date;
+
+    const rows = await query('SELECT * FROM orders WHERE status = $1', ['concluded']);
+    const services = await query('SELECT * FROM services');
+    const users = await query('SELECT * FROM users');
+
+    const servicesMap = Object.fromEntries(services.map(s => [s.id, normalizeService(s)]));
+    const servicesByName = services
+      .map(normalizeService)
+      .reduce((acc, svc) => {
+        if (svc.name) acc[svc.name.toLowerCase()] = svc;
+        return acc;
+      }, {});
+    const usersMap = Object.fromEntries(users.map(u => [u.id, normalizeUser(u)]));
+
+    const enriched = await Promise.all(rows.map(async (row) => {
+      const order = normalizeOrder(row);
+      let service = servicesMap[order.serviceId];
+      if (!service && order.productType) {
+        service = servicesByName[order.productType.toLowerCase()];
+      }
+      const seller = usersMap[order.sellerId];
+
+      try {
+        const calc = await computeFinancials({ ...order, price: order.price }, seller, service);
+        return {
+          ...order,
+          ...calc,
+          quote: calc.quoteUsed,
+          unitPrice: calc.unitPriceUsed,
+          serviceName: service?.name,
+          isRetroactive: calculateIsRetroactive(order.date, getLaunchDateFallback(order))
+        };
+      } catch (err) {
+        console.warn(`⚠️ Falha ao recalcular ordem #${order.id}:`, err.message);
+        return {
+          ...order,
+          serviceName: service?.name,
+          quote: order.quote ?? order.historicalQuote ?? null,
+          unitPrice: order.unitPrice ?? order.unitprice ?? null,
+          isRetroactive: calculateIsRetroactive(order.date, getLaunchDateFallback(order))
+        };
+      }
+    }));
+
+    const usdtOrders = enriched.filter(order => {
+      const productType = (order.productType || order.producttype || '').toString().trim().toLowerCase();
+      const serviceName = (order.serviceName || '').toString().trim().toLowerCase();
+      const isUsdt = productType === 'usdt' || serviceName === 'usdt';
+      return isUsdt && (order.status || 'open') === 'concluded';
+    });
+
+    const filtered = filterOrdersByPeriodServer(usdtOrders, period, selectedDate);
+
+    const metrics = {
+      somaLucroTx: 0,
+      somaLucroRepasse: 0,
+      somaLucroTotal: 0,
+      temOrdensSemCotacao: false,
+      ordensSemBaseQuote: 0,
+      temFallbackUnitPrice: false,
+      ordensComFallbackUnitPrice: 0
+    };
+
+    res.json(metrics);
+  } catch (error) {
+    console.error('Erro em /api/dashboard/usdt:', error);
+    res.status(500).json({ error: 'Falha ao carregar dashboard de USDT', detail: error.message });
+  }
+});
+
 // Atualiza credenciais (email/senha) vinculadas a um usuário
 app.patch('/api/users/:id/credentials', async (req, res) => {
   const id = Number(req.params.id);

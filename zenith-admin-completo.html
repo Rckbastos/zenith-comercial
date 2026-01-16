@@ -1586,9 +1586,51 @@
                             <span>TX + Repasse</span>
                         </div>
                     </div>
-                </div>
-                <div id="remessaWarnings" style="display: none;"></div>
             </div>
+            <div id="remessaWarnings" style="display: none;"></div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <h3 style="color: #D4AF37; margin-bottom: 1rem; font-size: 1.25rem;">💵 Detalhamento USDT</h3>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">USDT Lucro TX</span>
+                        <div class="kpi-icon remessa-green">💰</div>
+                    </div>
+                    <div class="kpi-value" id="kpiUsdtLucroTx" style="color: #10b981;">R$ 0,00</div>
+                    <div class="kpi-trend">
+                        <span>↑</span>
+                        <span>Taxa a definir</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">USDT Lucro Repasse</span>
+                        <div class="kpi-icon remessa-blue">🤝</div>
+                    </div>
+                    <div class="kpi-value" id="kpiUsdtLucroRepasse" style="color: #3b82f6;">R$ 0,00</div>
+                    <div class="kpi-trend">
+                        <span>↑</span>
+                        <span>Taxa a definir</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card remessa-highlight" style="border: 2px solid #D4AF37;">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Lucro Total USDT</span>
+                        <div class="kpi-icon remessa-gold">📈</div>
+                    </div>
+                    <div class="kpi-value" id="kpiUsdtLucroTotal" style="color: #D4AF37;">R$ 0,00</div>
+                    <div class="kpi-trend">
+                        <span>↑</span>
+                        <span>TX + Repasse</span>
+                    </div>
+                </div>
+            </div>
+            <div id="usdtWarnings" style="display: none;"></div>
+        </div>
         </div>
 
         <!-- Usuários Section -->
@@ -3233,6 +3275,7 @@
                 applyFilterAndRender();
                 populateServiceFilter();
                 await loadRemessaDashboard();
+                await loadUsdtDashboard();
 
                 const failed = results.filter(r => r.status === 'rejected');
                 if (failed.length) {
@@ -3275,6 +3318,7 @@
             renderOrders(filteredOrders, cachedUsers, cachedServices);
             renderFilteredConcludedOrders();
             loadRemessaDashboard();
+            loadUsdtDashboard();
         }
 
         function populateServiceFilter() {
@@ -3444,6 +3488,47 @@
             }
         }
 
+        function updateUsdtKpis(data = {}) {
+            const tx = Number(data.somaLucroTx || 0);
+            const repasse = Number(data.somaLucroRepasse || 0);
+            const total = Number(data.somaLucroTotal || 0);
+
+            const setValue = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = formatBRL(value);
+            };
+
+            setValue('kpiUsdtLucroTx', tx);
+            setValue('kpiUsdtLucroRepasse', repasse);
+            setValue('kpiUsdtLucroTotal', total);
+
+            const warningContainer = document.getElementById('usdtWarnings');
+            if (warningContainer) {
+                const warnings = [];
+                if (data.temOrdensSemCotacao) {
+                    warnings.push(`${data.ordensSemBaseQuote || 0} ordem(ns) sem cotação base`);
+                }
+                if (data.temFallbackUnitPrice) {
+                    warnings.push(`${data.ordensComFallbackUnitPrice || 0} ordem(ns) usando fallback de preço`);
+                }
+
+                if (warnings.length) {
+                    warningContainer.innerHTML = `
+                        <div class="info-box" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.3); margin-top: 1rem;">
+                            <span class="info-box-icon">⚠️</span>
+                            <div class="info-box-text" style="color: #fbbf24;">
+                                <strong>Atenção:</strong> ${warnings.join(' | ')}
+                            </div>
+                        </div>
+                    `;
+                    warningContainer.style.display = 'block';
+                } else {
+                    warningContainer.style.display = 'none';
+                    warningContainer.innerHTML = '';
+                }
+            }
+        }
+
         async function loadRemessaDashboard() {
             try {
                 const periodo = currentFilter || 'all';
@@ -3452,6 +3537,17 @@
                 updateRemessaKpis(data || {});
             } catch (error) {
                 console.error('Erro ao carregar dashboard remessa:', error);
+            }
+        }
+
+        async function loadUsdtDashboard() {
+            try {
+                const periodo = currentFilter || 'all';
+                const dateParam = currentFilter === 'date' && currentDateFilter ? `&date=${encodeURIComponent(currentDateFilter)}` : '';
+                const data = await fetchJson(`/api/dashboard/usdt?periodo=${encodeURIComponent(periodo)}${dateParam}`);
+                updateUsdtKpis(data || {});
+            } catch (error) {
+                console.error('Erro ao carregar dashboard USDT:', error);
             }
         }
     </script>
