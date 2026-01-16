@@ -1322,6 +1322,74 @@ function calculateRemessaDashboardMetrics(orders = []) {
   };
 }
 
+function calculateUsdtDashboardMetrics(orders = []) {
+  let somaLucroTx = 0;
+  let somaLucroRepasse = 0;
+  let somaProfitReal = 0;
+  let volumeUsd = 0;
+  let volumeBrl = 0;
+
+  let ordensSemBaseQuote = 0;
+  let ordensSemTrava = 0;
+  let ordensComTrava = 0;
+  let ordensComFallbackUnitPrice = 0;
+
+  orders.forEach(order => {
+    const quantity = Number(order.quantity ?? 0) || 0;
+    const profit = Number(order.profit ?? 0) || 0;
+    const commissionValue = Number(order.commissionValue ?? order.commissionvalue ?? 0) || 0;
+
+    const baseQuote = Number(order.historicalQuote ?? order.historicalquote ?? order.quote ?? 0) || 0;
+    const unitPrice = Number(order.unitPrice ?? order.unitprice ?? 0) || 0;
+
+    if (!(baseQuote > 0)) {
+      ordensSemBaseQuote++;
+    }
+
+    if (unitPrice && !(baseQuote > 0)) {
+      ordensComFallbackUnitPrice++;
+    }
+
+    const hedgeTotalBrl = Number(order.hedgeTotalBrl ?? order.hedgetotalbrl ?? order.hedge_total_brl ?? 0) || 0;
+    const custoRealBrl = Number(order.cost ?? 0) || 0;
+
+    let lucroTxBrl = 0;
+    if (hedgeTotalBrl > 0) {
+      lucroTxBrl = custoRealBrl - hedgeTotalBrl;
+      ordensComTrava++;
+    } else {
+      ordensSemTrava++;
+    }
+
+    const lucroRepasse = commissionValue;
+
+    somaLucroTx += lucroTxBrl;
+    somaLucroRepasse += lucroRepasse;
+    somaProfitReal += profit;
+    volumeUsd += quantity;
+    volumeBrl += Number(order.price ?? 0) || 0;
+  });
+
+  const somaLucroTotal = somaLucroTx + somaLucroRepasse;
+
+  return {
+    somaLucroTx,
+    somaLucroRepasse,
+    somaLucroTotal,
+    somaProfitReal,
+    volumeUsd,
+    volumeBrl,
+    totalOrdens: orders.length,
+    temOrdensSemCotacao: ordensSemBaseQuote > 0,
+    ordensSemBaseQuote,
+    temOrdensSemTrava: ordensSemTrava > 0,
+    ordensSemTrava,
+    ordensComTrava,
+    temFallbackUnitPrice: ordensComFallbackUnitPrice > 0,
+    ordensComFallbackUnitPrice
+  };
+}
+
 app.get('/api/dashboard/remessa', async (req, res) => {
   try {
     const period = (req.query.periodo || req.query.period || 'all').toString().toLowerCase();
@@ -1452,15 +1520,7 @@ app.get('/api/dashboard/usdt', async (req, res) => {
 
     const filtered = filterOrdersByPeriodServer(usdtOrders, period, selectedDate);
 
-    const metrics = {
-      somaLucroTx: 0,
-      somaLucroRepasse: 0,
-      somaLucroTotal: 0,
-      temOrdensSemCotacao: false,
-      ordensSemBaseQuote: 0,
-      temFallbackUnitPrice: false,
-      ordensComFallbackUnitPrice: 0
-    };
+    const metrics = calculateUsdtDashboardMetrics(filtered);
 
     res.json(metrics);
   } catch (error) {
