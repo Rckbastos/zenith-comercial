@@ -489,6 +489,14 @@ async function computeFinancials(order, seller, service) {
     const commissionRate = seller ? Number(seller.commission || 0) : 0;
     const commissionValue = profit > 0 ? profit * (commissionRate / 100) : 0;
 
+    console.log('=== USDT CALC DEBUG ===');
+    console.log('historicalQuote RAW:', order.historicalQuote ?? order.historicalquote);
+    console.log('cotacaoFechamento:', cotacaoFechamento);
+    console.log('spreadPercent:', spreadPercent);
+    console.log('costRate:', costRate);
+    console.log('cost ANTES toFixed:', cost);
+    console.log('cost DEPOIS:', Number(cost.toFixed(2)));
+
     console.log('=== USDT ORDEM ===');
     console.log('quantity:', quantity);
     console.log('cotacao:', cotacaoFechamento);
