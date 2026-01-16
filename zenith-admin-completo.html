@@ -1090,27 +1090,64 @@
         }
 
         /* Modo fullscreen do modal de comprovante */
-        .modal-comprovante.fullscreen {
-            max-width: 95vw !important;
-            width: 95vw !important;
-            max-height: 95vh !important;
-            height: 95vh !important;
+        /* Lightbox para ampliar comprovante em tela cheia */
+        .lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 2rem;
         }
 
-        .modal-comprovante.fullscreen .modal-body {
-            flex: 1;
-            max-height: calc(95vh - 150px);
+        .lightbox-close {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(212, 175, 55, 0.2);
+            border: 2px solid #D4AF37;
+            color: #D4AF37;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10000;
         }
 
-        .modal-comprovante.fullscreen .comprovante-image-container {
-            min-height: calc(95vh - 200px) !important;
-            max-height: calc(95vh - 200px) !important;
+        .lightbox-close:hover {
+            background: #D4AF37;
+            color: #0a0a0a;
+            transform: scale(1.1);
         }
 
-        .modal-comprovante.fullscreen .comprovante-image-container img,
-        .modal-comprovante.fullscreen .comprovante-image-container embed {
-            max-height: calc(95vh - 220px) !important;
-            height: auto !important;
+        .lightbox-content {
+            max-width: 95vw;
+            max-height: 95vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox-content img {
+            max-width: 100%;
+            max-height: 95vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox-content embed {
+            width: 90vw;
+            height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
         }
 
         .modal-comprovante .modal-body {
@@ -2098,6 +2135,11 @@
             </div>
         </div>
     </div>
+    <!-- Lightbox para ampliar comprovante -->
+    <div id="lightboxOverlay" class="lightbox-overlay" style="display: none;" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">×</button>
+        <div class="lightbox-content" onclick="event.stopPropagation();"></div>
+    </div>
 
     <script>
         const apiBase = '';
@@ -2553,13 +2595,11 @@
                     openNewTabBtn.textContent = '🔍 Ampliar';
                     openNewTabBtn.style.display = 'inline-flex';
                     openNewTabBtn.onclick = () => {
-                        const modalCard = modal.querySelector('.modal-comprovante');
-                        if (!modalCard.classList.contains('fullscreen')) {
-                            modalCard.classList.add('fullscreen');
-                            openNewTabBtn.textContent = '🔍 Reduzir';
+                        const currentElement = containerEl?.querySelector('img, embed');
+                        if (currentElement) {
+                            openLightbox(currentElement);
                         } else {
-                            modalCard.classList.remove('fullscreen');
-                            openNewTabBtn.textContent = '🔍 Ampliar';
+                            alert('⚠️ Nenhum conteúdo disponível para ampliar.');
                         }
                     };
                 }
@@ -2574,13 +2614,38 @@
         }
 
         function fecharModal() {
-            const modal = document.getElementById('comprovanteModal');
-            const modalCard = modal.querySelector('.modal-comprovante');
-            if (modalCard) modalCard.classList.remove('fullscreen');
-            const btn = document.getElementById('openProofNewTab');
-            if (btn) btn.textContent = '🔍 Ampliar';
-            modal.style.display = 'none';
+            document.getElementById('comprovanteModal').style.display = 'none';
         }
+
+        function openLightbox(contentElement) {
+            const lightbox = document.getElementById('lightboxOverlay');
+            const lightboxContent = lightbox.querySelector('.lightbox-content');
+
+            lightboxContent.innerHTML = '';
+
+            const clone = contentElement.cloneNode(true);
+            clone.style.display = 'block';
+            clone.removeAttribute('id');
+            lightboxContent.appendChild(clone);
+
+            lightbox.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightboxOverlay');
+            lightbox.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const lightbox = document.getElementById('lightboxOverlay');
+                if (lightbox && lightbox.style.display === 'flex') {
+                    closeLightbox();
+                }
+            }
+        });
 
         async function atualizarCotacao() {
             try {
